@@ -1,0 +1,21 @@
+---
+/* Page article : PageLayout + en-tête d'article, partage, encart auteur.
+   Stub de structure — les composants surfaces/ et islands/ seront branchés
+   à l'implémentation (ArticleHeader, ShareBar, AuthorBox…). */
+import PageLayout from "./PageLayout.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<PageLayout title={title} description={description}>
+  <article>
+    {/* TODO: ArticleHeader + Byline */}
+    <slot />
+    {/* TODO: ShareBar (island) + AuthorBox */}
+  </article>
+</PageLayout>

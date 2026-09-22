@@ -1,0 +1,18 @@
+---
+import { getCollection, render } from "astro:content";
+import PageLayout from "../../layouts/PageLayout.astro";
+
+export async function getStaticPaths() {
+  const auteurs = await getCollection("auteurs");
+  return auteurs.map((auteur) => ({ params: { slug: auteur.id }, props: { auteur } }));
+}
+
+const { auteur } = Astro.props;
+const { Content } = await render(auteur);
+---
+
+<PageLayout title={auteur.data.nom} description={auteur.data.bio}>
+  <h1>{auteur.data.nom}</h1>
+  {/* Stub — page auteur (AuthorHero + liste d'articles). */}
+  <Content />
+</PageLayout>

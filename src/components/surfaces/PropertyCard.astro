@@ -1,0 +1,106 @@
+---
+/**
+ * PropertyCard — port .astro de components/surfaces/PropertyCard.jsx
+ *
+ * Montre le second cas : un composant à variantes structurelles (le balisage
+ * change, pas seulement la classe). Les trois variantes sont contextuelles,
+ * jamais liées au device :
+ *   défaut      grilles (liste des biens, biens similaires)
+ *   overlay     mise en avant éditoriale — photo plein cadre + dégradé ;
+ *               jamais en grille dense
+ *   horizontal  vues denses (liste + carte, widgets colonne)
+ *
+ * `photo` remplace le placeholder quand les visuels de l'agence arrivent :
+ * même emplacement, rien d'autre à changer.
+ */
+interface Spec {
+  label: string;
+}
+interface Props {
+  variant?: 'overlay' | 'horizontal';
+  price: string;
+  /** Suffixe du prix, ex. « / mois » pour une location */
+  suffix?: string;
+  location: string;
+  title: string;
+  specs?: string[];
+  badge?: string;
+  badgeVariant?: 'new' | 'exclusive' | 'sold';
+  /** Légende du placeholder, en attente de la photo */
+  tag?: string;
+  photo?: string;
+  href?: string;
+}
+const {
+  variant,
+  price,
+  suffix,
+  location,
+  title,
+  specs = [],
+  badge,
+  badgeVariant,
+  tag,
+  photo,
+  href = '#',
+} = Astro.props;
+
+const isOverlay = variant === 'overlay';
+const isHorizontal = variant === 'horizontal';
+const ratio = isOverlay ? '4 / 4.4' : '4 / 3.1';
+---
+
+<article class={`card${isOverlay ? ' card--overlay' : ''}${isHorizontal ? ' card--h' : ''}`}>
+  <a href={href} class="card-link" aria-label={title}></a>
+
+  {isOverlay ? (
+    <>
+      {badge && <span class={`badge badge--floating${badgeVariant ? ` ${badgeVariant}` : ''}`}>{badge}</span>}
+      <button class="card-fav" aria-label="Ajouter aux favoris">♡</button>
+      {photo ? (
+        <img src={photo} alt={title} style={`display:block;width:100%;aspect-ratio:${ratio};object-fit:cover`} />
+      ) : (
+        <div class="ph ph--green" style={`aspect-ratio:${ratio};border-radius:0`}>
+          {tag && <span class="ph-tag">{tag}</span>}
+        </div>
+      )}
+      <div class="ov">
+        <span class="card-loc">{location}</span>
+        <h3>{title}</h3>
+        <span class="card-price">
+          {price}{suffix && <span class="card-price-sfx"> {suffix}</span>}
+        </span>
+        {specs.length > 0 && (
+          <div class="card-specs">{specs.map((s) => <span><i></i>{s}</span>)}</div>
+        )}
+      </div>
+    </>
+  ) : (
+    <>
+      <div class="card-media">
+        {badge && <span class={`badge badge--floating${badgeVariant ? ` ${badgeVariant}` : ''}`}>{badge}</span>}
+        <button class="card-fav" aria-label="Ajouter aux favoris">♡</button>
+        {photo ? (
+          <img src={photo} alt={title} style={`display:block;width:100%;aspect-ratio:${ratio};object-fit:cover`} />
+        ) : (
+          <div class="ph" style={`aspect-ratio:${ratio};border-radius:0`}>
+            {tag && <span class="ph-tag">{tag}</span>}
+          </div>
+        )}
+      </div>
+      <div class="card-body">
+        <div class="card-row">
+          <span class="card-price">
+            {price}{suffix && <span class="card-price-sfx"> {suffix}</span>}
+          </span>
+          {!isHorizontal && <span class="card-loc">{location}</span>}
+        </div>
+        <h3>{title}</h3>
+        {isHorizontal && <span class="card-loc card-loc--below">{location}</span>}
+        {specs.length > 0 && (
+          <div class="card-specs">{specs.map((s) => <span><i></i>{s}</span>)}</div>
+        )}
+      </div>
+    </>
+  )}
+</article>

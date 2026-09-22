@@ -1,0 +1,30 @@
+---
+/* Page courante : BaseLayout + header solide + footer.
+   La plupart des pages « intérieures » utilisent ce layout.
+
+   BaseLayout attend header/footer via des SLOTS NOMMÉS et enveloppe lui-même
+   le contenu par défaut dans <main> : on ne redouble donc pas le <main> ici. */
+import BaseLayout from "./BaseLayout.astro";
+import SiteHeader from "../components/chrome/SiteHeader.astro";
+import SiteFooter from "../components/chrome/SiteFooter.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+  canonical?: string;
+  bodyClass?: string;
+}
+
+const {
+  title,
+  description = "L'Avenir Immobilier — agence immobilière de prestige à Charleroi.",
+  canonical,
+  bodyClass,
+} = Astro.props;
+---
+
+<BaseLayout title={title} description={description} canonical={canonical} bodyClass={bodyClass}>
+  <SiteHeader slot="header" />
+  <slot />
+  <SiteFooter slot="footer" />
+</BaseLayout>

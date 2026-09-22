@@ -1,0 +1,91 @@
+/* ============================================================
+   Avenir Immobilier — pont Tailwind 4
+   ------------------------------------------------------------
+   À importer APRÈS les tokens du design system.
+
+   `@theme inline` : l'utilitaire généré RÉFÉRENCE la variable du DS
+   au lieu d'en copier la valeur.
+
+     @theme inline { --color-green: var(--green); }
+     → .bg-green { background-color: var(--green) }
+
+   Conséquence : une mise à jour de charte dans le DS se propage aux
+   utilitaires sans rien regénérer. Sans `inline`, Tailwind figerait
+   #17413B dans le CSS compilé et les deux systèmes divergeraient.
+
+   NE PAS déclarer ici de valeur littérale : tout doit être var(--…).
+   ============================================================ */
+
+@theme inline {
+  /* ---------- Couleurs ---------- */
+  --color-bg:        var(--bg);
+  --color-bg-soft:   var(--bg-soft);
+  --color-bg-soft2:  var(--bg-soft2);
+  --color-ink-bg:    var(--ink-bg);
+
+  --color-ink:       var(--ink);
+  --color-ink-soft:  var(--ink-soft);
+  --color-ink-mute:  var(--ink-mute);
+
+  --color-green:      var(--green);
+  --color-green-d:    var(--green-d);
+  --color-green-l:    var(--green-l);
+  --color-green-l-d:  var(--green-l-d);
+  --color-green-soft: var(--green-soft);
+  --color-green-tint: var(--green-tint);
+  --color-on-green:   var(--on-green);
+  --color-on-green-l: var(--on-green-l);
+  --color-yellow:     var(--yellow);
+  --color-yellow-d:   var(--yellow-d);
+
+  --color-line:   var(--line);
+  --color-line-2: var(--line-2);
+
+  /* ---------- Fontes ----------
+     Une seule famille (Acumin Variable) sert les trois rôles ;
+     ce qui les distingue est la graisse, la largeur et le tracking.
+     `font-display` sans `font-stretch-wide` reste en largeur normale. */
+  --font-display: var(--serif);
+  --font-sans:    var(--sans);
+  --font-meta:    var(--mono);
+
+  /* ---------- Rayons ---------- */
+  --radius-sm:   var(--r-sm);    /* 11px */
+  --radius-card: var(--r);       /* 16px */
+  --radius-pill: var(--r-pill);  /* 100px */
+
+  /* ---------- Ombres (teintées encre, jamais noires) ---------- */
+  --shadow-sm: var(--sh-sm);
+  --shadow-md: var(--sh);
+  --shadow-lg: var(--sh-lg);
+
+  /* ---------- Easing ---------- */
+  --ease-brand: var(--ease);
+
+  /* ---------- Layout ---------- */
+  --container-page: var(--maxw);  /* → max-w-page (1440px) */
+  --spacing-gut:    var(--gut);   /* → px-gut, gap-gut (clamp 20-76px) */
+}
+
+/* ============================================================
+   Recettes — ce que les utilitaires ne savent pas exprimer
+   ============================================================ */
+@layer components {
+  /* Axe wdth de la fonte variable. Équivalent utilitaire :
+     font-stretch-[112%] — la classe évite de répéter la valeur. */
+  .font-stretch-wide { font-stretch: var(--wide); }
+
+  /* Titre display complet : famille + largeur élargie + tracking.
+     Les h1-h4 héritent déjà de --serif via site.css, mais PAS de la
+     largeur élargie (elle est appliquée au cas par cas dans le DS). */
+  .display {
+    font-family: var(--serif);
+    font-stretch: var(--wide);
+    font-weight: 700;
+    line-height: 1.06;
+    letter-spacing: -0.025em;
+  }
+
+  /* Chiffres alignés — prix, mensualités, tableaux. */
+  .tnum { font-variant-numeric: tabular-nums; }
+}

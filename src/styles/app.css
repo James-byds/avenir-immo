@@ -1,0 +1,10 @@
+/* Avenir Immobilier — point d'entrée unique des styles
+   L'ORDRE EST SIGNIFICATIF :
+     1. Tailwind      — déclare les couches (theme, base, components, utilities)
+     2. Design system — tokens puis site.css (le reset du DS doit passer
+                        après le preflight de Tailwind, pas avant)
+     3. theme.css     — le pont @theme inline, qui lit les tokens de l'étape 2
+*/
+@import "tailwindcss";
+@import "./ds/styles.css";
+@import "./theme.css";

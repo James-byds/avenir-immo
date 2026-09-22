@@ -1,0 +1,23 @@
+---
+/* Pages légales : PageLayout + switcher inter-pages + sommaire sticky + prose.
+   Stub de structure — le switcher et le sommaire seront branchés à
+   l'implémentation. */
+import PageLayout from "./PageLayout.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<PageLayout title={title} description={description}>
+  <div class="legal">
+    {/* TODO: switcher mentions/confidentialité/cookies/honoraires */}
+    <aside>{/* TODO: sommaire sticky */}</aside>
+    <div class="prose">
+      <slot />
+    </div>
+  </div>
+</PageLayout>

@@ -1,0 +1,47 @@
+---
+/* Page de VALIDATION du pont DS ↔ Tailwind (DEMARRAGE.md, étape 3).
+   Temporaire : à supprimer une fois le contrôle #17413B passé.
+
+   Objectif : forcer Tailwind à générer les utilitaires de couleur (bg-green…)
+   pour vérifier qu'ils référencent var(--green) et NE figent PAS #17413B.
+   Mélange volontaire : couleurs/rayons via utilitaires (pont), grilles via
+   Tailwind, composants via classes DS. */
+import PageLayout from "../layouts/PageLayout.astro";
+import Button from "../components/actions/Button.astro";
+import PropertyCard from "../components/surfaces/PropertyCard.astro";
+---
+
+<PageLayout title="Validation du pont — Avenir Immobilier" description="Page de contrôle interne, à supprimer.">
+  <section class="sec--white">
+    <div class="max-w-page mx-auto px-gut py-16">
+      <h1 class="display">Validation du pont @theme inline</h1>
+
+      <h2>Aplats de charte — utilitaires Tailwind mappés sur les tokens du DS</h2>
+      <div class="grid gap-4 md:grid-cols-3">
+        <div class="bg-green text-white p-8 rounded-card">--green · #17413B</div>
+        <div class="bg-green-l text-ink p-8 rounded-card">--green-l · #00A678</div>
+        <div class="bg-yellow text-ink p-8 rounded-card">--yellow · #EDE300</div>
+      </div>
+
+      <h2 class="mt-8">Boutons — classes du design system</h2>
+      <div class="flex gap-4 flex-wrap">
+        <Button>Défaut</Button>
+        <Button variant="deep">Deep</Button>
+        <Button variant="ghost">Ghost</Button>
+      </div>
+
+      <h2 class="mt-8">PropertyCard — port .astro de référence</h2>
+      <div class="grid gap-4 md:grid-cols-3">
+        <PropertyCard
+          price="285 000 €"
+          location="Gerpinnes"
+          title="Villa contemporaine 4 façades"
+          specs={["4 ch.", "180 m²", "PEB B"]}
+          tag="Photo à venir"
+          badge="Nouveau"
+          badgeVariant="new"
+        />
+      </div>
+    </div>
+  </section>
+</PageLayout>

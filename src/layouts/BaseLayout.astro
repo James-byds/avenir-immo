@@ -1,0 +1,66 @@
+---
+/**
+ * Layout de base — fontes, favicons, script partagé du DS.
+ *
+ * `ds-script.js` est la copie de script.js du design system : header collant,
+ * enhancer des <select>, scroll-spy du sommaire légal, visionneuse, révélations.
+ * Il s'auto-initialise et tolère l'absence de ses cibles (gardes `if (el)`),
+ * donc il peut être chargé sur toutes les pages sans condition.
+ */
+interface Props {
+  title: string;
+  description: string;
+  /** URL canonique absolue — indispensable sur les pages de localité */
+  canonical?: string;
+  /** Classe de fond du <body> si la page commence par une section teintée */
+  bodyClass?: string;
+}
+const { title, description, canonical, bodyClass = '' } = Astro.props;
+const canonicalURL = canonical ?? new URL(Astro.url.pathname, Astro.site).href;
+---
+
+<!doctype html>
+<html lang="fr-BE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Signe V de la marque -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
+    <link rel="apple-touch-icon" href="/favicon-180.png" />
+
+    <!-- Fonte de marque : préchargement, sinon le display bascule sur system-ui -->
+    <link
+      rel="preload"
+      href="/fonts/AcuminVariable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_BE" />
+
+    <slot name="head" />
+  </head>
+
+  <body class={bodyClass}>
+    <slot name="header" />
+    <main>
+      <slot />
+    </main>
+    <slot name="footer" />
+
+    <script is:inline src="/ds-script.js"></script>
+  </body>
+</html>
+
+<style is:global>
+  @import "../styles/app.css";
+</style>

@@ -1,0 +1,9 @@
+/* Avenir Immobilier — layout, gouttières & rayons */
+:root {
+/* Layout */
+  --maxw: 1440px;
+  --gut: clamp(20px, 5vw, 76px); /* @kind spacing */
+  --r:    16px;
+  --r-sm: 11px;
+  --r-pill: 100px;
+}

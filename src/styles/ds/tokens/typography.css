@@ -1,0 +1,13 @@
+/* Avenir Immobilier — typographie (charte client) */
+:root {
+  /* Display — Acumin Variable élargi : titres, prix, chiffres clés */
+  --serif: "Acumin Variable", system-ui, sans-serif; /* @kind font */ /* display */
+  /* Corps — Acumin Variable, largeur normale */
+  --sans:  "Acumin Variable", system-ui, -apple-system, sans-serif; /* @kind font */
+  /* Métadonnées & eyebrows — Acumin Variable en capitales espacées
+     (la charte client ne comporte pas de fonte monospace) */
+  --mono:  "Acumin Variable", system-ui, sans-serif; /* @kind font */
+
+  /* Largeur du display sur l'axe wdth de la fonte variable. */
+  --wide: 112%; /* @kind other */
+}

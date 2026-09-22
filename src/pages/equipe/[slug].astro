@@ -1,0 +1,18 @@
+---
+import { getCollection, render } from "astro:content";
+import PageLayout from "../../layouts/PageLayout.astro";
+
+export async function getStaticPaths() {
+  const membres = await getCollection("equipe");
+  return membres.map((membre) => ({ params: { slug: membre.id }, props: { membre } }));
+}
+
+const { membre } = Astro.props;
+const { Content } = await render(membre);
+---
+
+<PageLayout title={membre.data.nom} description={membre.data.fonction}>
+  <h1>{membre.data.nom}</h1>
+  {/* Stub — fiche membre (MemberHero…). */}
+  <Content />
+</PageLayout>

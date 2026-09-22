@@ -1,0 +1,42 @@
+---
+/* Pages de localité — route dynamique UNIQUE.
+   Motif d'URL FIGÉ : /maison-a-vendre-gerpinnes, /appartement-a-louer-charleroi.
+   Alimentée par content/communes/ ; n'émet que les combinaisons déclarées
+   disponibles pour chaque commune (garde-fou anti-contenu-dupliqué). */
+import { getCollection } from "astro:content";
+import PageLayout from "../layouts/PageLayout.astro";
+import { slugCommune, ancre } from "../lib/maillage";
+import type { TypeBien, Transaction } from "../lib/maillage";
+
+export async function getStaticPaths() {
+  const communes = await getCollection("communes");
+  const paths = [];
+
+  for (const commune of communes) {
+    const communeSlug = slugCommune(commune.data.nom);
+    for (const type of commune.data.types as TypeBien[]) {
+      for (const transaction of commune.data.transactions as Transaction[]) {
+        // Le motif [type]-a-[transaction]-[commune] met le VERBE dans l'URL
+        // (maison-a-vendre-gerpinnes) : le param `transaction` vaut vendre/louer.
+        paths.push({
+          params: {
+            type,
+            transaction: transaction === "vente" ? "vendre" : "louer",
+            commune: communeSlug,
+          },
+          props: { commune, type, transaction, titre: ancre(type, transaction, commune.data.nom) },
+        });
+      }
+    }
+  }
+  return paths;
+}
+
+const { commune, titre } = Astro.props;
+---
+
+<PageLayout title={titre} description={commune.data.intro}>
+  <h1>{titre}</h1>
+  {/* Stub — page de localité : chiffres datés, biens filtrés, FAQ locale. */}
+  <p>{commune.data.intro}</p>
+</PageLayout>

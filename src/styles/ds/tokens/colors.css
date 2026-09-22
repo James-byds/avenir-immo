@@ -1,0 +1,31 @@
+/* Avenir Immobilier — couleurs (charte client, sept. 2026) */
+:root {
+  /* Surfaces */
+  --bg:       #FFFFFF;
+  --bg-soft:  #F4F7F6;   /* airy section band */
+  --bg-soft2: #EBF1EF;
+  /* Fond sombre = le vert foncé de la charte (--green-d). Aucun noir ni gris foncé :
+     héros, pied de page, section estimation, bandeaux d'en-tête. */
+  --ink-bg:   #0E2B27;
+
+  /* Ink */
+  --ink:      #101512;
+  --ink-soft: #545C56;
+  --ink-mute: #6C736C;
+
+  /* Brand — charte client : vert foncé primaire, vert clair accent, jaune signal */
+  --green:      #17413B;  /* vert foncé · CMJN 86-47-64-57 · RVB 23-65-59 — primaire (CTA, liens, texte accent) */
+  --green-d:    #0E2B27;  /* hover */
+  --green-l:    #00A678;  /* vert clair · CMJN 79-4-65-0 · RVB 0-166-120 — accent graphique, aplats, traits, pastilles */
+  --green-l-d:  #008A63;  /* hover du vert clair */
+  --green-soft: #D6F0E7;  /* fond doux dérivé du vert clair */
+  --green-tint: #EDF7F3;
+  --on-green:   #FFFFFF;
+  --on-green-l: #101512;  /* texte sur aplat vert clair — TOUJOURS l'encre : le blanc y tombe à 2,9:1 */
+  --yellow:     #EDE300;  /* jaune · CMJN 13-0-96-0 · RVB 237-237-0 — signal sur fonds sombres */
+  --yellow-d:   #D6CC00;
+
+  /* Lines */
+  --line:   #E3EBE8;
+  --line-2: #EEF3F1;
+}

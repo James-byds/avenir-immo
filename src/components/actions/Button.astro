@@ -1,0 +1,43 @@
+---
+/**
+ * Button — port .astro de components/actions/Button.jsx
+ *
+ * Modèle de référence pour tous les ports statiques : la classe du DS porte
+ * TOUT le style, le composant ne fait que la composer. Aucune couleur, aucun
+ * rayon, aucune ombre ici — sinon on duplique une décision déjà prise.
+ *
+ * Variantes (cf. components/actions/Button.d.ts) :
+ *   défaut  aplat vert clair --green-l, texte encre — le CTA du système
+ *   deep    vert profond, texte blanc — quand le vert clair est déjà pris
+ *           par le fond ou un aplat voisin
+ *   ghost   bordé ; devient transparent à bord blanc sur toute surface
+ *           sombre du DS, ou sur une surface portant .on-dark
+ *   light   blanc
+ *   dark / brass : alias hérités de deep, conservés pour les pages existantes
+ */
+interface Props {
+  variant?: 'deep' | 'ghost' | 'light' | 'dark' | 'brass';
+  block?: boolean;
+  arrow?: boolean;
+  href?: string;
+  class?: string;
+  [key: string]: any;
+}
+const {
+  variant,
+  block = false,
+  arrow = true,
+  href,
+  class: extra = '',
+  ...rest
+} = Astro.props;
+
+const cls = ['btn', variant && `btn--${variant}`, block && 'btn--block', extra]
+  .filter(Boolean)
+  .join(' ');
+const Tag = href ? 'a' : 'button';
+---
+
+<Tag class={cls} href={href} type={href ? undefined : 'button'} {...rest}>
+  <slot />{arrow && <span class="arr">→</span>}
+</Tag>

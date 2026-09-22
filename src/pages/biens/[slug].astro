@@ -1,0 +1,18 @@
+---
+import { getCollection, render } from "astro:content";
+import PageLayout from "../../layouts/PageLayout.astro";
+
+export async function getStaticPaths() {
+  const biens = await getCollection("biens", ({ data }) => data.publie !== false);
+  return biens.map((bien) => ({ params: { slug: bien.id }, props: { bien } }));
+}
+
+const { bien } = Astro.props;
+const { Content } = await render(bien);
+---
+
+<PageLayout title={bien.data.titre} description={bien.data.description}>
+  <h1>{bien.data.titre}</h1>
+  {/* Stub — fiche bien. SpecGrid, PebScale, AgentCard, galerie… à brancher. */}
+  <Content />
+</PageLayout>

@@ -1,0 +1,9 @@
+/* Avenir Immobilier — ombres & easing */
+:root {
+/* Ombres (teintées encre, jamais noires) */
+  --sh-sm: 0 2px 10px rgba(16,21,18,.05);
+  --sh:    0 18px 44px -26px rgba(16,21,18,.22);
+  --sh-lg: 0 34px 80px -42px rgba(16,21,18,.30);
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1); /* @kind other */
+}

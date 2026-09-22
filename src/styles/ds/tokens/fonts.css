@@ -1,0 +1,25 @@
+/* Avenir Immobilier — fontes · VERSION ASTRO
+   ============================================================
+   Diffère de tokens/fonts.css du design system sur un seul point :
+   le chemin de la fonte pointe vers public/ au lieu de ../assets/.
+
+   Source : assets/fonts/AcuminVariableConcept.otf (DS)
+   → convertir en woff2 avant mise en production :
+       fonttools ttLib.woff2 compress AcuminVariableConcept.otf
+     en conservant les axes wght (100-900) ET wdth (75-125 %) —
+     le display repose sur font-stretch: 112 %.
+
+   Un seul @font-face sert les trois rôles typographiques :
+     · --serif (display) = même famille + font-stretch: var(--wide)
+     · --sans  (corps)   = largeur normale
+     · --mono  (méta)    = largeur normale, capitales espacées
+   ============================================================ */
+@font-face {
+  font-family: "Acumin Variable";
+  src: url("/fonts/AcuminVariable.woff2") format("woff2-variations"),
+       url("/fonts/AcuminVariableConcept.otf") format("opentype-variations");
+  font-weight: 100 900;
+  font-stretch: 75% 125%;
+  font-style: normal;
+  font-display: swap;
+}
