@@ -1,4 +1,87 @@
 ---
-// Stub — composant «SiteFooter». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * SiteFooter — pied de page (chrome). Fond sombre (.footer = --ink-bg).
+ * Logo blanc sur fond sombre ; zones = maillage interne (ancres descriptives).
+ * Contenu provisoire — le projet maquette ajustera copie et liens.
+ */
+import LocalityLinks from "../core/LocalityLinks.astro";
+
+const year = 2026; // provisoire
+const zones = [
+  { text: "Maisons à vendre à Gerpinnes", href: "/maison-a-vendre-gerpinnes" },
+  { text: "Maisons à vendre à Loverval", href: "/maison-a-vendre-loverval" },
+  { text: "Appartements à louer à Charleroi", href: "/appartement-a-louer-charleroi" },
+  { text: "Maisons à vendre à Mont-sur-Marchienne", href: "/maison-a-vendre-mont-sur-marchienne" },
+];
 ---
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <a href="/" class="brand" aria-label="Avenir Immobilier — accueil">
+          <img class="brand-logo" src="/assets/logo-lavenir-immobilier-blanc.png" alt="Avenir Immobilier" />
+        </a>
+        <p class="f-about">
+          Agence immobilière de prestige à Charleroi. Vente, location et estimation
+          de biens d'exception dans le Grand Charleroi.
+        </p>
+        <div class="f-contact">
+          <a href="tel:+3271321470">+32 71 32 14 70</a>
+          <a href="mailto:bonjour@avenir-immobilier.be">bonjour@avenir-immobilier.be</a>
+          <span>Rue Saint-Gilles 118 · 6000 Charleroi</span>
+        </div>
+        <div class="f-social">
+          <a href="#" aria-label="Facebook"><span class="fs-ico fs-facebook"></span></a>
+          <a href="#" aria-label="Instagram"><span class="fs-ico fs-instagram"></span></a>
+          <a href="#" aria-label="LinkedIn"><span class="fs-ico fs-linkedin"></span></a>
+        </div>
+      </div>
+
+      <div>
+        <h4>Explorer</h4>
+        <ul>
+          <li><a href="/biens">Nos biens</a></li>
+          <li><a href="/estimation">Estimation gratuite</a></li>
+          <li><a href="/equipe">L'équipe</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="/avis">Avis clients</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Informations</h4>
+        <ul>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/legal/mentions">Mentions légales</a></li>
+          <li><a href="/legal/confidentialite">Confidentialité</a></li>
+          <li><a href="/legal/cookies">Cookies</a></li>
+          <li><a href="/legal/honoraires">Honoraires & barème</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-news">
+        <h4>Nouveautés</h4>
+        <p class="f-about">Les nouveaux biens et nos analyses de marché, une fois par mois.</p>
+        <form onsubmit="return false">
+          <input type="email" placeholder="Votre e-mail" aria-label="Votre adresse e-mail" />
+          <button type="submit" aria-label="S'inscrire">→</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="footer-zones">
+      <h4>Zones d'intervention</h4>
+      <LocalityLinks variant="widen" label="Autour de Charleroi" links={zones} />
+    </div>
+
+    <div class="footer-bottom">
+      <span>© {year} Avenir Immobilier · IPI 509 217</span>
+      <div class="fb-links">
+        <a href="/legal/mentions">Mentions</a>
+        <a href="/legal/confidentialite">Confidentialité</a>
+        <a href="/legal/cookies">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>

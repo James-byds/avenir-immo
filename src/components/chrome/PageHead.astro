@@ -1,4 +1,37 @@
 ---
-// Stub — composant «PageHead». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * PageHead — en-tête de page intérieure (chrome).
+ *
+ * Variantes de fond : sans = clair · "tint" = vert tendre · "band"/"ink" = aplat
+ * sombre (breadcrumb et eyebrow s'inversent automatiquement via site.css).
+ * Compose Breadcrumb + Eyebrow du DS.
+ */
+import Breadcrumb from "../core/Breadcrumb.astro";
+import Eyebrow from "../core/Eyebrow.astro";
+
+interface Crumb {
+  label: string;
+  href?: string;
+}
+interface Props {
+  title: string;
+  eyebrow?: string;
+  lede?: string;
+  breadcrumb?: Crumb[];
+  /** Fond : défaut clair, "tint" vert tendre, "band"/"ink" sombre */
+  variant?: "tint" | "band" | "ink";
+}
+const { title, eyebrow, lede, breadcrumb = [], variant } = Astro.props;
+const cls = `page-head${variant ? ` page-head--${variant}` : ""}`;
 ---
+
+<div class={cls}>
+  <div class="wrap">
+    {breadcrumb.length > 0 && <Breadcrumb items={breadcrumb} />}
+    <div class="section-head">
+      {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+      <h1>{title}</h1>
+      {lede && <p>{lede}</p>}
+    </div>
+  </div>
+</div>

@@ -1,4 +1,76 @@
 ---
-// Stub — composant «SiteHeader». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * SiteHeader — en-tête du site (chrome, hors composants DS).
+ *
+ * Balisage attendu par ds-script.js : #header (ombre au scroll), #burger
+ * (ouvre le drawer), #drawer + #drawerClose (menu mobile). Le drawer se ferme
+ * au clic sur un lien.
+ *
+ * `.header--solid` = verre blanc lisible (défaut). Le logo est l'image cliente
+ * (jamais redessiné). Variante transparente-sur-hero laissée au projet maquette.
+ */
+interface NavItem {
+  label: string;
+  href: string;
+}
+interface Props {
+  /** Header verre blanc (pages intérieures + accueil provisoire). */
+  solid?: boolean;
+  /** href de la page courante — souligne l'onglet actif. */
+  active?: string;
+}
+const { solid = true, active } = Astro.props;
+
+const nav: NavItem[] = [
+  { label: "Nos biens", href: "/biens" },
+  { label: "Estimation", href: "/estimation" },
+  { label: "Équipe", href: "/equipe" },
+  { label: "Blog", href: "/blog" },
+  { label: "Avis", href: "/avis" },
+  { label: "Contact", href: "/contact" },
+];
 ---
+
+<header id="header" class={`header${solid ? " header--solid" : ""}`}>
+  <div class="wrap">
+    <div class="nav">
+      <a href="/" class="brand" aria-label="Avenir Immobilier — accueil">
+        <img class="brand-logo" src="/assets/logo-lavenir-immobilier.png" alt="Avenir Immobilier" />
+      </a>
+
+      <nav class="nav-links" aria-label="Navigation principale">
+        {nav.map((n) => <a href={n.href} class={active === n.href ? "on" : undefined}>{n.label}</a>)}
+      </nav>
+
+      <div class="nav-cta">
+        <a class="nav-phone" href="tel:+3271321470">+32 71 32 14 70</a>
+        <a class="btn" href="/estimation">Estimer mon bien <span class="arr">→</span></a>
+        <button
+          id="burger"
+          class="burger"
+          type="button"
+          aria-label="Ouvrir le menu"
+          aria-controls="drawer"
+          aria-expanded="false"
+        >
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<aside id="drawer" class="drawer" aria-hidden="true" aria-label="Menu de navigation">
+  <div class="wrap">
+    <div class="drawer-top">
+      <a href="/" class="brand" aria-label="Avenir Immobilier — accueil">
+        <img class="brand-logo" src="/assets/logo-lavenir-immobilier.png" alt="Avenir Immobilier" />
+      </a>
+      <button id="drawerClose" class="drawer-close" type="button" aria-label="Fermer le menu">×</button>
+    </div>
+    <nav aria-label="Navigation mobile">
+      {nav.map((n) => <a href={n.href}>{n.label}</a>)}
+    </nav>
+    <a class="btn btn--block" href="/estimation">Estimer mon bien <span class="arr">→</span></a>
+  </div>
+</aside>

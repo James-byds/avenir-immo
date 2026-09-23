@@ -1,11 +1,145 @@
 ---
+/* Page d'accueil — ASSEMBLAGE PROVISOIRE.
+   Démonstration d'adhérence au design system : classes DS pour le style,
+   grilles Tailwind pour la mise en page, alternance des fonds via .sec--*.
+   Le projet maquette (claude design) fournira la composition définitive —
+   contenu, chiffres sourcés et visuels sont ici des placeholders. */
 import PageLayout from "../layouts/PageLayout.astro";
+import Eyebrow from "../components/core/Eyebrow.astro";
+import PropertyCard from "../components/surfaces/PropertyCard.astro";
+import ArticleCard from "../components/surfaces/ArticleCard.astro";
+import SellHere from "../components/surfaces/SellHere.astro";
+import TrustSection from "../components/surfaces/TrustSection.astro";
+import ContactForm from "../components/islands/ContactForm.tsx";
 ---
 
 <PageLayout
-  title="L'Avenir Immobilier — Agence immobilière"
-  description="Vente, location et estimation de biens immobiliers."
+  title="Avenir Immobilier — Agence immobilière de prestige à Charleroi"
+  description="Vente, location et estimation de biens de caractère dans le Grand Charleroi."
 >
-  <h1>L'Avenir Immobilier</h1>
-  <p>Stub — page d'accueil. À implémenter (voir handoff / DEMARRAGE.md).</p>
+  <!-- 1 · Hero (fond sombre) -->
+  <section class="sec--ink on-dark">
+    <div class="wrap py-24 md:py-32">
+      <div class="max-w-3xl">
+        <Eyebrow>Agence de prestige · Charleroi</Eyebrow>
+        <h1 class="display mt-4">L'immobilier d'exception, avec la rigueur d'un conseiller local.</h1>
+        <p class="lede mt-6 text-lg" style="color:rgba(255,255,255,.8);max-width:52ch">
+          Vente, location et estimation de biens de caractère dans le Grand Charleroi.
+          Un accompagnement sur mesure, du premier rendez-vous à l'acte.
+        </p>
+        <div class="flex gap-4 flex-wrap mt-8">
+          <a class="btn" href="/estimation">Estimer mon bien <span class="arr">→</span></a>
+          <a class="btn btn--ghost" href="/biens">Voir les biens</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · Biens à la une (fond blanc) -->
+  <section class="sec--white">
+    <div class="wrap py-20 md:py-28">
+      <div class="section-head">
+        <Eyebrow>Sélection du moment</Eyebrow>
+        <h2>Biens à la une</h2>
+        <p>Une sélection de biens de caractère, choisis pour leur emplacement et leur qualité.</p>
+      </div>
+      <div class="grid gap-5 md:grid-cols-3 mt-10">
+        <PropertyCard
+          price="745 000 €"
+          location="Gerpinnes"
+          title="Villa d'architecte, lisière de bois"
+          specs={["5 chambres", "420 m²", "Piscine"]}
+          badge="Nouveau"
+          badgeVariant="new"
+          tag="Villa contemporaine — Gerpinnes"
+        />
+        <PropertyCard
+          price="395 000 €"
+          location="Loverval"
+          title="Maison de maître Belle Époque"
+          specs={["4 chambres", "260 m²", "Jardin"]}
+          tag="Maison de maître — Loverval"
+        />
+        <PropertyCard
+          price="1 450 €"
+          suffix="/ mois"
+          location="Charleroi"
+          title="Loft d'angle sur cour pavée"
+          specs={["2 chambres", "140 m²"]}
+          badge="Sous offre"
+          tag="Loft d'angle — Charleroi"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · Vendre ici (fond vert tendre — section auto-stylée) -->
+  <SellHere
+    eyebrow="Vous vendez"
+    title="Votre bien mérite une estimation juste"
+    lede="Gratuite, sans engagement, réalisée par un conseiller qui connaît votre commune."
+    headline="34"
+    headlineLabel="jours — délai médian avant compromis"
+    rows={[
+      { label: "Prix médian maison", value: "345 000 €" },
+      { label: "Biens vendus en 2025", value: "41" },
+    ]}
+    source="Données internes Avenir · au 31 août 2026"
+  />
+
+  <!-- 4 · Confiance (fond blanc — section auto-stylée) -->
+  <TrustSection
+    distribution={[
+      { stars: 5, count: 112 },
+      { stars: 4, count: 11 },
+      { stars: 3, count: 3 },
+      { stars: 2, count: 1 },
+      { stars: 1, count: 0 },
+    ]}
+  />
+
+  <!-- 5 · Blog (fond vert tendre) -->
+  <section class="sec--tint">
+    <div class="wrap py-20 md:py-28">
+      <div class="section-head">
+        <Eyebrow>À lire</Eyebrow>
+        <h2>Comprendre le marché</h2>
+        <p>Analyses de marché, fiscalité et conseils, par nos conseillers.</p>
+      </div>
+      <div class="grid gap-4 md:grid-cols-3 mt-10">
+        <ArticleCard
+          variant="compact"
+          category="Marché"
+          meta="14 septembre 2026 · 6 min"
+          title="Prix de l'immobilier à Charleroi : ce que révèle la rentrée 2026"
+          author={{ name: "Camille Renard" }}
+        />
+        <ArticleCard
+          variant="compact"
+          category="Fiscalité"
+          meta="4 min"
+          title="Droits d'enregistrement en Wallonie : ce qui change en 2027"
+          author={{ name: "Marc Lambert" }}
+        />
+        <ArticleCard
+          variant="compact"
+          category="Conseil"
+          meta="7 min"
+          title="Estimer son bien sans se tromper : la méthode en cinq étapes"
+          author={{ name: "Anne Vandeputte" }}
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · Contact (fond encre — île, section auto-stylée) -->
+  <ContactForm
+    client:visible
+    tone="ink"
+    coordinates={[
+      { label: "Téléphone", value: "+32 71 32 14 70", href: "tel:+3271321470" },
+      { label: "E-mail", value: "bonjour@avenir-immobilier.be", href: "mailto:bonjour@avenir-immobilier.be" },
+      { label: "Agence", value: "Rue Saint-Gilles 118 · 6000 Charleroi" },
+    ]}
+  />
 </PageLayout>
