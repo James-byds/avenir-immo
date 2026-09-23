@@ -6,23 +6,22 @@
 
   /* ---------- Sticky header shadow ---------- */
   const header = document.getElementById("header");
-  const onScroll = () => { if (header) header.classList.toggle("scrolled", window.scrollY > 12); };
+  const onScroll = () => header.classList.toggle("scrolled", window.scrollY > 12);
   onScroll();
   window.addEventListener("scroll", onScroll, { passive: true });
 
   /* ---------- Mobile drawer ---------- */
   const drawer = document.getElementById("drawer");
-  const openDrawer = () => { if (!drawer) return; drawer.style.removeProperty("transform"); drawer.style.removeProperty("visibility"); drawer.classList.add("open"); drawer.setAttribute("aria-hidden", "false"); };
-  const closeDrawer = () => { if (!drawer) return; drawer.classList.remove("open"); drawer.setAttribute("aria-hidden", "true"); };
+  const openDrawer = () => { drawer.style.removeProperty("transform"); drawer.style.removeProperty("visibility"); drawer.classList.add("open"); drawer.setAttribute("aria-hidden", "false"); };
+  const closeDrawer = () => { drawer.classList.remove("open"); drawer.setAttribute("aria-hidden", "true"); };
   const burgerBtn = document.getElementById("burger");
   if (burgerBtn) burgerBtn.addEventListener("click", openDrawer);
-  const drawerClose = document.getElementById("drawerClose");
-  if (drawerClose) drawerClose.addEventListener("click", closeDrawer);
-  if (drawer) drawer.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeDrawer));
+  document.getElementById("drawerClose").addEventListener("click", closeDrawer);
+  drawer.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeDrawer));
 
   /* ---------- Hero search (Estimer / Acheter / Louer) ---------- */
   const heroSearch = document.getElementById("heroSearch");
-  const hsTabs = document.querySelectorAll(".hs-tab");
+  const hsTabs = heroSearch ? heroSearch.closest(".hero-search").querySelectorAll(".hs-tab") : [];
   const hsEstimerRow = document.getElementById("hsEstimerRow");
   const hsSearchRow = document.getElementById("hsSearchRow");
   const hsLoc = document.getElementById("hsLoc");
@@ -54,6 +53,28 @@
       e.preventDefault();
       const field = hsMode === "estimer" ? document.getElementById("hsEstLoc") : hsLoc;
       if (field) { field.value = "Ma position actuelle"; field.focus(); }
+    });
+  }
+
+  /* ---------- Recherche section biens (Acheter / Louer) ---------- */
+  const propSearch = document.getElementById("propSearch");
+  if (propSearch) {
+    const psLoc = document.getElementById("psLoc");
+    const psTabs = propSearch.querySelectorAll(".hs-tab");
+    psTabs.forEach((t) =>
+      t.addEventListener("click", () => {
+        psTabs.forEach((x) => { x.classList.remove("on"); x.setAttribute("aria-selected", "false"); });
+        t.classList.add("on");
+        t.setAttribute("aria-selected", "true");
+        const louer = t.dataset.pmode === "louer";
+        if (psLoc) psLoc.placeholder = louer ? "Où souhaitez-vous louer ?" : "Où souhaitez-vous acheter ?";
+        const label = document.getElementById("psBudgetLabel");
+        if (label) label.textContent = louer ? "Loyer max." : "Budget";
+      })
+    );
+    propSearch.addEventListener("submit", (e) => {
+      e.preventDefault();
+      window.location.href = "biens.html";
     });
   }
 
@@ -93,7 +114,8 @@
   document.addEventListener("click", (e) => { if (!e.target.closest(".hs-field--dd")) closeDropdowns(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDropdowns(); });
 
-  /* ---------- Property filters ---------- */
+  /* ---------- Property filters + pagination ---------- */
+  let propRepage = null;
   const filters = document.getElementById("filters");
   const cards = Array.from(document.querySelectorAll("#propGrid .card"));
   if (filters && !document.getElementById("selLoc")) filters.addEventListener("click", (e) => {
@@ -106,7 +128,31 @@
       const show = f === "all" || c.dataset.cat === f;
       c.classList.toggle("hide", !show);
     });
+    if (propRepage) propRepage(0);
   });
+
+  /* ---------- Pagination de la grille des biens (flèches) ---------- */
+  const propPrev = document.getElementById("propPrev");
+  const propNext = document.getElementById("propNext");
+  const propPage = document.getElementById("propPage");
+  if (propPrev && propNext && cards.length) {
+    const PER = 4;
+    let page = 0;
+    const pool = () => cards.filter((c) => !c.classList.contains("card--overlay") && !c.classList.contains("hide"));
+    propRepage = (p) => {
+      const list = pool();
+      const pages = Math.max(1, Math.ceil(list.length / PER));
+      page = Math.min(Math.max(p == null ? page : p, 0), pages - 1);
+      list.forEach((c, i) => c.classList.toggle("pg-hid", Math.floor(i / PER) !== page));
+      cards.filter((c) => c.classList.contains("hide")).forEach((c) => c.classList.remove("pg-hid"));
+      propPrev.disabled = page === 0;
+      propNext.disabled = page >= pages - 1;
+      if (propPage) propPage.textContent = (page + 1) + " / " + pages;
+    };
+    propPrev.addEventListener("click", () => propRepage(page - 1));
+    propNext.addEventListener("click", () => propRepage(page + 1));
+    propRepage(0);
+  }
 
   /* ---------- Favorite toggle ---------- */
   document.querySelectorAll(".card-fav").forEach((b) => {
@@ -229,8 +275,15 @@
       prev.disabled = teamTrack.scrollLeft <= 4;
       next.disabled = teamTrack.scrollLeft + teamTrack.clientWidth >= teamTrack.scrollWidth - 4;
     };
-    next.addEventListener("click", () => teamTrack.scrollBy({ left: step(), behavior: "smooth" }));
-    prev.addEventListener("click", () => teamTrack.scrollBy({ left: -step(), behavior: "smooth" }));
+    const go = (dir) => {
+      const before = teamTrack.scrollLeft;
+      const target = Math.max(0, Math.min(before + dir * step(), teamTrack.scrollWidth - teamTrack.clientWidth));
+      teamTrack.scrollTo({ left: target, behavior: "smooth" });
+      if (teamTrack.scrollLeft === before) teamTrack.scrollLeft = target;
+      update();
+    };
+    next.addEventListener("click", () => go(1));
+    prev.addEventListener("click", () => go(-1));
     teamTrack.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
     update();
