@@ -1,0 +1,25 @@
+---
+/**
+ * SectionHead — tête de section (.section-head : eyebrow + h2 + p).
+ * La classe DS porte tout le style ; `align="center"` ne pose que la mise
+ * en page (Tailwind) — aucune variante centrée n'existe dans site.css.
+ *
+ * Le chapô passe par le slot (il porte parfois du balisage : <strong>, liens).
+ */
+import Eyebrow from "./Eyebrow.astro";
+
+interface Props {
+  eyebrow?: string;
+  title: string;
+  align?: "left" | "center";
+}
+const { eyebrow, title, align = "left" } = Astro.props;
+---
+
+<div class={`section-head${align === "center" ? " mx-auto text-center" : ""}`}>
+  {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+  <h2>{title}</h2>
+  {Astro.slots.has("default") && (
+    <p><slot /></p>
+  )}
+</div>
