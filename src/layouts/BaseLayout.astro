@@ -1,12 +1,15 @@
 ---
 /**
- * Layout de base — fontes, favicons, script partagé du DS.
+ * Layout de base — fontes, favicons, script partagé du DS, JSON-LD Organization.
  *
  * `ds-script.js` est la copie de script.js du design system : header collant,
- * enhancer des <select>, scroll-spy du sommaire légal, visionneuse, révélations.
- * Il s'auto-initialise et tolère l'absence de ses cibles (gardes `if (el)`),
- * donc il peut être chargé sur toutes les pages sans condition.
+ * drawer, recherches, enhancer des <select>, visionneuse, révélations.
+ * ATTENTION (synchro du 23 sept.) : il EXIGE #header, #burger, #drawer et
+ * #drawerClose — gardes retirées côté DS. Toute page doit donc rendre le
+ * chrome (SiteHeader) ou fournir ces ancres.
  */
+import { organization, jsonLd } from "../lib/seo";
+
 interface Props {
   title: string;
   description: string;
@@ -46,6 +49,8 @@ const canonicalURL = canonical ?? new URL(Astro.url.pathname, Astro.site).href;
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="fr_BE" />
+
+    <script is:inline type="application/ld+json" set:html={jsonLd(organization())} />
 
     <slot name="head" />
   </head>

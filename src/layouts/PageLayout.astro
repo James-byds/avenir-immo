@@ -1,10 +1,15 @@
 ---
-/* Page courante : BaseLayout + header solide + footer.
+/* Page courante : BaseLayout + TopBar + header + footer.
    La plupart des pages « intérieures » utilisent ce layout.
 
    BaseLayout attend header/footer via des SLOTS NOMMÉS et enveloppe lui-même
-   le contenu par défaut dans <main> : on ne redouble donc pas le <main> ici. */
+   le contenu par défaut dans <main> : on ne redouble donc pas le <main> ici.
+
+   `solid` (défaut true) = header verre blanc ; le passer à false sur les
+   pages à héros pleine hauteur (accueil) pour le header transparent.
+   `active` = href de l'onglet de navigation à souligner. */
 import BaseLayout from "./BaseLayout.astro";
+import TopBar from "../components/chrome/TopBar.astro";
 import SiteHeader from "../components/chrome/SiteHeader.astro";
 import SiteFooter from "../components/chrome/SiteFooter.astro";
 
@@ -13,6 +18,10 @@ interface Props {
   description?: string;
   canonical?: string;
   bodyClass?: string;
+  /** Header verre blanc (défaut) — false pour le header transparent sur héros. */
+  solid?: boolean;
+  /** href de la page courante — souligne l'onglet actif du header. */
+  active?: string;
 }
 
 const {
@@ -20,11 +29,16 @@ const {
   description = "L'Avenir Immobilier — agence immobilière de prestige à Charleroi.",
   canonical,
   bodyClass,
+  solid = true,
+  active,
 } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description} canonical={canonical} bodyClass={bodyClass}>
-  <SiteHeader slot="header" />
+  <Fragment slot="header">
+    <TopBar />
+    <SiteHeader solid={solid} active={active} />
+  </Fragment>
   <slot />
   <SiteFooter slot="footer" />
 </BaseLayout>

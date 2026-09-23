@@ -1,0 +1,23 @@
+---
+/**
+ * TopBar — barre utilitaire au-dessus du header (`.utility`), présente sur
+ * les 27 pages de la référence : adresse + horaires à gauche, sous-nav et
+ * réseaux sociaux à droite. Coordonnées = copie finale de la maquette.
+ */
+import SocialLinks from "./SocialLinks.astro";
+---
+
+<div class="utility">
+  <div class="wrap">
+    <div class="u-left">
+      <span><span class="u-dot"></span>&nbsp;&nbsp;Boulevard Tirou 102 — 6000 Charleroi</span>
+      <span class="hide-sm">Lun–Ven 9h–18h30 · Sam 10h–16h</span>
+    </div>
+    <div class="u-right">
+      <nav class="u-nav" aria-label="Navigation secondaire">
+        <a href="/contact">Contactez-nous</a>
+      </nav>
+      <SocialLinks class="u-social" />
+    </div>
+  </div>
+</div>

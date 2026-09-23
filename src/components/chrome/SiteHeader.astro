@@ -2,19 +2,24 @@
 /**
  * SiteHeader — en-tête du site (chrome, hors composants DS).
  *
- * Balisage attendu par ds-script.js : #header (ombre au scroll), #burger
- * (ouvre le drawer), #drawer + #drawerClose (menu mobile). Le drawer se ferme
- * au clic sur un lien.
+ * Balisage attendu par ds-script.js (SANS gardes depuis la synchro du
+ * 23 sept.) : #header, #burger, #drawer et #drawerClose doivent exister
+ * sur toutes les pages. Le drawer se ferme au clic sur un lien.
  *
- * `.header--solid` = verre blanc lisible (défaut). Le logo est l'image cliente
- * (jamais redessiné). Variante transparente-sur-hero laissée au projet maquette.
+ * Deux logos superposés (image cliente, jamais redessinée) :
+ * `.brand-logo--ink` (couleur) / `.brand-logo--rev` (blanc) — la bascule
+ * au scroll est du pur CSS via la classe `.scrolled` posée par ds-script.js.
+ * `solid` = verre blanc (pages intérieures) ; sans = transparent sur héros.
+ *
+ * L'état initial du drawer est un style inline transform/visibility
+ * (anti-flash avant CSS) que openDrawer() retire — contrat du script.
  */
 interface NavItem {
   label: string;
   href: string;
 }
 interface Props {
-  /** Header verre blanc (pages intérieures + accueil provisoire). */
+  /** Header verre blanc (pages intérieures). Sans : transparent sur héros. */
   solid?: boolean;
   /** href de la page courante — souligne l'onglet actif. */
   active?: string;
@@ -23,54 +28,60 @@ const { solid = true, active } = Astro.props;
 
 const nav: NavItem[] = [
   { label: "Nos biens", href: "/biens" },
+  { label: "Quartiers", href: "/communes" },
   { label: "Estimation", href: "/estimation" },
-  { label: "Équipe", href: "/equipe" },
+  { label: "L'agence", href: "/a-propos" },
   { label: "Blog", href: "/blog" },
-  { label: "Avis", href: "/avis" },
   { label: "Contact", href: "/contact" },
 ];
 ---
 
 <header id="header" class={`header${solid ? " header--solid" : ""}`}>
-  <div class="wrap">
-    <div class="nav">
-      <a href="/" class="brand" aria-label="Avenir Immobilier — accueil">
-        <img class="brand-logo" src="/assets/logo-lavenir-immobilier.png" alt="Avenir Immobilier" />
-      </a>
-
-      <nav class="nav-links" aria-label="Navigation principale">
-        {nav.map((n) => <a href={n.href} class={active === n.href ? "on" : undefined}>{n.label}</a>)}
-      </nav>
-
-      <div class="nav-cta">
-        <a class="nav-phone" href="tel:+3271321470">+32 71 32 14 70</a>
-        <a class="btn" href="/estimation">Estimer mon bien <span class="arr">→</span></a>
-        <button
-          id="burger"
-          class="burger"
-          type="button"
-          aria-label="Ouvrir le menu"
-          aria-controls="drawer"
-          aria-expanded="false"
-        >
-          <span></span><span></span><span></span>
-        </button>
-      </div>
+  <div class="wrap nav">
+    <a href="/" class="brand" aria-label="Avenir Immobilier, accueil">
+      <img src="/assets/logo-lavenir-immobilier.png" alt="L'aVenir immobilier" class="brand-logo brand-logo--ink" />
+      <img src="/assets/logo-lavenir-immobilier-blanc.png" alt="" aria-hidden="true" class="brand-logo brand-logo--rev" />
+    </a>
+    <nav class="nav-links" aria-label="Navigation principale">
+      {nav.map((n) => <a href={n.href} class={active === n.href ? "on" : undefined}>{n.label}</a>)}
+    </nav>
+    <div class="nav-cta">
+      <a class="nav-phone" href="tel:+3271321470"><span class="u-dot"></span>+32 71 32 14 70</a>
+      <a href="/estimation" class="btn">Estimer mon bien <span class="arr">→</span></a>
+      <button
+        id="burger"
+        class="burger"
+        type="button"
+        aria-label="Ouvrir le menu"
+        aria-controls="drawer"
+        aria-expanded="false"
+      >
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </div>
 </header>
 
-<aside id="drawer" class="drawer" aria-hidden="true" aria-label="Menu de navigation">
-  <div class="wrap">
-    <div class="drawer-top">
-      <a href="/" class="brand" aria-label="Avenir Immobilier — accueil">
-        <img class="brand-logo" src="/assets/logo-lavenir-immobilier.png" alt="Avenir Immobilier" />
-      </a>
-      <button id="drawerClose" class="drawer-close" type="button" aria-label="Fermer le menu">×</button>
-    </div>
-    <nav aria-label="Navigation mobile">
-      {nav.map((n) => <a href={n.href}>{n.label}</a>)}
-    </nav>
-    <a class="btn btn--block" href="/estimation">Estimer mon bien <span class="arr">→</span></a>
+<div class="drawer" id="drawer" aria-hidden="true" style="transform:translateX(100%);visibility:hidden">
+  <div class="drawer-top">
+    <img src="/assets/logo-lavenir-immobilier.png" alt="L'aVenir immobilier" class="brand-logo" />
+    <button id="drawerClose" class="drawer-close" type="button" aria-label="Fermer">×</button>
   </div>
-</aside>
+  <nav aria-label="Navigation mobile">
+    {nav.map((n) => <a href={n.href}>{n.label}</a>)}
+  </nav>
+  <a href="/estimation" class="btn btn--block">Estimer mon bien <span class="arr">→</span></a>
+</div>
+
+<style>
+  /* Point vert du téléphone : la référence le pose en style inline
+     (background:var(--green)) — défaut de maquette recopié ici en scoped,
+     valeur inchangée. À reprendre dans le DS (.nav-phone .u-dot). */
+  .nav-phone .u-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+    display: inline-block;
+  }
+</style>

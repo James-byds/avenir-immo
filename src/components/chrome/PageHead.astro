@@ -2,36 +2,44 @@
 /**
  * PageHead — en-tête de page intérieure (chrome).
  *
- * Variantes de fond : sans = clair · "tint" = vert tendre · "band"/"ink" = aplat
- * sombre (breadcrumb et eyebrow s'inversent automatiquement via site.css).
- * Compose Breadcrumb + Eyebrow du DS.
+ * Quatre variantes de fond (cf. handoff-rythme-visuel.md) :
+ *   plain — clair (défaut) · band — bandeau encre + emplacement photo 48 %
+ *   à droite · ink — bandeau encre sans photo (fiche bien : la galerie occupe
+ *   le cadre) · tint — vert tendre, pour les en-têtes riches (blog, localités,
+ *   légales) que l'encre rendrait illisibles.
+ *
+ * Slots :
+ *   breadcrumb — fil d'Ariane ; défaut — section-head (eyebrow + h1 + p),
+ *   galerie, filtres… ; aside — action alignée à droite du fil d'Ariane
+ *   (ex. « Vous cherchez à louer ? » sur les localités, via .bc-row).
+ *
+ * L'emplacement photo de --band est un placeholder .ph : remplacer par un
+ * <img> au même endroit quand les visuels de l'agence arriveront.
  */
-import Breadcrumb from "../core/Breadcrumb.astro";
-import Eyebrow from "../core/Eyebrow.astro";
-
-interface Crumb {
-  label: string;
-  href?: string;
-}
 interface Props {
-  title: string;
-  eyebrow?: string;
-  lede?: string;
-  breadcrumb?: Crumb[];
-  /** Fond : défaut clair, "tint" vert tendre, "band"/"ink" sombre */
-  variant?: "tint" | "band" | "ink";
+  variant?: "plain" | "band" | "ink" | "tint";
+  /** Libellé du placeholder photo de la variante band. */
+  photoTag?: string;
 }
-const { title, eyebrow, lede, breadcrumb = [], variant } = Astro.props;
-const cls = `page-head${variant ? ` page-head--${variant}` : ""}`;
+const { variant = "plain", photoTag = "Photo d'en-tête — 1600 × 600" } = Astro.props;
+const cls = `page-head${variant === "plain" ? "" : ` page-head--${variant}`}`;
+const hasAside = Astro.slots.has("aside");
+const hasBreadcrumb = Astro.slots.has("breadcrumb");
 ---
 
-<div class={cls}>
+<section class={cls}>
+  {variant === "band" && (
+    <div class="ph pb-photo" aria-hidden="true"><span class="ph-tag">{photoTag}</span></div>
+  )}
   <div class="wrap">
-    {breadcrumb.length > 0 && <Breadcrumb items={breadcrumb} />}
-    <div class="section-head">
-      {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
-      <h1>{title}</h1>
-      {lede && <p>{lede}</p>}
-    </div>
+    {hasAside ? (
+      <div class="bc-row">
+        <slot name="breadcrumb" />
+        <slot name="aside" />
+      </div>
+    ) : (
+      hasBreadcrumb && <slot name="breadcrumb" />
+    )}
+    <slot />
   </div>
-</div>
+</section>

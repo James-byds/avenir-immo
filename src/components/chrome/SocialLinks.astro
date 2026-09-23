@@ -1,0 +1,47 @@
+---
+/**
+ * SocialLinks — les quatre réseaux de l'agence, SVG inline de la référence.
+ * Employé deux fois : `.u-social` (TopBar) et `.f-social` (SiteFooter) —
+ * mêmes tracés, seule la classe du conteneur change.
+ */
+interface Props {
+  /** Classe du conteneur : "u-social" (barre utilitaire) ou "f-social" (footer). */
+  class: string;
+}
+const { class: cls } = Astro.props;
+
+const socials = [
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/avenir.immobilier",
+    d: "M13.5 9h2.2V6.2h-2.2c-2 0-3.6 1.6-3.6 3.6V11H8v2.8h1.9V22h2.8v-8.2h2.2l.4-2.8h-2.6V9.8c0-.45.35-.8.8-.8z",
+  },
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/avenir.immobilier",
+    d: "M8.2 3h7.6A5.2 5.2 0 0 1 21 8.2v7.6A5.2 5.2 0 0 1 15.8 21H8.2A5.2 5.2 0 0 1 3 15.8V8.2A5.2 5.2 0 0 1 8.2 3zm0 1.9A3.3 3.3 0 0 0 4.9 8.2v7.6a3.3 3.3 0 0 0 3.3 3.3h7.6a3.3 3.3 0 0 0 3.3-3.3V8.2a3.3 3.3 0 0 0-3.3-3.3H8.2zM12 7.4a4.6 4.6 0 1 1 0 9.2 4.6 4.6 0 0 1 0-9.2zm0 1.9a2.7 2.7 0 1 0 0 5.4 2.7 2.7 0 0 0 0-5.4zm5.1-2.4a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2z",
+  },
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/company/avenir-immobilier",
+    d: "M4.6 3a1.9 1.9 0 1 1 0 3.8 1.9 1.9 0 0 1 0-3.8zM3.1 8.4h3v12.5h-3V8.4zm5.2 0h2.9v1.7c.6-1.1 1.9-1.9 3.6-1.9 2.6 0 4.2 1.7 4.2 4.8v7.9h-3v-7.3c0-1.7-.7-2.6-2.1-2.6-1.3 0-2.2.9-2.2 2.6v7.3h-3V8.4z",
+  },
+  {
+    label: "TikTok",
+    href: "https://www.tiktok.com/@avenir.immobilier",
+    d: "M13.9 3h2.7c.2 1.9 1.3 3.4 3.4 3.7v2.7c-1.3 0-2.5-.4-3.5-1.1v5.9a5.9 5.9 0 1 1-5.9-5.9c.3 0 .6 0 .9.1v2.8a3.1 3.1 0 1 0 2.2 3V3z",
+  },
+];
+---
+
+<div class={cls} aria-label="Réseaux sociaux">
+  {
+    socials.map((s) => (
+      <a href={s.href} target="_blank" rel="noopener" aria-label={s.label} title={s.label}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d={s.d} />
+        </svg>
+      </a>
+    ))
+  }
+</div>

@@ -1,87 +1,129 @@
 ---
 /**
  * SiteFooter — pied de page (chrome). Fond sombre (.footer = --ink-bg).
- * Logo blanc sur fond sombre ; zones = maillage interne (ancres descriptives).
- * Contenu provisoire — le projet maquette ajustera copie et liens.
+ * Balisage et copie = référence index.html (finale). Filigrane .f-mark en
+ * signe V BLANC pleine résolution (jamais la version couleur sur fond sombre).
+ *
+ * Colonne « Quartiers » : combinaisons réelles calculées depuis la collection
+ * biens via lib/maillage.ts — ancres descriptives, jamais de lien vers une
+ * combinaison vide. Tant que la collection est vide, seule « Toutes nos
+ * communes » est émise.
  */
-import LocalityLinks from "../core/LocalityLinks.astro";
+import { getCollection } from "astro:content";
+import { combinaisons } from "../../lib/maillage";
+import SocialLinks from "./SocialLinks.astro";
 
-const year = 2026; // provisoire
+const biens = await getCollection("biens", ({ data }) => data.publie !== false);
+const quartiers = combinaisons(
+  biens.map(({ data }) => ({ type: data.type, transaction: data.transaction, commune: data.commune })),
+).slice(0, 5);
+
+const year = new Date().getFullYear();
+
+/* Zones d'intervention — liste finale de la référence (pastilles vers la liste). */
 const zones = [
-  { text: "Maisons à vendre à Gerpinnes", href: "/maison-a-vendre-gerpinnes" },
-  { text: "Maisons à vendre à Loverval", href: "/maison-a-vendre-loverval" },
-  { text: "Appartements à louer à Charleroi", href: "/appartement-a-louer-charleroi" },
-  { text: "Maisons à vendre à Mont-sur-Marchienne", href: "/maison-a-vendre-mont-sur-marchienne" },
+  "Ath", "Binche", "Charleroi", "Ciney", "Dinant", "Dour", "Florennes",
+  "Gembloux", "La Louvière", "Manage", "Mons", "Namur", "Nivelles",
+  "Péruwelz", "Philippeville", "Sambreville", "Seneffe", "Thuin",
+  "Tournai", "Walcourt", "Waterloo", "Wavre",
 ];
 ---
 
 <footer class="footer">
+  <img class="f-mark" src="/assets/signe-v-blanc.png" alt="" aria-hidden="true" />
   <div class="wrap">
     <div class="footer-top">
-      <div>
-        <a href="/" class="brand" aria-label="Avenir Immobilier — accueil">
-          <img class="brand-logo" src="/assets/logo-lavenir-immobilier-blanc.png" alt="Avenir Immobilier" />
+      <div class="f-brand">
+        <a href="/" class="brand" aria-label="Avenir Immobilier, accueil">
+          <img src="/assets/logo-lavenir-immobilier-blanc.png" alt="L'aVenir immobilier" class="brand-logo" />
         </a>
         <p class="f-about">
-          Agence immobilière de prestige à Charleroi. Vente, location et estimation
-          de biens d'exception dans le Grand Charleroi.
+          Agence immobilière de prestige à Charleroi. Vente, achat, estimation
+          et gestion de biens d'exception depuis 1992.
         </p>
-        <div class="f-contact">
-          <a href="tel:+3271321470">+32 71 32 14 70</a>
-          <a href="mailto:bonjour@avenir-immobilier.be">bonjour@avenir-immobilier.be</a>
-          <span>Rue Saint-Gilles 118 · 6000 Charleroi</span>
-        </div>
-        <div class="f-social">
-          <a href="#" aria-label="Facebook"><span class="fs-ico fs-facebook"></span></a>
-          <a href="#" aria-label="Instagram"><span class="fs-ico fs-instagram"></span></a>
-          <a href="#" aria-label="LinkedIn"><span class="fs-ico fs-linkedin"></span></a>
-        </div>
+        <SocialLinks class="f-social" />
       </div>
 
       <div>
-        <h4>Explorer</h4>
+        <h4>Agence</h4>
         <ul>
           <li><a href="/biens">Nos biens</a></li>
-          <li><a href="/estimation">Estimation gratuite</a></li>
-          <li><a href="/equipe">L'équipe</a></li>
-          <li><a href="/blog">Blog</a></li>
+          <li><a href="/equipe">Notre équipe</a></li>
+          <li><a href="/blog">Blog &amp; actualités</a></li>
           <li><a href="/avis">Avis clients</a></li>
+          <li><a href="/estimation">Estimation gratuite</a></li>
         </ul>
       </div>
 
       <div>
-        <h4>Informations</h4>
+        <h4>Quartiers</h4>
         <ul>
-          <li><a href="/contact">Contact</a></li>
-          <li><a href="/legal/mentions">Mentions légales</a></li>
-          <li><a href="/legal/confidentialite">Confidentialité</a></li>
-          <li><a href="/legal/cookies">Cookies</a></li>
-          <li><a href="/legal/honoraires">Honoraires & barème</a></li>
+          {quartiers.map((q) => (
+            <li><a href={`/${q.slug}`}>{q.ancre}</a></li>
+          ))}
+          <li><a href="/communes">Toutes nos communes</a></li>
         </ul>
       </div>
 
-      <div class="footer-news">
-        <h4>Nouveautés</h4>
-        <p class="f-about">Les nouveaux biens et nos analyses de marché, une fois par mois.</p>
-        <form onsubmit="return false">
-          <input type="email" placeholder="Votre e-mail" aria-label="Votre adresse e-mail" />
-          <button type="submit" aria-label="S'inscrire">→</button>
-        </form>
+      <div>
+        <h4>Notre siège social</h4>
+        <ul class="f-hq">
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 3.5h3l1.4 3.5-1.9 1.4a12 12 0 0 0 5.9 5.9l1.4-1.9 3.5 1.4v3c0 1-.8 1.8-1.8 1.7C10.6 18.1 5.9 13.4 4.5 5.3c-.1-1 .7-1.8 1.7-1.8z"/></svg>
+            <a href="tel:+3271221141">071 22 11 41</a>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.8 7 8.2 5.8L20.2 7"/></svg>
+            <a href="mailto:info@avenir-immobilier.be">info@avenir-immobilier.be</a>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+            <span>Place Roger Desaise 5<br />6032 Mont-sur-Marchienne</span>
+          </li>
+        </ul>
+        <a class="f-hq-link" href="/contact">Votre accès <span class="arr">→</span></a>
       </div>
     </div>
 
-    <div class="footer-zones">
-      <h4>Zones d'intervention</h4>
-      <LocalityLinks variant="widen" label="Autour de Charleroi" links={zones} />
+    <div class="f-zones">
+      <h4 class="eyebrow">Nos zones d'intervention</h4>
+      <ul class="f-zones-list">
+        {zones.map((z) => (
+          <li><a href="/biens">{z}</a></li>
+        ))}
+        <li><a href="/biens" title="Toutes nos zones d'intervention">…</a></li>
+      </ul>
     </div>
 
     <div class="footer-bottom">
-      <span>© {year} Avenir Immobilier · IPI 509 217</span>
+      <span>
+        © {year} Avenir Immobilier · <strong>IPI</strong> Agent immobilier agréé n° 509 217 — Belgique ·
+        TVA BE 0712.xxx.xxx ·
+        <a
+          class="fb-google"
+          href="https://www.google.com/maps/search/Avenir+Immobilier+Charleroi"
+          target="_blank"
+          rel="noopener"
+        ><span class="fb-star">★</span> 4,8/5 · 190 avis Google ↗</a>
+      </span>
       <div class="fb-links">
-        <a href="/legal/mentions">Mentions</a>
+        <a href="/legal/mentions">Mentions légales</a>
         <a href="/legal/confidentialite">Confidentialité</a>
         <a href="/legal/cookies">Cookies</a>
+        <a href="/legal/honoraires">Honoraires</a>
       </div>
     </div>
   </div>
 </footer>
+
+<style>
+  /* Lien avis Google : la référence pose color:inherit et l'étoile ambre
+     #E9A93B en styles inline — recopiés ici en scoped, valeurs inchangées.
+     À reprendre dans le DS (l'ambre des étoiles n'est pas tokenisé). */
+  .fb-google {
+    color: inherit;
+  }
+  .fb-star {
+    color: #e9a93b;
+  }
+</style>
