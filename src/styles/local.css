@@ -1056,6 +1056,27 @@ body:has(.finalcta--straddle) .footer { padding-top: calc(clamp(34px, 4vw, 52px)
 }
 .search-hint button:hover { color: var(--green-d); }
 
+/* ============================================================
+   À REPRENDRE DANS LE DS — gabarit accueil (23 sept. 2026)
+   ------------------------------------------------------------
+   · .team-track … .ph img  photos réelles des conseillers dans le carousel
+     équipe (la maquette n'avait que des .ph vides ; mêmes valeurs que
+     .member--contact .m-photo img plus haut) ;
+   · .prop-grid .card--overlay .ph  le port Astro de PropertyCard fige
+     l'aspect-ratio du placeholder en STYLE INLINE (4/4.4) : la vedette
+     large de l'accueil doit reprendre le sien — !important en attendant
+     un prop de ratio contextuel sur PropertyCard (valeurs déjà posées
+     plus haut dans « grille organique », reprises ici telles quelles) ;
+   · .process--light .sell-src  ligne de source datée sur l'aplat vert
+     profond de la méthode (--ink-mute y est illisible ; même alpha .55
+     que la ligne « diffusés sur » de la section estimation).
+   ============================================================ */
+.team-track .member-photo .ph img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+.prop-grid .card--overlay .ph { aspect-ratio: 16 / 7.4 !important; }
+@media (max-width: 980px){ .prop-grid .card--overlay .ph { aspect-ratio: 16 / 9 !important; } }
+@media (max-width: 600px){ .prop-grid .card--overlay .ph { aspect-ratio: 4 / 3.6 !important; } }
+.process--light .sell-src { color: rgba(255,255,255,.55); }
+
 /* Squelette de chargement */
 .sk-card { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: #fff; }
 .sk-media { aspect-ratio: 4 / 3.1; }

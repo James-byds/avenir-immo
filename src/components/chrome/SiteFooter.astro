@@ -5,18 +5,35 @@
  * signe V BLANC pleine résolution (jamais la version couleur sur fond sombre).
  *
  * Colonne « Quartiers » : combinaisons réelles calculées depuis la collection
- * biens via lib/maillage.ts — ancres descriptives, jamais de lien vers une
- * combinaison vide. Tant que la collection est vide, seule « Toutes nos
- * communes » est émise.
+ * biens via lib/maillage.ts, restreintes aux combinaisons DÉCLARÉES dans
+ * communes.combinaisons — seules celles-là ont une page générée par
+ * [type]-a-[transaction]-[commune].astro. Ancres descriptives, jamais de
+ * lien vers une page absente.
  */
 import { getCollection } from "astro:content";
-import { combinaisons } from "../../lib/maillage";
+import {
+  combinaisons,
+  slugCombinaison,
+  slugCommune,
+  type Transaction,
+  type TypeBien,
+} from "../../lib/maillage";
 import SocialLinks from "./SocialLinks.astro";
 
 const biens = await getCollection("biens", ({ data }) => data.publie !== false);
+const communes = await getCollection("communes");
+const generees = new Set(
+  communes.flatMap((c) =>
+    (c.data.combinaisons as { type: TypeBien; transaction: Transaction }[]).map(
+      ({ type, transaction }) => slugCombinaison(type, transaction, slugCommune(c.data.nom)),
+    ),
+  ),
+);
 const quartiers = combinaisons(
   biens.map(({ data }) => ({ type: data.type, transaction: data.transaction, commune: data.commune })),
-).slice(0, 5);
+)
+  .filter((q) => generees.has(q.slug))
+  .slice(0, 5);
 
 const year = new Date().getFullYear();
 
@@ -61,7 +78,7 @@ const zones = [
           {quartiers.map((q) => (
             <li><a href={`/${q.slug}`}>{q.ancre}</a></li>
           ))}
-          <li><a href="/communes">Toutes nos communes</a></li>
+          <li><a href="/communes" data-planned>Toutes nos communes</a></li>{/* gabarit 04 */}
         </ul>
       </div>
 

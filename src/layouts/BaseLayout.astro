@@ -17,8 +17,11 @@ interface Props {
   canonical?: string;
   /** Classe de fond du <body> si la page commence par une section teintée */
   bodyClass?: string;
+  /** Passer à false quand la page émet son propre RealEstateAgent complet
+      (slot head) — sinon deux blocs JSON-LD RealEstateAgent coexistent. */
+  organizationLd?: boolean;
 }
-const { title, description, canonical, bodyClass = '' } = Astro.props;
+const { title, description, canonical, bodyClass = '', organizationLd = true } = Astro.props;
 const canonicalURL = canonical ?? new URL(Astro.url.pathname, Astro.site).href;
 ---
 
@@ -50,7 +53,9 @@ const canonicalURL = canonical ?? new URL(Astro.url.pathname, Astro.site).href;
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="fr_BE" />
 
-    <script is:inline type="application/ld+json" set:html={jsonLd(organization())} />
+    {organizationLd && (
+      <script is:inline type="application/ld+json" set:html={jsonLd(organization())} />
+    )}
 
     <slot name="head" />
   </head>

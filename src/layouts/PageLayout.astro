@@ -7,7 +7,11 @@
 
    `solid` (défaut true) = header verre blanc ; le passer à false sur les
    pages à héros pleine hauteur (accueil) pour le header transparent.
-   `active` = href de l'onglet de navigation à souligner. */
+   `active` = href de l'onglet de navigation à souligner.
+
+   Le slot nommé `head` est relayé à BaseLayout (JSON-LD de page, balises
+   spécifiques). Une page qui émet son propre RealEstateAgent complet passe
+   `organizationLd={false}` pour couper le bloc minimal du BaseLayout. */
 import BaseLayout from "./BaseLayout.astro";
 import TopBar from "../components/chrome/TopBar.astro";
 import SiteHeader from "../components/chrome/SiteHeader.astro";
@@ -22,6 +26,8 @@ interface Props {
   solid?: boolean;
   /** href de la page courante — souligne l'onglet actif du header. */
   active?: string;
+  /** false quand la page émet son propre RealEstateAgent (slot head). */
+  organizationLd?: boolean;
 }
 
 const {
@@ -31,10 +37,18 @@ const {
   bodyClass,
   solid = true,
   active,
+  organizationLd = true,
 } = Astro.props;
 ---
 
-<BaseLayout title={title} description={description} canonical={canonical} bodyClass={bodyClass}>
+<BaseLayout
+  title={title}
+  description={description}
+  canonical={canonical}
+  bodyClass={bodyClass}
+  organizationLd={organizationLd}
+>
+  <Fragment slot="head"><slot name="head" /></Fragment>
   <Fragment slot="header">
     <TopBar />
     <SiteHeader solid={solid} active={active} />

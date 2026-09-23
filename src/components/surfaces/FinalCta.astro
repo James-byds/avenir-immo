@@ -1,0 +1,69 @@
+---
+/**
+ * FinalCta — section CTA de fin de page (« Et si on commençait par un café ? »).
+ *
+ * Variantes CONTEXTUELLES (classes de local.css / site.css, aucune couleur ici) :
+ *   plain    — .finalcta seul : texte centré du DS ;
+ *   photo    — .finalcta--photo : panneau .fc-panel vert clair (texte encre,
+ *              le vert clair ne porte jamais de blanc) + portrait .fc-photo
+ *              débordant ; chevauche le pied de page — le footer réserve la
+ *              hauteur via body:has(.finalcta--photo) (local.css) ;
+ *   straddle — .finalcta--straddle : même panneau, à cheval sur la bande
+ *              sombre précédente (hub équipe).
+ *
+ * tone :
+ *   tint — pose .sec--tint sur la section (CTA plain sur fond vert tendre,
+ *          cas de la liste des biens — remplace le style inline de la maquette) ;
+ *   deep — réservé : pose .finalcta--deep, pas encore stylé dans le DS.
+ *
+ * Le contenu (eyebrow, h2, p, .fc-actions) passe par le slot — la copie
+ * appartient à la page, le composant ne porte que la structure.
+ */
+interface Props {
+  id?: string;
+  variant?: "plain" | "photo" | "straddle";
+  tone?: "tint" | "deep";
+  /** Portrait détouré du panneau (variants photo/straddle) — image cliente. */
+  photo?: { src: string; alt: string; width?: number; height?: number };
+}
+const { id, variant = "plain", tone, photo } = Astro.props;
+
+const cls = [
+  "finalcta",
+  variant === "photo" && "finalcta--photo",
+  variant === "straddle" && "finalcta--straddle",
+  tone === "tint" && "sec--tint",
+  tone === "deep" && "finalcta--deep",
+]
+  .filter(Boolean)
+  .join(" ");
+
+const panelled = variant === "photo" || variant === "straddle";
+---
+
+<section class={cls} id={id}>
+  <div class="wrap">
+    {
+      panelled ? (
+        <div class="fc-panel">
+          <div class="fc-copy">
+            <slot />
+          </div>
+          {photo && (
+            <figure class="fc-photo reveal d1">
+              <img
+                src={photo.src}
+                alt={photo.alt}
+                width={photo.width}
+                height={photo.height}
+                loading="lazy"
+              />
+            </figure>
+          )}
+        </div>
+      ) : (
+        <slot />
+      )
+    }
+  </div>
+</section>
