@@ -1,4 +1,163 @@
 ---
-// Stub — composant «TrustSection». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * TrustSection — port .astro de components/surfaces/TrustSection.jsx
+ *
+ * "full" = section pleine (accueil) · "band" = bandeau compact (fiche bien).
+ * Port STATIQUE : la lightbox des photos d'avis (état React) est omise — les
+ * avis restent affichés, sans galerie plein écran. Note et barres en jaune sur
+ * aplat vert profond.
+ */
+import Eyebrow from "../core/Eyebrow.astro";
+import Button from "../actions/Button.astro";
+
+interface Review {
+  quote: string;
+  name: string;
+  place: string;
+  context?: string;
+  source?: string;
+  stars?: number;
+  photo?: string;
+}
+interface Figure {
+  v: string;
+  k: string;
+}
+interface Distribution {
+  stars: number;
+  count: number;
+}
+interface Props {
+  variant?: "full" | "band";
+  eyebrow?: string;
+  title?: string;
+  intro?: string;
+  rating?: string;
+  count?: number;
+  source?: string;
+  distribution?: Distribution[];
+  ctaHref?: string;
+  writeHref?: string;
+  reviews?: Review[];
+  figures?: Figure[];
+  showFigures?: boolean;
+}
+
+const DEF_REVIEWS: Review[] = [
+  { quote: "Vente conclue en trois semaines, au prix. Julien a été d'une transparence rare, du premier appel à l'acte.", name: "Martine D.", place: "Gerpinnes", stars: 5 },
+  { quote: "Estimation précise, photos superbes, et un vrai suivi après chaque visite. On a signé sereinement.", name: "Olivier & Sarah V.", place: "Mont-sur-Marchienne", stars: 5 },
+  { quote: "Premier achat, mille questions — toujours une réponse claire dans la journée. Je recommande sans hésiter.", name: "Karim B.", place: "Charleroi", stars: 5 },
+];
+const DEF_FIGURES: Figure[] = [
+  { v: "240+", k: "biens vendus" },
+  { v: "18 ans", k: "d'expérience locale" },
+  { v: "21 j", k: "délai moyen de vente" },
+];
+
+const {
+  variant = "full",
+  eyebrow = "Ils nous font confiance",
+  title,
+  intro,
+  rating = "4,9",
+  count = 127,
+  source = "Avis Google",
+  distribution,
+  ctaHref = "#",
+  writeHref,
+  reviews = DEF_REVIEWS,
+  figures = DEF_FIGURES,
+  showFigures = true,
+} = Astro.props;
+
+const stars = (n = 5) => "★★★★★".slice(0, n);
+const initials = (name: string) =>
+  name.split(" ").filter((w) => /^\p{L}/u.test(w)).map((w) => w[0]).join("").slice(0, 2);
+const max = distribution ? Math.max(...distribution.map((d) => d.count), 1) : 1;
 ---
+
+{
+  variant === "band" ? (
+    <div class="trust--band">
+      <div class="trust-rating">
+        <span class="t-score">{rating}<span style="font-size:60%;color:var(--ink-mute)">/5</span></span>
+        <span style="display:flex;flex-direction:column;gap:5px">
+          <span class="t-stars" aria-label="5 étoiles sur 5">{stars(5)}</span>
+          <span class="t-src">{source} · {count} avis</span>
+        </span>
+      </div>
+      <p class="t-quote">{(reviews[0] || DEF_REVIEWS[0]).quote}</p>
+      <span class="t-avas">
+        {reviews.slice(0, 3).map((r) =>
+          r.photo ? <img class="t-ava" src={r.photo} alt="" /> : <span class="t-ava" aria-hidden="true">{initials(r.name)}</span>
+        )}
+        <span class="t-count">{count} avis vérifiés</span>
+      </span>
+    </div>
+  ) : (
+    <section class="trust">
+      <div class="trust-head">
+        <div style="flex:1 1 420px">
+          <Eyebrow>{eyebrow}</Eyebrow>
+          {title ? (
+            <h2 style="max-width:24ch">{title}</h2>
+          ) : (
+            <h2 style="max-width:24ch">{count} familles accompagnées, notées <em class="t-hl">{rating}/5</em></h2>
+          )}
+          {intro && <p class="trust-intro">{intro}</p>}
+        </div>
+      </div>
+      <div class="trust-sum">
+        <div class="ts-score">
+          <div class="v">{rating}</div>
+          <span class="t-stars">{stars(5)}</span>
+          <span class="t-src">{source} · {count} avis</span>
+        </div>
+        {distribution && (
+          <div class="ts-bars">
+            {distribution.map((d) => (
+              <div class="ts-bar">
+                <span>{d.stars} ★</span>
+                <span class="ts-track"><span class="ts-fill" style={`width:${Math.max(2, Math.round((d.count / max) * 100))}%`} /></span>
+                <span class="n">{d.count}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <div class="ts-cta">
+          <Button href={ctaHref}>Lire les {count} avis</Button>
+          {writeHref && <a class="t-write" href={writeHref}>Laisser un avis</a>}
+        </div>
+      </div>
+      <div class="trust-grid">
+        {reviews.map((r) => (
+          <article class="t-card">
+            <div class="t-headrow">
+              <span class="t-cstars" aria-label={`${r.stars ?? 5} étoiles sur 5`}>{stars(r.stars ?? 5)}</span>
+              <span class="t-gtag">{r.source ?? "Google"}</span>
+            </div>
+            <p class="t-quote">{r.quote}</p>
+            <div class="t-meta">
+              {r.photo ? <img class="t-ava" src={r.photo} alt="" /> : <span class="t-ava" aria-hidden="true">{initials(r.name)}</span>}
+              <span>
+                <span class="t-name">{r.name}</span>
+                <br />
+                <span class="t-place">{r.context ? r.context + " · " : ""}{r.place}</span>
+              </span>
+            </div>
+          </article>
+        ))}
+      </div>
+      {showFigures && figures.length > 0 && (
+        <div class="trust-figs">
+          {figures.map((f) => (
+            <div class="t-fig">
+              <div class="fv">{f.v}</div>
+              <div class="fk">{f.k}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}

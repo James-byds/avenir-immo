@@ -1,4 +1,115 @@
 ---
-// Stub — composant «AgencyCard». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * AgencyCard — port .astro de components/surfaces/AgencyCard.jsx
+ *
+ * Une seule agence : `media="photo"` (vitrine) ou `media="map"` (plan + pastille).
+ * `zones` = pilules vers les pages de localité (maillage interne).
+ */
+interface Row {
+  label: string;
+  value: string;
+}
+import MapLeaflet from "../islands/MapLeaflet";
+
+type Zone = string | { label: string; href?: string };
+interface Props {
+  media?: "photo" | "map";
+  mediaLabel?: string;
+  photo?: string;
+  /** Coordonnées GPS — activent la carte Leaflet (îlot) quand media="map" */
+  lat?: number;
+  lng?: number;
+  zoom?: number;
+  tag?: string;
+  name?: string;
+  address?: string;
+  note?: string;
+  open?: string;
+  rows?: Row[];
+  phone?: string;
+  directionsHref?: string;
+  directionsLabel?: string;
+  zones?: Zone[];
+  zonesLabel?: string;
+  class?: string;
+}
+const {
+  media = "photo",
+  mediaLabel,
+  photo,
+  lat,
+  lng,
+  zoom = 15,
+  tag = "Agence",
+  name,
+  address,
+  note,
+  open,
+  rows = [],
+  phone,
+  directionsHref = "#",
+  directionsLabel = "Itinéraire",
+  zones = [],
+  zonesLabel = "Zones d'intervention",
+  class: className = "",
+} = Astro.props;
+const label = mediaLabel || (media === "map" ? "Plan — " + (name || "") : "Vitrine — " + (name || ""));
 ---
+
+<article class={`agc ${className}`.trim()}>
+  <div class="agc-media">
+    {
+      photo ? (
+        <img src={photo} alt={label} style="display:block;width:100%;aspect-ratio:16 / 8.2;object-fit:cover" />
+      ) : media === "map" && lat != null && lng != null ? (
+        <MapLeaflet client:visible lat={lat} lng={lng} zoom={zoom} label={name} />
+      ) : (
+        <div class="ph"><span class="ph-tag">{label}</span></div>
+      )
+    }
+    {media === "map" && !photo && (lat == null || lng == null) && <span class="map-pin" />}
+  </div>
+  <div class="agc-body">
+    {open ? <span class="ag-open">{open}</span> : tag ? <span class="ag-tag">{tag}</span> : null}
+    {name && <div class="ag-name">{name}</div>}
+    {address && <p class="ag-addr">{address}{note ? " · " + note : ""}</p>}
+    {
+      rows.length > 0 && (
+        <dl class="ag-rows">
+          {rows.map((r) => (
+            <div class="ag-row">
+              <dt>{r.label}</dt>
+              <dd>{r.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )
+    }
+    {
+      (phone || directionsHref) && (
+        <div class="agc-act">
+          {phone && <a class="btn" href={`tel:${phone.replace(/[^+0-9]/g, "")}`}>{phone}</a>}
+          {directionsHref && (
+            <a class="btn btn--ghost" href={directionsHref}>{directionsLabel}<span class="arr">→</span></a>
+          )}
+        </div>
+      )
+    }
+    {
+      zones.length > 0 && (
+        <div class="ag-zones">
+          <span class="z-label">{zonesLabel}</span>
+          <ul>
+            {zones.map((z) => (
+              <li>
+                <a href={typeof z === "string" ? "#" : z.href || "#"}>
+                  {typeof z === "string" ? z : z.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+  </div>
+</article>

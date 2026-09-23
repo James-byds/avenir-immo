@@ -1,4 +1,106 @@
 ---
-// Stub — composant «SellHere». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * SellHere — port .astro de components/surfaces/SellHere.jsx
+ *
+ * Seconde intention de la page de localité : le PROPRIÉTAIRE.
+ * "band" = section vert tendre + carte de chiffres · "compact" = carte + pastilles.
+ * `source` datée obligatoire dès qu'un chiffre est affiché.
+ */
+interface Proof {
+  label: string;
+  value: string;
+}
+interface Props {
+  variant?: "band" | "compact";
+  eyebrow?: string;
+  title?: string;
+  lede?: string;
+  headline?: string;
+  headlineLabel?: string;
+  rows?: Proof[];
+  source?: string;
+  primaryLabel?: string;
+  primaryHref?: string;
+  secondaryLabel?: string;
+  secondaryHref?: string;
+  fineprint?: string;
+  class?: string;
+}
+const {
+  variant = "band",
+  eyebrow = "Vous vendez",
+  title,
+  lede,
+  headline,
+  headlineLabel,
+  rows = [],
+  source,
+  primaryLabel = "Estimer ma maison",
+  primaryHref = "#",
+  secondaryLabel = "Parler à un conseiller",
+  secondaryHref = "#",
+  fineprint,
+  class: className = "",
+} = Astro.props;
+const isCompact = variant === "compact";
 ---
+
+{
+  isCompact ? (
+    <section class={`sell-compact ${className}`.trim()}>
+      <div>
+        {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+        {title && <h2>{title}</h2>}
+        {lede && <p class="sell-lede">{lede}</p>}
+        {rows.length > 0 && (
+          <div class="sell-chips">
+            {rows.map((r) => (
+              <span class="sell-chip">
+                <b>{r.value}</b>
+                {r.label}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div class="sell-acts">
+        <a class="btn" href={primaryHref}>{primaryLabel}<span class="arr">→</span></a>
+        {secondaryLabel && <a class="btn btn--ghost" href={secondaryHref}>{secondaryLabel}</a>}
+        {fineprint && <span class="sell-fine">{fineprint}</span>}
+      </div>
+    </section>
+  ) : (
+    <section class={`section sell-band ${className}`.trim()}>
+      <div class="wrap">
+        <div class="sell-grid">
+          <div>
+            <div>
+              {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+              {title && <h2>{title}</h2>}
+              {lede && <p class="sell-lede">{lede}</p>}
+            </div>
+            <div class="sell-acts">
+              <a class="btn" href={primaryHref}>{primaryLabel}<span class="arr">→</span></a>
+              {secondaryLabel && <a class="btn btn--ghost" href={secondaryHref}>{secondaryLabel}</a>}
+            </div>
+          </div>
+          <div class="sell-card">
+            {headline && <div class="sell-big">{headline}</div>}
+            {headlineLabel && <div class="sell-big-k">{headlineLabel}</div>}
+            {rows.length > 0 && (
+              <div class="sell-rows">
+                {rows.map((r) => (
+                  <div class="rw">
+                    <span class="k">{r.label}</span>
+                    <span class="v">{r.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {source && <span class="sell-src">{source}</span>}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}

@@ -1,4 +1,43 @@
 ---
-// Stub — composant «AgentCard». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * AgentCard — port .astro de components/surfaces/AgentCard.jsx
+ *
+ * Conseiller associé à un bien (distinct des membres d'équipe et des auteurs).
+ * Le formulaire de contact (Input + Button) se passe en enfant, via <slot />.
+ * L'avatar est un placeholder rond (.agent-av .ph) jusqu'à la vraie photo.
+ */
+interface Props {
+  name: string;
+  /** ex. "Votre conseiller — sud de Charleroi" */
+  role: string;
+  /** ex. "+32 71 32 14 70" */
+  tel?: string;
+  /** Réassurances à coche verte */
+  points?: string[];
+}
+const { name, role, tel, points = [] } = Astro.props;
+const telHref = tel ? `tel:${tel.split(" ").join("")}` : undefined;
 ---
+
+<div class="agent-card">
+  <div class="agent-top">
+    <div class="agent-av"><div class="ph"></div></div>
+    <div>
+      <div class="agent-nm">{name}</div>
+      <div class="agent-role">{role}</div>
+      {tel && <a class="agent-tel" href={telHref}>{tel}</a>}
+    </div>
+  </div>
+  <slot />
+  {
+    points.length > 0 && (
+      <ul class="agent-points">
+        {points.map((p) => (
+          <li>
+            <span class="tick">✓</span> {p}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</div>

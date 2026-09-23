@@ -1,4 +1,30 @@
 ---
-// Stub — composant «AuthorBox». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * AuthorBox — port .astro de components/surfaces/AuthorBox.jsx
+ *
+ * Encadré « À propos de l'auteur » — en fin d'article, une seule fois.
+ */
+interface Props {
+  name: string;
+  role?: string;
+  bio?: string;
+  initials?: string;
+  href?: string;
+  linkLabel?: string;
+}
+const { name, role, bio, initials, href, linkLabel = "Tous ses articles" } = Astro.props;
+const av = initials || (name || "").split(" ").map((w) => w[0]).slice(0, 2).join("");
 ---
+
+<aside class="author-box">
+  <span class="b-av">{av}</span>
+  <div>
+    <div class="ab-tag">À propos de l'auteur</div>
+    <div class="ab-name">{href ? <a href={href}>{name}</a> : name}</div>
+    {role && <div class="ab-role">{role}</div>}
+    {bio && <p class="ab-bio">{bio}</p>}
+    {href && (
+      <a class="link-arrow" href={href}>{linkLabel}<span aria-hidden="true">→</span></a>
+    )}
+  </div>
+</aside>

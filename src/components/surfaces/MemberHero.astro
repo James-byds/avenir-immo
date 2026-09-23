@@ -1,4 +1,67 @@
 ---
-// Stub — composant «MemberHero». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * MemberHero — port .astro de components/surfaces/MemberHero.jsx
+ *
+ * En-tête de page membre (agent associé aux biens) — distinct des auteurs.
+ * Les actions (contact, estimation) se passent en enfant via <slot />.
+ */
+interface Stat {
+  value: string;
+  label: string;
+}
+interface Props {
+  name: string;
+  role?: string;
+  bio?: string;
+  meta?: string[];
+  points?: string[];
+  stats?: Stat[];
+}
+const { name, role, bio, meta = [], points = [], stats = [] } = Astro.props;
 ---
+
+<div class="member-hero">
+  <div class="mh-photo"><div class="ph"><span class="ph-tag">portrait</span></div></div>
+  <div>
+    <h1>{name}</h1>
+    {role && <div class="mh-role">{role}</div>}
+    {bio && <p class="mh-bio">{bio}</p>}
+    {
+      meta.length > 0 && (
+        <div class="mh-meta">
+          {meta.map((m, i) => (
+            <>
+              {i > 0 && <span class="dot">·</span>}
+              <span>{m}</span>
+            </>
+          ))}
+        </div>
+      )
+    }
+    {
+      points.length > 0 && (
+        <ul class="mh-points">
+          {points.map((p) => (
+            <li>
+              <span class="tick">✓</span>
+              {p}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+    {Astro.slots.has("default") && <div class="mh-actions"><slot /></div>}
+    {
+      stats.length > 0 && (
+        <div class="mh-stats">
+          {stats.map((s) => (
+            <div class="st">
+              <div class="sv">{s.value}</div>
+              <div class="sl">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</div>

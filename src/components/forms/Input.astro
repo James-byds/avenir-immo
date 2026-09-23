@@ -1,4 +1,18 @@
 ---
-// Stub — composant «Input». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * Input — port .astro de components/forms/Input.jsx
+ *
+ * Champ .field : label + input. Les attributs supplémentaires (type, name,
+ * placeholder, required, value…) sont transmis à l'<input>.
+ */
+interface Props {
+  label: string;
+  [key: string]: any;
+}
+const { label, ...rest } = Astro.props;
 ---
+
+<div class="field">
+  <label>{label}</label>
+  <input {...rest} />
+</div>

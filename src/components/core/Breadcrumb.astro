@@ -1,4 +1,27 @@
 ---
-// Stub — composant «Breadcrumb». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * Breadcrumb — port .astro de components/core/Breadcrumb.jsx
+ *
+ * Dernier item sans href = page courante. Le fil s'inverse automatiquement
+ * sur .page-head--band / .page-head--ink (règles de site.css).
+ */
+interface Item {
+  label: string;
+  href?: string;
+}
+interface Props {
+  items?: Item[];
+}
+const { items = [] } = Astro.props;
 ---
+
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+  {
+    items.map((it, i) => (
+      <>
+        {i > 0 && <span class="sep">/</span>}
+        {it.href ? <a href={it.href}>{it.label}</a> : <span class="cur">{it.label}</span>}
+      </>
+    ))
+  }
+</nav>

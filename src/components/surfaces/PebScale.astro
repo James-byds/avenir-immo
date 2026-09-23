@@ -1,4 +1,44 @@
 ---
-// Stub — composant «PebScale». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * PebScale — port .astro de components/surfaces/PebScale.jsx
+ *
+ * Échelle PEB wallonne A→G : barres colorées croissantes, classe du bien
+ * soulignée (outline encre via .peb-row.on) + pilule « B · 142 kWh/m²·an ».
+ * À coupler avec dl.legal-list (certificat, RC, électricité, urbanisme, inondation).
+ *
+ * Les couleurs sont le STANDARD RÉGLEMENTAIRE PEB (pas des tokens de marque) :
+ * conservées inline, à l'identique du composant du DS.
+ */
+interface Props {
+  grade?: "A" | "B" | "C" | "D" | "E" | "F" | "G";
+  /** ex. "142 kWh/m²·an" */
+  value?: string;
+}
+const { grade = "B", value } = Astro.props;
+
+const ROWS = [
+  { g: "A", w: "34%", bg: "#0E7C22" },
+  { g: "B", w: "45%", bg: "#58A618" },
+  { g: "C", w: "56%", bg: "#B8C41F", ink: "#3d4200" },
+  { g: "D", w: "67%", bg: "#F6C500", ink: "#4d3d00" },
+  { g: "E", w: "78%", bg: "#EF8D00" },
+  { g: "F", w: "89%", bg: "#E05206" },
+  { g: "G", w: "100%", bg: "#C81E1E" },
+] as const;
 ---
+
+<div class="peb-rows" aria-label={`Classement PEB, ce bien est classé ${grade}`}>
+  {
+    ROWS.map((r) => (
+      <div class={`peb-row${r.g === grade ? " on" : ""}`}>
+        <span
+          class="peb-bar"
+          style={`width:${r.w};background:${r.bg}${"ink" in r ? `;color:${r.ink}` : ""}`}
+        >
+          {r.g}
+        </span>
+        {r.g === grade && value && <span class="peb-tag">{grade} · {value}</span>}
+      </div>
+    ))
+  }
+</div>

@@ -1,4 +1,34 @@
 ---
-// Stub — composant «Select». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * Select — port .astro de components/forms/Select.jsx
+ *
+ * PORT ASTRO : <select> natif dans .field (déjà stylé par site.css :
+ * `.field input, .field select`). Le handoff impose le natif plutôt que l'île
+ * React DropdownMenu — accessible, indexable, zéro hydratation. `ds-script.js`
+ * peut l'enrichir sans qu'il en dépende.
+ */
+interface Props {
+  label: string;
+  options?: string[];
+  placeholder?: string;
+  /** Option pré-sélectionnée */
+  value?: string;
+  name?: string;
+  [key: string]: any;
+}
+const { label, options = [], placeholder = "Sélectionner…", value, name, ...rest } = Astro.props;
 ---
+
+<div class="field">
+  <label>{label}</label>
+  <select name={name} {...rest}>
+    <option value="" disabled selected={!value}>{placeholder}</option>
+    {
+      options.map((o) => (
+        <option value={o} selected={value === o}>
+          {o}
+        </option>
+      ))
+    }
+  </select>
+</div>

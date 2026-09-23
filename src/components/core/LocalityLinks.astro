@@ -1,4 +1,74 @@
 ---
-// Stub — composant «LocalityLinks». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * LocalityLinks — port .astro de components/core/LocalityLinks.jsx
+ *
+ * "widen" = bandeau « Élargir autour » sous les filtres (rendu null si vide).
+ * "mesh"  = bloc groupé par intention. Les ancres sont DESCRIPTIVES (SEO).
+ */
+interface Link {
+  text: string;
+  href?: string;
+  count?: number;
+  current?: boolean;
+}
+interface Group {
+  label: string;
+  links: Link[];
+}
+interface Props {
+  variant?: "widen" | "mesh";
+  label?: string;
+  links?: Link[];
+  eyebrow?: string;
+  title?: string;
+  groups?: Group[];
+  class?: string;
+}
+const {
+  variant = "mesh",
+  label = "Élargir autour",
+  links = [],
+  eyebrow = "Maillage",
+  title,
+  groups = [],
+  class: className = "",
+} = Astro.props;
 ---
+
+{
+  variant === "widen" ? (
+    links.length === 0 ? null : (
+      <div class={`ll-widen ${className}`.trim()}>
+        <span class="ll-lab">{label}</span>
+        <div class="ll-pills">
+          {links.map((l) => (
+            <a href={l.href || "#"} class={l.current ? "on" : undefined} aria-current={l.current ? "page" : undefined}>
+              {l.text}
+              {l.count != null && <span class="ll-n">{l.count}</span>}
+            </a>
+          ))}
+        </div>
+      </div>
+    )
+  ) : (
+    <section class={`ll-mesh ${className}`.trim()}>
+      {eyebrow && <span class="ll-lab">{eyebrow}</span>}
+      {title && <h2>{title}</h2>}
+      <div class="ll-rows">
+        {groups.map((g) => (
+          <div class="ll-row">
+            <span class="ll-lab">{g.label}</span>
+            <div class="ll-pills">
+              {g.links.map((l) => (
+                <a href={l.href || "#"} class={l.current ? "on" : undefined} aria-current={l.current ? "page" : undefined}>
+                  {l.text}
+                  {l.count != null && <span class="ll-n">{l.count}</span>}
+                </a>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}

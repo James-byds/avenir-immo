@@ -1,4 +1,35 @@
 ---
-// Stub — composant «Seg». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * Seg — port .astro de components/forms/Seg.jsx
+ *
+ * Filtres segmentés (pilule) avec compteurs. Le port statique fixe l'option
+ * active via `value` (défaut : la première). L'interactivité de filtrage est
+ * portée par ds-script.js là où elle s'applique (toolbar de la liste des biens).
+ */
+interface Option {
+  id: string;
+  label: string;
+  count?: number;
+}
+interface Props {
+  label?: string;
+  options?: Option[];
+  value?: string;
+}
+const { label, options = [], value } = Astro.props;
+const active = value ?? options[0]?.id;
 ---
+
+<div class="tool-group">
+  {label && <span class="tool-label">{label}</span>}
+  <div class="seg" role="group" aria-label={label}>
+    {
+      options.map((o) => (
+        <button type="button" class={o.id === active ? "on" : undefined}>
+          {o.label}
+          {o.count != null && <span class="n">{o.count}</span>}
+        </button>
+      ))
+    }
+  </div>
+</div>

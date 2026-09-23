@@ -1,4 +1,22 @@
 ---
-// Stub — composant «Pagination». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * Pagination — port .astro de components/core/Pagination.jsx
+ *
+ * Cercles ; page courante en encre pleine ; « → » vers la suivante (pas de
+ * bouton libellé). Adaptation statique : le onSelect(page) de la version React
+ * devient hrefFor(page), qui renvoie l'URL de chaque page → de vrais liens.
+ */
+interface Props {
+  pages?: number;
+  current?: number;
+  /** Renvoie l'URL d'une page. Défaut : ?page=N */
+  hrefFor?: (page: number) => string;
+}
+const { pages = 1, current = 1, hrefFor = (p: number) => `?page=${p}` } = Astro.props;
+const list = Array.from({ length: pages }, (_, i) => i + 1);
 ---
+
+<nav class="pagination" aria-label="Pagination">
+  {list.map((p) => (p === current ? <span class="cur">{p}</span> : <a href={hrefFor(p)}>{p}</a>))}
+  {current < pages && <a href={hrefFor(current + 1)} aria-label="Page suivante">→</a>}
+</nav>

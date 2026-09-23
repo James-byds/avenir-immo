@@ -1,4 +1,23 @@
 ---
-// Stub — composant «Placeholder». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * Placeholder — port .astro de components/core/Placeholder.jsx
+ *
+ * Emplacement photo hachuré + étiquette mono. Jamais d'illustration SVG dessinée :
+ * une vraie photo le remplace (un <img> au même endroit, rien d'autre).
+ */
+interface Props {
+  /** Étiquette décrivant la photo attendue */
+  tag?: string;
+  /** Fond vert profond (héros, fonds sombres) */
+  green?: boolean;
+  /** aspect-ratio CSS, défaut "4 / 3" */
+  ratio?: string;
+  class?: string;
+}
+const { tag, green = false, ratio = "4 / 3", class: extra = "" } = Astro.props;
+const cls = ["ph", green && "ph--green", extra].filter(Boolean).join(" ");
 ---
+
+<div class={cls} style={`aspect-ratio:${ratio}`}>
+  {tag && <span class="ph-tag">{tag}</span>}
+</div>

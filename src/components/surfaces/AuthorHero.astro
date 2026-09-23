@@ -1,4 +1,37 @@
 ---
-// Stub — composant «AuthorHero». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * AuthorHero — port .astro de components/surfaces/AuthorBox.jsx (export AuthorHero)
+ *
+ * En-tête de page auteur (rédacteur du blog) — jamais de biens.
+ * Les actions (boutons) se passent en enfant via <slot />.
+ */
+interface Props {
+  name: string;
+  role?: string;
+  bio?: string;
+  meta?: string[];
+}
+const { name, role, bio, meta = [] } = Astro.props;
 ---
+
+<div class="author-hero">
+  <span class="b-av"><span class="ph"><span class="ph-tag">portrait</span></span></span>
+  <div>
+    <h1>{name}</h1>
+    {role && <div class="ah-role">{role}</div>}
+    {bio && <p class="ah-bio">{bio}</p>}
+    {
+      meta.length > 0 && (
+        <div class="ah-meta">
+          {meta.map((m, i) => (
+            <>
+              {i > 0 && <span class="dot">·</span>}
+              <span>{m}</span>
+            </>
+          ))}
+        </div>
+      )
+    }
+    {Astro.slots.has("default") && <div class="ah-actions"><slot /></div>}
+  </div>
+</div>

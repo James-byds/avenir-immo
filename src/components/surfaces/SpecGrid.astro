@@ -1,4 +1,26 @@
 ---
-// Stub — composant «SpecGrid». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * SpecGrid — port .astro de components/surfaces/SpecGrid.jsx
+ *
+ * Caractéristiques de la fiche bien — 6 tuiles idéalement.
+ */
+interface Spec {
+  value: string;
+  label: string;
+}
+interface Props {
+  specs?: Spec[];
+}
+const { specs = [] } = Astro.props;
 ---
+
+<div class="spec-grid">
+  {
+    specs.map((s) => (
+      <div class="spec">
+        <div class="sv">{s.value}</div>
+        <div class="sk">{s.label}</div>
+      </div>
+    ))
+  }
+</div>

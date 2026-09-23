@@ -1,4 +1,16 @@
 ---
-// Stub — composant «LinkArrow». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * LinkArrow — port .astro de components/core/LinkArrow.jsx
+ *
+ * Lien fléché mono. La flèche « → » fait partie du composant.
+ */
+interface Props {
+  href?: string;
+  [key: string]: any;
+}
+const { href = "#", ...rest } = Astro.props;
 ---
+
+<!-- La flèche est un élément à part : .link-arrow anime le `gap` flex au hover
+     (8px → 14px). En un seul run de texte, l'animation ne se déclencherait pas. -->
+<a class="link-arrow" href={href} {...rest}><slot /><span aria-hidden="true">→</span></a>

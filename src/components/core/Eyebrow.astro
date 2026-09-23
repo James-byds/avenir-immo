@@ -1,4 +1,15 @@
 ---
-// Stub — composant «Eyebrow». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * Eyebrow — port .astro de components/core/Eyebrow.jsx
+ *
+ * Filet + capitales espacées. La couleur (vert sur clair, jaune sur sombre)
+ * est décidée par le contexte dans site.css — rien à porter ici.
+ */
+interface Props {
+  /** Centré, sans trait — pour sections centrées */
+  center?: boolean;
+}
+const { center = false } = Astro.props;
 ---
+
+<span class={`eyebrow${center ? " center" : ""}`}><slot /></span>

@@ -1,4 +1,19 @@
 ---
-// Stub — composant «Badge». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * Badge — port .astro de components/surfaces/Badge.jsx
+ *
+ * Pilule statut (mono, capitales). "new" = jaune (Nouveau), "sold" = encre
+ * (Vendu), défaut = blanc. `floating` = position absolue haut-gauche d'un média
+ * (usage carte) ; sinon la pilule est placée dans le flux (position:static).
+ */
+interface Props {
+  variant?: "new" | "sold";
+  /** Position absolue en haut-gauche d'un média (usage carte) */
+  floating?: boolean;
+  class?: string;
+}
+const { variant, floating = false, class: extra = "" } = Astro.props;
+const cls = ["card-badge", variant, extra].filter(Boolean).join(" ");
 ---
+
+<span class={cls} style={!floating ? "position:static" : undefined}><slot /></span>

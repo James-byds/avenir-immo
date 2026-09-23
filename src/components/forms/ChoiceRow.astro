@@ -1,4 +1,23 @@
 ---
-// Stub — composant «ChoiceRow». À implémenter (voir handoff / DEMARRAGE.md).
-// Ce fichier fait partie de l'arborescence cible ; il ne contient pas encore de logique.
+/**
+ * ChoiceRow — port .astro de components/forms/ChoiceRow.jsx
+ *
+ * Grille 2 colonnes de pilules `.choice` (choix exclusif). Port statique :
+ * option active via `value` (défaut : la première). La sélection au clic est
+ * gérée par ds-script.js dans le formulaire d'estimation (#typeChoice).
+ */
+interface Props {
+  label?: string;
+  options?: string[];
+  value?: string;
+}
+const { label, options = [], value } = Astro.props;
+const active = value ?? options[0];
 ---
+
+<div class="field">
+  {label && <label>{label}</label>}
+  <div class="choice-row">
+    {options.map((o) => <div class={`choice${o === active ? " on" : ""}`}>{o}</div>)}
+  </div>
+</div>
