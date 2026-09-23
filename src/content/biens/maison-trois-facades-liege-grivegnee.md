@@ -3,6 +3,7 @@ titre: "Maison trois façades rénovée, faibles charges"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Grivegnée"
 prix: 262000
 surface: 155
 chambres: 3

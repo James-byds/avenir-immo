@@ -3,6 +3,8 @@ titre: "Duplex de caractère en Ville-Haute"
 type: appartement
 transaction: vente
 commune: "Charleroi centre"
+sousType: duplex
+statut: nouveau
 prix: 285000
 surface: 150
 chambres: 3

@@ -3,6 +3,8 @@ titre: "Appartement deux chambres, parking privatif"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Angleur"
+statut: nouveau
 prix: 875
 surface: 78
 chambres: 2

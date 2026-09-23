@@ -3,6 +3,7 @@ titre: "Appartement trois chambres, immeuble neuf"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Guillemins"
 prix: 1150
 surface: 98
 chambres: 3

@@ -3,6 +3,8 @@ titre: "Penthouse trois chambres, toit-terrasse"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Cointe & Laveu"
+sousType: penthouse
 prix: 1690
 surface: 140
 chambres: 3

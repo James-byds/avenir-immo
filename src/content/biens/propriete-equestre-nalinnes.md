@@ -3,6 +3,7 @@ titre: "Propriété équestre, parc arboré de 1,2 ha"
 type: maison
 transaction: vente
 commune: "Nalinnes"
+sousType: villa
 prix: 1150000
 surface: 540
 chambres: 7

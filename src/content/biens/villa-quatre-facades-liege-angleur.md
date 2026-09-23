@@ -3,6 +3,9 @@ titre: "Villa quatre façades, proche Sart-Tilman"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Angleur"
+sousType: villa
+statut: nouveau
 prix: 420000
 surface: 240
 chambres: 4

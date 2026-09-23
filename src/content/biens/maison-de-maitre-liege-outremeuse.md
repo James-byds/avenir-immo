@@ -3,6 +3,8 @@ titre: "Maison de maître à rénover, 4 façades libres"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Outremeuse"
+statut: nouveau
 prix: 298000
 surface: 215
 chambres: 4

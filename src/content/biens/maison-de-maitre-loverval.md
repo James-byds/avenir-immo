@@ -3,6 +3,7 @@ titre: "Maison de maître Belle Époque restaurée"
 type: maison
 transaction: vente
 commune: "Loverval"
+statut: sous-offre
 prix: 595000
 surface: 340
 chambres: 6

@@ -3,6 +3,7 @@ titre: "Maison trois chambres prête à habiter"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Sainte-Walburge"
 prix: 245000
 surface: 145
 chambres: 3

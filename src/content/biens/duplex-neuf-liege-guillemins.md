@@ -3,6 +3,9 @@ titre: "Duplex neuf deux chambres, terrasse plein sud"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Guillemins"
+sousType: duplex
+statut: nouveau
 prix: 1250
 surface: 96
 chambres: 2

@@ -3,6 +3,7 @@ titre: "Maison familiale trois façades, jardin plat"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Angleur"
 prix: 259000
 surface: 170
 chambres: 4

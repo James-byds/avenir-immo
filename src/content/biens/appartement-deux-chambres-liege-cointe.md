@@ -3,6 +3,7 @@ titre: "Appartement deux chambres, vue sur la ville"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Cointe & Laveu"
 prix: 1050
 surface: 85
 chambres: 2

@@ -3,6 +3,7 @@ titre: "Appartement une chambre, rue calme"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Sainte-Walburge"
 prix: 780
 surface: 62
 chambres: 1

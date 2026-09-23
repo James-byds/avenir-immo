@@ -14,19 +14,22 @@ export async function getStaticPaths() {
 
   for (const commune of communes) {
     const communeSlug = slugCommune(commune.data.nom);
-    for (const type of commune.data.types as TypeBien[]) {
-      for (const transaction of commune.data.transactions as Transaction[]) {
-        // Le motif [type]-a-[transaction]-[commune] met le VERBE dans l'URL
-        // (maison-a-vendre-gerpinnes) : le param `transaction` vaut vendre/louer.
-        paths.push({
-          params: {
-            type,
-            transaction: transaction === "vente" ? "vendre" : "louer",
-            commune: communeSlug,
-          },
-          props: { commune, type, transaction, titre: ancre(type, transaction, commune.data.nom) },
-        });
-      }
+    // `combinaisons` liste les paires type × transaction RÉELLEMENT pourvues —
+    // jamais de produit cartésien, donc jamais de page sans bien.
+    for (const { type, transaction } of commune.data.combinaisons as {
+      type: TypeBien;
+      transaction: Transaction;
+    }[]) {
+      // Le motif [type]-a-[transaction]-[commune] met le VERBE dans l'URL
+      // (maison-a-vendre-gerpinnes) : le param `transaction` vaut vendre/louer.
+      paths.push({
+        params: {
+          type,
+          transaction: transaction === "vente" ? "vendre" : "louer",
+          commune: communeSlug,
+        },
+        props: { commune, type, transaction, titre: ancre(type, transaction, commune.data.nom) },
+      });
     }
   }
   return paths;

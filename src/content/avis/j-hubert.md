@@ -3,6 +3,7 @@ auteur: "J. Hubert"
 note: 5
 texte: "Appartement vendu en 26 jours, au prix. Un seul interlocuteur du début à la fin."
 commune: "Charleroi"
+projet: "vente"
 date: 2026-07-01
 source:
   libelle: "Avis Google · synchronisé le 12 septembre 2026"

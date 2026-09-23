@@ -1,7 +1,7 @@
 ---
 nom: "Gerpinnes"
-transactions: [vente]
-types: [maison]
+combinaisons:
+  - { type: maison, transaction: vente }
 intro: "La campagne aux portes de la ville — six villages préservés à quinze minutes de Charleroi. Nous avons vendu 74 biens dans l'entité ces cinq dernières années, et Julien la couvre depuis neuf ans."
 chiffres:
   - label: "Prix médian d'une maison à Gerpinnes"
@@ -33,6 +33,62 @@ chiffres:
     source:
       libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
       date: 2026-06-30
+prixQuartiers:
+  - nom: "Loverval"
+    transaction: vente
+    valeur: 2480
+    unite: "€/m²"
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Gerpinnes (centre)"
+    transaction: vente
+    valeur: 2260
+    unite: "€/m²"
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Acoz"
+    transaction: vente
+    valeur: 2040
+    unite: "€/m²"
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Joncret"
+    transaction: vente
+    valeur: 1980
+    unite: "€/m²"
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Gougnies"
+    transaction: vente
+    valeur: 1940
+    unite: "€/m²"
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Villers-Poterie"
+    transaction: vente
+    valeur: 1890
+    unite: "€/m²"
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+trajets:
+  - { destination: "Charleroi centre", minutes: 15 }
+  - { destination: "Gare Charleroi-Central", minutes: 18 }
+  - { destination: "Aéroport", minutes: 20 }
+  - { destination: "CHU Marie Curie", minutes: 14 }
+  - { destination: "Golf de Ragnies", minutes: 12 }
+atouts:
+  - titre: "Écoles à Gerpinnes"
+    texte: "Trois écoles communales, section immersion néerlandais, et le collège Saint-Augustin à dix minutes — la commune retient les familles d'un cycle à l'autre."
+  - titre: "Nature, RAVeL et patrimoine"
+    texte: "Bois de Gerpinnes, RAVeL et fermes en carré classées ; la marche Sainte-Rolende anime chaque printemps les cinq villages de l'entité."
+  - titre: "Accès à Charleroi et à l'aéroport"
+    texte: "N5 et R3 immédiats : Charleroi centre en 15 min, l'aéroport en 20. Commerces de proximité aux Flaches et au centre."
 faq:
   - question: "Quels sont les droits d'enregistrement à Gerpinnes ?"
     reponse: "Gerpinnes est en Wallonie : le taux plein est de 12,5 % du prix d'achat, et le taux réduit de 3 % s'applique à l'habitation propre et unique, sous conditions de domiciliation. Sur une maison à 385 000 € — le prix médian de l'entité — l'écart entre les deux régimes dépasse 36 000 €. Nous le vérifions avant l'offre, jamais après."
@@ -58,27 +114,6 @@ Gerpinnes se vend au-dessus de la moyenne de l'arrondissement (289 000 €) et p
 
 L'entité ne se vend pas d'un seul prix : de Villers-Poterie à Loverval, le mètre carré gagne un tiers.
 
-| Village | Prix moyen au m² |
-| --- | --- |
-| Loverval | 2 480 € |
-| Gerpinnes (centre) | 2 260 € |
-| Acoz | 2 040 € |
-| Joncret | 1 980 € |
-| Gougnies | 1 940 € |
-| Villers-Poterie | 1 890 € |
-
-Source : Ventes Avenir Immobilier & notaire.be · 1er semestre 2026.
-
 ## Temps de trajet depuis le centre de Gerpinnes
 
-- Charleroi centre : 15 min
-- Gare Charleroi-Central : 18 min
-- Aéroport : 20 min
-- CHU Marie Curie : 14 min
-- Golf de Ragnies : 12 min
-
 ## Vivre à Gerpinnes : écoles, nature et accès à Charleroi
-
-- **Écoles à Gerpinnes.** Trois écoles communales, section immersion néerlandais, et le collège Saint-Augustin à dix minutes — la commune retient les familles d'un cycle à l'autre.
-- **Nature, RAVeL et patrimoine.** Bois de Gerpinnes, RAVeL et fermes en carré classées ; la marche Sainte-Rolende anime chaque printemps les cinq villages de l'entité.
-- **Accès à Charleroi et à l'aéroport.** N5 et R3 immédiats : Charleroi centre en 15 min, l'aéroport en 20. Commerces de proximité aux Flaches et au centre.

@@ -3,6 +3,7 @@ auteur: "Sébastien L."
 note: 5
 texte: "Estimation juste et argumentée, sans nous survendre. On a senti une vraie connaissance du marché local de Montigny."
 commune: "Montigny-le-Tilleul"
+projet: "estimation"
 date: 2026-08-01
 source:
   libelle: "Avis Google · synchronisé le 12 septembre 2026"

@@ -3,6 +3,8 @@ titre: "Propriété 1930 restaurée, parc arboré"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Cointe & Laveu"
+sousType: villa
 prix: 690000
 surface: 420
 chambres: 6

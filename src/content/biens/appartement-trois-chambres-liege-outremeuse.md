@@ -3,6 +3,7 @@ titre: "Appartement trois chambres en maison de maître"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Outremeuse"
 prix: 950
 surface: 95
 chambres: 3

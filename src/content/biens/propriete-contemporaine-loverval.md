@@ -3,6 +3,7 @@ titre: "Propriété contemporaine, parc arboré"
 type: maison
 transaction: vente
 commune: "Loverval"
+statut: off-market
 prix: 890000
 surface: 520
 chambres: 6

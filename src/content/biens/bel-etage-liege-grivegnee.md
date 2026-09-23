@@ -3,6 +3,7 @@ titre: "Bel étage, jardin sud de 4 ares"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Grivegnée"
 prix: 285000
 surface: 180
 chambres: 3

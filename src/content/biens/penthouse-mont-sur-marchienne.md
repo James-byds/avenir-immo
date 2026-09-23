@@ -3,6 +3,7 @@ titre: "Penthouse lumineux, terrasse plein sud"
 type: appartement
 transaction: vente
 commune: "Mont-sur-Marchienne"
+sousType: penthouse
 prix: 395000
 surface: 165
 chambres: 3

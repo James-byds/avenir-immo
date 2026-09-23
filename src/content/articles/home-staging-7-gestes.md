@@ -2,7 +2,8 @@
 titre: "Home-staging : 7 gestes qui font monter le prix de vente"
 description: "Des ajustements simples et peu coûteux qui transforment la perception d'un bien dès la première visite."
 auteur: camille-renard
-tags: ["Vendre"]
+categorie: "Vendre"
+tempsLecture: 5
 datePublication: 2026-05-12
 ---
 

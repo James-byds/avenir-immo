@@ -3,6 +3,8 @@ titre: "Studio lumineux, proche université"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Outremeuse"
+sousType: studio
 prix: 690
 surface: 34
 chambres: 0

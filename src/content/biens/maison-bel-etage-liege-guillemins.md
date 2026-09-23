@@ -3,6 +3,7 @@ titre: "Maison bel étage, à dix minutes de la gare"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Guillemins"
 prix: 268000
 surface: 165
 chambres: 3

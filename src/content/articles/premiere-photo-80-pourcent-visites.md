@@ -2,7 +2,8 @@
 titre: "La première photo décide de 80 % des visites"
 description: "Cadrage, heure de prise de vue, ordre des images : ce que nous imposons à nos photographes."
 auteur: camille-renard
-tags: ["Vendre"]
+categorie: "Vendre"
+tempsLecture: 4
 datePublication: 2026-02-10
 ---
 

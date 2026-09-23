@@ -3,6 +3,7 @@ titre: "Appartement deux chambres, terrasse"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Grivegnée"
 prix: 900
 surface: 82
 chambres: 2

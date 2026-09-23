@@ -3,6 +3,8 @@ titre: "Maison de ville, idéale premier achat"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Sainte-Walburge"
+statut: nouveau
 prix: 228000
 surface: 120
 chambres: 2

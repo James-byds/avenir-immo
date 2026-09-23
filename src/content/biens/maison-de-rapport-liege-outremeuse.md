@@ -3,6 +3,7 @@ titre: "Maison de rapport, deux unités louées"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Outremeuse"
 prix: 252000
 surface: 190
 chambres: 4

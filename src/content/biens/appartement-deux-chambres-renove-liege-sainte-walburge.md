@@ -3,6 +3,7 @@ titre: "Appartement deux chambres rénové"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Sainte-Walburge"
 prix: 890
 surface: 80
 chambres: 2

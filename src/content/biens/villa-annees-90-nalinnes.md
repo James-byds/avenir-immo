@@ -3,6 +3,7 @@ titre: "Villa des années 90 remise à neuf"
 type: maison
 transaction: vente
 commune: "Nalinnes"
+sousType: villa
 prix: 512000
 surface: 280
 chambres: 4

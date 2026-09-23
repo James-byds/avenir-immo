@@ -3,6 +3,7 @@ titre: "Maison à rafraîchir, beaux volumes"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Sainte-Walburge"
 prix: 239000
 surface: 160
 chambres: 4

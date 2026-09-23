@@ -3,6 +3,7 @@ titre: "Appartement deux chambres, jardin commun"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Grivegnée"
 prix: 820
 surface: 74
 chambres: 2

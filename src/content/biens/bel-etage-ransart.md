@@ -3,6 +3,7 @@ titre: "Bel-étage rénové, quartier calme"
 type: maison
 transaction: vente
 commune: "Ransart"
+statut: nouveau
 prix: 329000
 surface: 183
 chambres: 3

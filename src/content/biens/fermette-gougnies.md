@@ -3,6 +3,7 @@ titre: "Fermette rénovée, grange aménageable"
 type: maison
 transaction: vente
 commune: "Gougnies"
+sousType: fermette
 prix: 465000
 surface: 245
 chambres: 4

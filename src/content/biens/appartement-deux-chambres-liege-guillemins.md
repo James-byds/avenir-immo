@@ -3,6 +3,7 @@ titre: "Appartement deux chambres, face à la gare"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Guillemins"
 prix: 980
 surface: 76
 chambres: 2

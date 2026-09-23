@@ -3,6 +3,9 @@ titre: "Studio rénové, cuisine équipée"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Grivegnée"
+sousType: studio
+statut: nouveau
 prix: 720
 surface: 40
 chambres: 0

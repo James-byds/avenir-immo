@@ -3,6 +3,7 @@ titre: "Villa quatre façades, jardin plein ouest"
 type: maison
 transaction: vente
 commune: "Fleurus"
+sousType: villa
 prix: 495000
 surface: 230
 chambres: 4

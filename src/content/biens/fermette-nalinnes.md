@@ -3,6 +3,7 @@ titre: "Fermette en carré, dépendances à restaurer"
 type: maison
 transaction: vente
 commune: "Nalinnes"
+sousType: fermette
 prix: 465000
 surface: 310
 chambres: 4

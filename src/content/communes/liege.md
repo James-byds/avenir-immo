@@ -1,7 +1,9 @@
 ---
 nom: "Liège"
-transactions: [vente, location]
-types: [maison, appartement]
+combinaisons:
+  - { type: maison, transaction: vente }
+  - { type: maison, transaction: location }
+  - { type: appartement, transaction: location }
 intro: "Liège ne se résume pas à une moyenne. Entre une maison de maître d'Outremeuse à rénover et un bel étage de Grivegnée prêt à habiter, ce n'est ni le même budget, ni le même chantier, ni la même vie de quartier."
 chiffres:
   - label: "Prix médian d'une maison à Liège"
@@ -68,6 +70,110 @@ chiffres:
     source:
       libelle: "Baux en gestion Avenir Immobilier · 1er semestre 2026"
       date: 2026-06-30
+prixQuartiers:
+  - nom: "Cointe & Laveu"
+    description: "Villas et maisons bourgeoises, vue sur la ville, grands jardins"
+    transaction: vente
+    valeur: 2640
+    unite: "€/m²"
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Guillemins"
+    description: "Immeubles de rapport et maisons de ville, à dix minutes de la gare TGV"
+    transaction: vente
+    valeur: 2120
+    unite: "€/m²"
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Outremeuse"
+    description: "Maisons de maître à rénover, quartier vivant, peu de garages"
+    transaction: vente
+    valeur: 1870
+    unite: "€/m²"
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Grivegnée"
+    description: "Bel étage des années 60-70, jardins réguliers, écoles à pied"
+    transaction: vente
+    valeur: 1760
+    unite: "€/m²"
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Angleur"
+    description: "Maisons familiales trois façades, accès autoroutier et Sart-Tilman"
+    transaction: vente
+    valeur: 1690
+    unite: "€/m²"
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Sainte-Walburge"
+    description: "Le meilleur rapport surface-prix de l'entité, bâti à rénover"
+    transaction: vente
+    valeur: 1540
+    unite: "€/m²"
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Cointe & Laveu"
+    description: "Grands appartements et duplex avec terrasse, vue sur la ville"
+    transaction: location
+    valeur: "12,80"
+    unite: "€/m²"
+    source:
+      libelle: "Baux en gestion Avenir Immobilier · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Guillemins"
+    description: "Immeubles récents, ascenseur et parking, à côté de la gare TGV"
+    transaction: location
+    valeur: "12,40"
+    unite: "€/m²"
+    source:
+      libelle: "Baux en gestion Avenir Immobilier · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Outremeuse"
+    description: "Appartements en maison de maître, quartier étudiant et vivant"
+    transaction: location
+    valeur: "11,60"
+    unite: "€/m²"
+    source:
+      libelle: "Baux en gestion Avenir Immobilier · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Grivegnée"
+    description: "Deux chambres avec jardin commun, familles et jeunes couples"
+    transaction: location
+    valeur: "10,90"
+    unite: "€/m²"
+    source:
+      libelle: "Baux en gestion Avenir Immobilier · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Angleur"
+    description: "Studios et deux chambres, proche Sart-Tilman et autoroutes"
+    transaction: location
+    valeur: "10,60"
+    unite: "€/m²"
+    source:
+      libelle: "Baux en gestion Avenir Immobilier · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Sainte-Walburge"
+    description: "Le meilleur rapport surface-loyer, bâti plus ancien"
+    transaction: location
+    valeur: "9,80"
+    unite: "€/m²"
+    source:
+      libelle: "Baux en gestion Avenir Immobilier · 1er semestre 2026"
+      date: 2026-06-30
+atouts:
+  - titre: "Écoles & université"
+    texte: "Campus du Sart-Tilman à quinze minutes, HEC Liège au centre, athénées et immersion néerlandais à Outremeuse : les familles restent d'un cycle à l'autre."
+  - titre: "Mobilité"
+    texte: "Gare de Liège-Guillemins (Bruxelles en 55 min, Cologne en 1 h 40), tram en service depuis 2025, E25 et E40 à cinq minutes."
+  - titre: "Vie de quartier"
+    texte: "La Batte le dimanche, Cointe et le Laveu pour le calme et les vues, Outremeuse pour les maisons de maître et la vie de café."
 faq:
   - question: "Combien coûtent les droits d'enregistrement en Wallonie ?"
     reponse: "Le taux plein est de 12,5 % du prix d'achat. Pour une habitation propre et unique, le taux réduit de 3 % s'applique depuis 2025, sous conditions de domiciliation et de plafond. Sur une maison à 265 000 €, l'écart représente environ 25 000 € : cela se vérifie avant l'offre, pas après."
@@ -110,22 +216,7 @@ Nos deux conseillers liégeois travaillent uniquement sur l'arrondissement. Ils 
 
 ## Prix au m² par quartier de Liège
 
-| Quartier | Ce qu'on y trouve | Médian / m² |
-| --- | --- | --- |
-| Cointe & Laveu | Villas et maisons bourgeoises, vue sur la ville, grands jardins | 2 640 € |
-| Guillemins | Immeubles de rapport et maisons de ville, à dix minutes de la gare TGV | 2 120 € |
-| Outremeuse | Maisons de maître à rénover, quartier vivant, peu de garages | 1 870 € |
-| Grivegnée | Bel étage des années 60-70, jardins réguliers, écoles à pied | 1 760 € |
-| Angleur | Maisons familiales trois façades, accès autoroutier et Sart-Tilman | 1 690 € |
-| Sainte-Walburge | Le meilleur rapport surface-prix de l'entité, bâti à rénover | 1 540 € |
-
-Source : Ventes Avenir Immobilier & notaire.be · 1er semestre 2026.
-
 ## Vivre à Liège : ce que vous achetez avec le quartier
-
-- **Écoles & université.** Campus du Sart-Tilman à quinze minutes, HEC Liège au centre, athénées et immersion néerlandais à Outremeuse : les familles restent d'un cycle à l'autre.
-- **Mobilité.** Gare de Liège-Guillemins (Bruxelles en 55 min, Cologne en 1 h 40), tram en service depuis 2025, E25 et E40 à cinq minutes.
-- **Vie de quartier.** La Batte le dimanche, Cointe et le Laveu pour le calme et les vues, Outremeuse pour les maisons de maître et la vie de café.
 
 ## Louer un appartement à Liège : un marché qui bouge deux fois par an
 
@@ -145,17 +236,6 @@ Nos annonces indiquent toujours les charges séparément et le PEB réel. Un loy
 6. **Le dossier que nous demandons.** Pièce d'identité, trois dernières fiches de paie ou attestation de revenus, et coordonnées du bailleur précédent. Nous ne demandons ni extrait de casier, ni composition de ménage : ce n'est pas autorisé.
 
 ## Loyer au m² par quartier de Liège
-
-| Quartier | Ce qu'on y loue | Médian / m² |
-| --- | --- | --- |
-| Cointe & Laveu | Grands appartements et duplex avec terrasse, vue sur la ville | 12,80 € |
-| Guillemins | Immeubles récents, ascenseur et parking, à côté de la gare TGV | 12,40 € |
-| Outremeuse | Appartements en maison de maître, quartier étudiant et vivant | 11,60 € |
-| Grivegnée | Deux chambres avec jardin commun, familles et jeunes couples | 10,90 € |
-| Angleur | Studios et deux chambres, proche Sart-Tilman et autoroutes | 10,60 € |
-| Sainte-Walburge | Le meilleur rapport surface-loyer, bâti plus ancien | 9,80 € |
-
-Source : Baux en gestion Avenir Immobilier · 1er semestre 2026.
 
 ## Où louer à Liège, selon ce que vous cherchez
 

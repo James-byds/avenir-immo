@@ -3,6 +3,8 @@ titre: "Villa sur les hauteurs, vue sur la ville"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Cointe & Laveu"
+sousType: villa
 prix: 545000
 surface: 290
 chambres: 5

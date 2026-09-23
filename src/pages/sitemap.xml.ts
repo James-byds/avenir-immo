@@ -31,10 +31,8 @@ export const GET: APIRoute = async () => {
   // Pages de localité — uniquement les combinaisons déclarées disponibles
   for (const commune of await getCollection("communes")) {
     const cs = slugCommune(commune.data.nom);
-    for (const type of commune.data.types as TypeBien[]) {
-      for (const tr of commune.data.transactions as Transaction[]) {
-        urls.add(`${SITE}/${slugCombinaison(type, tr, cs)}`);
-      }
+    for (const c of commune.data.combinaisons as { type: TypeBien; transaction: Transaction }[]) {
+      urls.add(`${SITE}/${slugCombinaison(c.type, c.transaction, cs)}`);
     }
   }
 

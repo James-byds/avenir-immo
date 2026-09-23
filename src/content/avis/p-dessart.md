@@ -3,6 +3,7 @@ auteur: "P. Dessart"
 note: 5
 texte: "Fourchette annoncée en ligne, confirmée sur place, et acte signé chez le notaire à 2 % près. Difficile de faire plus fiable."
 commune: "Loverval"
+projet: "estimation"
 date: 2026-06-01
 source:
   libelle: "Avis Google · synchronisé le 12 septembre 2026"

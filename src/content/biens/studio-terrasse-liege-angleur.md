@@ -3,6 +3,8 @@ titre: "Studio avec terrasse, proche Sart-Tilman"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Angleur"
+sousType: studio
 prix: 745
 surface: 42
 chambres: 0

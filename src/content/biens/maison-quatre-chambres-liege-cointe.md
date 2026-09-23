@@ -3,6 +3,7 @@ titre: "Maison quatre chambres, jardin clos"
 type: maison
 transaction: location
 commune: "Liège"
+quartier: "Cointe & Laveu"
 prix: 1490
 surface: 165
 chambres: 4

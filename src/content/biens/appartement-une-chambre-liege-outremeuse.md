@@ -3,6 +3,7 @@ titre: "Appartement une chambre, quartier vivant"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Outremeuse"
 prix: 850
 surface: 68
 chambres: 1

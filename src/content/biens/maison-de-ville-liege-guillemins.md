@@ -3,6 +3,7 @@ titre: "Maison de ville rénovée, terrasse sur toit"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Guillemins"
 prix: 345000
 surface: 205
 chambres: 4

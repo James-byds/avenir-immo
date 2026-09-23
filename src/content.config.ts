@@ -32,19 +32,47 @@ const faqItem = z.object({
   reponse: z.string(),
 });
 
+const typeBien = z.enum(["maison", "appartement", "terrain", "commerce", "immeuble"]);
+const transaction = z.enum(["vente", "location"]);
+
+/** Ligne des tables « prix par quartier / village » des pages de localité. */
+const prixQuartier = z.object({
+  nom: z.string(),
+  description: z.string().optional(),
+  transaction,
+  valeur: z.union([z.string(), z.number()]),
+  /** « €/m² », « €/mois »… */
+  unite: z.string().optional(),
+  source,
+});
+
 /* ── Biens (annonces immobilières) ──────────────────────────────────────── */
 const biens = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/biens" }),
   schema: ({ image }) =>
     z.object({
       titre: z.string(),
-      type: z.enum(["maison", "appartement", "terrain", "commerce", "immeuble"]),
-      transaction: z.enum(["vente", "location"]),
+      type: typeBien,
+      transaction,
       commune: z.string(),
+      /** Quartier de la commune (« Cointe & Laveu ») — filtres des pages de localité. */
+      quartier: z.string().optional(),
+      /** Sous-type d'affichage (le type reste la clé du maillage). */
+      sousType: z.enum(["villa", "studio", "duplex", "penthouse", "fermette"]).optional(),
+      /** Cycle de vie commercial — badges des cartes. */
+      statut: z.enum(["nouveau", "sous-offre", "vendu", "off-market"]).optional(),
+      /** Référence interne de l'annonce (« AV-2418 »). */
+      reference: z.string().optional(),
       prix: z.number().int().positive(),
       surface: z.number().positive().optional(),
       chambres: z.number().int().nonnegative().optional(),
+      sdb: z.number().int().nonnegative().optional(),
+      /** Terrain en m². */
+      terrain: z.number().positive().optional(),
+      anneeConstruction: z.number().int().optional(),
       peb: z.enum(["A++", "A+", "A", "B", "C", "D", "E", "F", "G"]).optional(),
+      /** Consommation PEB en kWh/m²·an. */
+      kwh: z.number().optional(),
       description: z.string(),
       photos: z.array(image()).default([]),
       agent: reference("equipe").optional(),
@@ -68,6 +96,10 @@ const articles = defineCollection({
       titre: z.string(),
       description: z.string(),
       auteur: reference("auteurs"),
+      /** Catégorie éditoriale affichée (« Marché », « Fiscalité »…). */
+      categorie: z.string().optional(),
+      /** Temps de lecture en minutes. */
+      tempsLecture: z.number().int().positive().optional(),
       image: image().optional(),
       tags: z.array(z.string()).default([]),
       chiffres: z.array(chiffre).default([]),
@@ -99,9 +131,20 @@ const equipe = defineCollection({
     z.object({
       nom: z.string(),
       fonction: z.string(),
+      /** Numéro d'agrément IPI (« 509 217 »). */
+      ipi: z.string().optional(),
       photo: image().optional(),
       telephone: z.string().optional(),
       email: z.string().email().optional(),
+      /** Points ✓ de la carte membre. */
+      points: z.array(z.string()).default([]),
+      /** Chiffres de la page membre — source datée obligatoire. */
+      stats: z.array(chiffre).default([]),
+      langues: z.array(z.string()).default([]),
+      /** Zones d'intervention (communes). */
+      zones: z.array(z.string()).default([]),
+      /** Année d'entrée chez Avenir. */
+      depuis: z.number().int().optional(),
       ordre: z.number().int().default(0),
     }),
 });
@@ -111,13 +154,18 @@ const communes = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/communes" }),
   schema: z.object({
     nom: z.string(),
-    /* Types de transaction réellement disponibles → alimente lib/maillage.ts. */
-    transactions: z.array(z.enum(["vente", "location"])).default(["vente"]),
-    types: z
-      .array(z.enum(["maison", "appartement", "terrain", "commerce", "immeuble"]))
-      .default([]),
+    /* Combinaisons type × transaction réellement disponibles → routes de
+       [type]-a-[transaction]-[commune] et maillage. Un produit cartésien
+       types × transactions générerait des pages sans bien (interdit). */
+    combinaisons: z.array(z.object({ type: typeBien, transaction })).default([]),
     intro: z.string(),
     chiffres: z.array(chiffre).default([]),
+    /** Tables prix/loyer par quartier ou village. */
+    prixQuartiers: z.array(prixQuartier).default([]),
+    /** Temps de trajet affichés (« Charleroi centre » → 15 min). */
+    trajets: z.array(z.object({ destination: z.string(), minutes: z.number() })).default([]),
+    /** Cadre de vie / points d'intérêt (écoles, accès, commerces). */
+    atouts: z.array(z.object({ titre: z.string(), texte: z.string() })).default([]),
     faq: z.array(faqItem).default([]),
   }),
 });
@@ -130,6 +178,12 @@ const avis = defineCollection({
     note: z.number().min(1).max(5),
     texte: z.string(),
     commune: z.string().optional(),
+    /** Type de projet — filtres du mur d'avis (« vente », « achat »…). */
+    projet: z.string().optional(),
+    /** Nombre de photos jointes à l'avis. */
+    photos: z.number().int().positive().optional(),
+    /** Réponse publique de l'agence. */
+    reponse: z.string().optional(),
     date: z.coerce.date(),
     source,
   }),

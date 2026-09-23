@@ -3,6 +3,7 @@ titre: "Maison familiale au calme, jardin sud"
 type: maison
 transaction: vente
 commune: "Montigny-le-Tilleul"
+statut: vendu
 prix: 425000
 surface: 260
 chambres: 4

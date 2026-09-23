@@ -3,6 +3,7 @@ titre: "Maison à rénover, rue calme"
 type: maison
 transaction: vente
 commune: "Liège"
+quartier: "Angleur"
 prix: 215000
 surface: 135
 chambres: 3

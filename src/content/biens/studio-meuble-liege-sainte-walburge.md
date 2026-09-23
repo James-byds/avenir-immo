@@ -3,6 +3,8 @@ titre: "Studio meublé, charges comprises"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Sainte-Walburge"
+sousType: studio
 prix: 675
 surface: 38
 chambres: 0

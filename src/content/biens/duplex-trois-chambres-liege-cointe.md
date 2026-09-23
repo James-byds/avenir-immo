@@ -3,6 +3,8 @@ titre: "Duplex trois chambres, terrasse de 40 m²"
 type: appartement
 transaction: location
 commune: "Liège"
+quartier: "Cointe & Laveu"
+sousType: duplex
 prix: 1390
 surface: 128
 chambres: 3
