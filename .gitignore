@@ -22,3 +22,7 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Références de design (handoff maquette) — HTML de référence, instantané DS, assets déjà
+# présents dans public/. Pas du code livrable : hors git, à recopier depuis le handoff.
+docs/handoff/reference/
