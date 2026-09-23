@@ -8,7 +8,7 @@
 | Fenêtre | Contenu | État |
 |---|---|---|
 | F1 | `00-preflight` | ✅ terminé le 23 sept. 2026 (commits `2213ace` → `3c0a0aa`) |
-| F2 | `01-accueil` — page témoin, recette à 100 % avant toute vague | ⬜ à faire |
+| F2 | `01-accueil` — page témoin, recette à 100 % avant toute vague | ✅ terminé le 24 sept. 2026 (commit `c37e852`, recette conforme) |
 | F3 | Vague A : `02-biens-liste` · `03-bien-fiche` · `07-estimation` (3 gabarits en parallèle) | ⬜ |
 | F4 | Vague B : `05-localite` puis `06-quartier` · `04-localites-hub` | ⬜ |
 | F5 | Vague C : `11-equipe` · `10-a-propos` · `08-contact` · `09-avis` (3 max puis le 4e) | ⬜ |
@@ -49,7 +49,8 @@ Trois sous-agents en parallèle maximum.
 2. **`ds-script.js` code en dur `window.location.href = "biens.html"`** au submit de
    `#propSearch`/`#heroSearch` en jetant la saisie. Le gabarit accueil/biens-liste doit
    recâbler vers `/biens?cat=…&loc=…&q=…` (contrat d'URL du README) — script Astro local,
-   à signaler « à reprendre dans le DS ».
+   à signaler « à reprendre dans le DS ». **Fait sur l'accueil** (interception en phase
+   de capture avant `ds-script.js`, voir `index.astro`) — motif à réutiliser en 02.
 3. **MapLeaflet** contient `var(--green,#17413B)` — le hex n'est qu'un fallback de
    var CSS ; écart toléré, ne pas le compter en recette comme couleur en dur.
 4. **`/test` (banc de comparaison)** affiche des hex en texte documentaire — page à
@@ -64,6 +65,20 @@ Trois sous-agents en parallèle maximum.
    Succession, Technique ; `avis.projet` — vente, achat, estimation, offmarket.
 8. **`sousType` n'a pas « loft »** : le loft de Charleroi reste type=appartement sans
    sousType. À trancher si le gabarit biens-liste en a besoin pour un filtre.
+9. **`data-planned` posé sur `/communes` et `/a-propos`** (SiteHeader nav+drawer,
+   SiteFooter « Toutes nos communes ») : à RETIRER quand les gabarits 04 et 10 livrent.
+10. **Contrat JSON-LD des pages** : `PageLayout` relaie le slot `head` ; une page qui
+    émet son propre `RealEstateAgent` complet passe `organizationLd={false}` (sinon
+    doublon avec le bloc minimal du `BaseLayout`). La colonne Quartiers du footer =
+    `combinaisons(biens)` ∩ `communes.combinaisons` (jamais de lien sans page).
+11. **Composants disponibles depuis F2** : `surfaces/FinalCta` (`variant: plain|photo|straddle`,
+    `tone: tint|deep` — `deep` réservé, non stylé) et `surfaces/TrustSection` (photos
+    d'avis `.t-imgs`/`.t-more`, logo Google) — à réutiliser en 08-contact et 09-avis.
+12. **À reprendre dans le DS (relevé F2)** : redirection `biens.html` de `ds-script.js` ;
+    `PropertyCard` sans passe-through `class`/`data-cat`, sans prop de ratio, kWh PEB
+    non affiché (l'accueil pose `data-cat` + `reveal` par script local) ; `local.css`
+    additifs — photos du carousel équipe, aspect-ratio de la carte vedette, `.sell-src`
+    sur aplat sombre.
 
 ## Arbitrages de contenu (incohérences de la maquette)
 
@@ -94,3 +109,14 @@ Trois sous-agents en parallèle maximum.
   extrait puis enrichi (sous-agent contenu ×2) ; schémas étendus après validation
   utilisateur ; route localité et sitemap passés sur `combinaisons`. Outillage :
   `@astrojs/check` + `typescript` en devDependencies.
+- **24 sept. 2026 — F2 accueil** (commit `c37e852`, branche `feat/01-accueil` mergée) :
+  gabarit livré par sous-agent `gabarit`, recette en 2 passes (6 écarts → conforme).
+  Corrections de chrome par l'orchestrateur : footer Quartiers intersecté avec
+  `communes.combinaisons` (3 liens 404 supprimés), `data-planned` sur `/communes` et
+  `/a-propos`, slot `head` relayé + `organizationLd` (un seul `RealEstateAgent`/page).
+  Fonds des sections 10-12 : la référence (quartiers vert profond · blog tendre ·
+  faq blanc) prime sur le tableau du prompt 01 — acté en recette. L'écart « espaces
+  sécables FAQ » était un faux positif (U+00A0 déjà en source, contrôle par points de
+  code). Photos d'avis complétées (toussaint 2, sebastien-l 4). Prochaine étape :
+  **F3 vague A** (`02-biens-liste` · `03-bien-fiche` · `07-estimation`, 3 sous-agents
+  `gabarit` en parallèle).
