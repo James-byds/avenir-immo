@@ -3,8 +3,11 @@
      1. Tailwind      — déclare les couches (theme, base, components, utilities)
      2. Design system — tokens puis site.css (le reset du DS doit passer
                         après le preflight de Tailwind, pas avant)
-     3. theme.css     — le pont @theme inline, qui lit les tokens de l'étape 2
+     3. local.css     — écarts maquette en attente de reprise dans le DS
+                        (ne rien y ajouter sans titre de bloc « à reprendre »)
+     4. theme.css     — le pont @theme inline, qui lit les tokens des étapes 2-3
 */
 @import "tailwindcss";
 @import "./ds/styles.css";
+@import "./local.css";
 @import "./theme.css";
