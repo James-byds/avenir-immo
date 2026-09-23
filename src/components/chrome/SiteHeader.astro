@@ -17,6 +17,8 @@
 interface NavItem {
   label: string;
   href: string;
+  /** Page prévue mais non encore codée : le lien porte data-planned (cf. local.css). */
+  planned?: boolean;
 }
 interface Props {
   /** Header verre blanc (pages intérieures). Sans : transparent sur héros. */
@@ -28,9 +30,9 @@ const { solid = true, active } = Astro.props;
 
 const nav: NavItem[] = [
   { label: "Nos biens", href: "/biens" },
-  { label: "Quartiers", href: "/communes" },
+  { label: "Quartiers", href: "/communes", planned: true }, // gabarit 04
   { label: "Estimation", href: "/estimation" },
-  { label: "L'agence", href: "/a-propos" },
+  { label: "L'agence", href: "/a-propos", planned: true }, // gabarit 10
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
 ];
@@ -43,7 +45,7 @@ const nav: NavItem[] = [
       <img src="/assets/logo-lavenir-immobilier-blanc.png" alt="" aria-hidden="true" class="brand-logo brand-logo--rev" />
     </a>
     <nav class="nav-links" aria-label="Navigation principale">
-      {nav.map((n) => <a href={n.href} class={active === n.href ? "on" : undefined}>{n.label}</a>)}
+      {nav.map((n) => <a href={n.href} class={active === n.href ? "on" : undefined} data-planned={n.planned ? "" : undefined}>{n.label}</a>)}
     </nav>
     <div class="nav-cta">
       <a class="nav-phone" href="tel:+3271321470"><span class="u-dot"></span>+32 71 32 14 70</a>
@@ -68,7 +70,7 @@ const nav: NavItem[] = [
     <button id="drawerClose" class="drawer-close" type="button" aria-label="Fermer">×</button>
   </div>
   <nav aria-label="Navigation mobile">
-    {nav.map((n) => <a href={n.href}>{n.label}</a>)}
+    {nav.map((n) => <a href={n.href} data-planned={n.planned ? "" : undefined}>{n.label}</a>)}
   </nav>
   <a href="/estimation" class="btn btn--block">Estimer mon bien <span class="arr">→</span></a>
 </div>

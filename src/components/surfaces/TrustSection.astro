@@ -2,13 +2,24 @@
 /**
  * TrustSection — port .astro de components/surfaces/TrustSection.jsx
  *
- * "full" = section pleine (accueil) · "band" = bandeau compact (fiche bien).
- * Port STATIQUE : la lightbox des photos d'avis (état React) est omise — les
- * avis restent affichés, sans galerie plein écran. Note et barres en jaune sur
- * aplat vert profond.
+ * "full" = section pleine (accueil, liste des biens) · "band" = bandeau compact
+ * (fiche bien). Port STATIQUE : la lightbox des photos d'avis (état React) est
+ * omise — les avis restent affichés, sans galerie plein écran.
+ *
+ * Étendu pour le gabarit accueil (23 sept. 2026) :
+ *   · `id`       — ancre de section (#avis) ; le variant full rend désormais
+ *                  <section class="trust"><div class="wrap">…</div></section> ;
+ *   · `google`   — pastille Google (logo G) sur la synthèse et les cartes ;
+ *   · Review.photos / morePhotos — photos jointes à l'avis en placeholders
+ *     `.t-imgs` (remplacer chaque .ph par un <img> quand les visuels arrivent) ;
+ *     une carte à photos sans « +n » porte .t-card--photo (motif maquette).
+ *
+ * Chiffres : rating/count sont des données EXTERNES (Google) reprises telles
+ * quelles — la source visible est « {source} · {count} avis ». Les `figures`
+ * par défaut sont des valeurs de démonstration : les pages passent
+ * `showFigures={false}` tant qu'elles ne disposent pas de chiffres sourcés.
  */
 import Eyebrow from "../core/Eyebrow.astro";
-import Button from "../actions/Button.astro";
 
 interface Review {
   quote: string;
@@ -18,6 +29,10 @@ interface Review {
   source?: string;
   stars?: number;
   photo?: string;
+  /** Étiquettes des photos jointes (placeholders en attente des visuels). */
+  photos?: string[];
+  /** Nombre de photos supplémentaires non affichées (pastille « +n »). */
+  morePhotos?: number;
 }
 interface Figure {
   v: string;
@@ -29,12 +44,16 @@ interface Distribution {
 }
 interface Props {
   variant?: "full" | "band";
+  /** Ancre de la section (variant full) — ex. "avis". */
+  id?: string;
   eyebrow?: string;
   title?: string;
   intro?: string;
   rating?: string;
   count?: number;
   source?: string;
+  /** Affiche le logo Google à côté de la source et sur chaque carte. */
+  google?: boolean;
   distribution?: Distribution[];
   ctaHref?: string;
   writeHref?: string;
@@ -56,12 +75,14 @@ const DEF_FIGURES: Figure[] = [
 
 const {
   variant = "full",
+  id,
   eyebrow = "Ils nous font confiance",
   title,
   intro,
   rating = "4,9",
   count = 127,
   source = "Avis Google",
+  google = false,
   distribution,
   ctaHref = "#",
   writeHref,
@@ -74,6 +95,8 @@ const stars = (n = 5) => "★★★★★".slice(0, n);
 const initials = (name: string) =>
   name.split(" ").filter((w) => /^\p{L}/u.test(w)).map((w) => w[0]).join("").slice(0, 2);
 const max = distribution ? Math.max(...distribution.map((d) => d.count), 1) : 1;
+const external = (href: string) => href.startsWith("http");
+const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
 ---
 
 {
@@ -95,69 +118,104 @@ const max = distribution ? Math.max(...distribution.map((d) => d.count), 1) : 1;
       </span>
     </div>
   ) : (
-    <section class="trust">
-      <div class="trust-head">
-        <div style="flex:1 1 420px">
-          <Eyebrow>{eyebrow}</Eyebrow>
-          {title ? (
-            <h2 style="max-width:24ch">{title}</h2>
-          ) : (
-            <h2 style="max-width:24ch">{count} familles accompagnées, notées <em class="t-hl">{rating}/5</em></h2>
+    <section class="trust" id={id}>
+      <div class="wrap">
+        <div class="trust-head reveal">
+          <div style="flex:1 1 420px">
+            <Eyebrow>{eyebrow}</Eyebrow>
+            {title ? (
+              <h2 style="max-width:24ch">{title}</h2>
+            ) : (
+              <h2 style="max-width:24ch">{count} familles accompagnées, notées <em class="t-hl">{rating}/5</em></h2>
+            )}
+            {intro && <p class="trust-intro">{intro}</p>}
+          </div>
+        </div>
+        <div class="trust-sum reveal">
+          <div class="ts-score">
+            <div class="v">{rating}</div>
+            <span class="t-stars" aria-label={`${rating} étoiles sur 5`}>{stars(5)}</span>
+            <span class={`t-src${google ? " t-gsrc" : ""}`}>
+              {google && (
+                <svg class="t-glogo" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z"/><path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/></svg>
+              )}
+              {source} · {count} avis
+            </span>
+          </div>
+          {distribution && (
+            <div class="ts-bars">
+              {distribution.map((d) => (
+                <div class="ts-bar">
+                  <span>{d.stars} ★</span>
+                  <span class="ts-track"><span class="ts-fill" style={`width:${Math.max(2, Math.round((d.count / max) * 100))}%`} /></span>
+                  <span class="n">{d.count}</span>
+                </div>
+              ))}
+            </div>
           )}
-          {intro && <p class="trust-intro">{intro}</p>}
+          <div class="ts-cta">
+            <a
+              class="btn"
+              href={ctaHref}
+              target={external(ctaHref) ? "_blank" : undefined}
+              rel={external(ctaHref) ? "noopener" : undefined}
+            >Lire les {count} avis <span class="arr">→</span></a>
+            {writeHref && (
+              <a
+                class="t-write"
+                href={writeHref}
+                target={external(writeHref) ? "_blank" : undefined}
+                rel={external(writeHref) ? "noopener" : undefined}
+              >Laisser un avis</a>
+            )}
+          </div>
         </div>
-      </div>
-      <div class="trust-sum">
-        <div class="ts-score">
-          <div class="v">{rating}</div>
-          <span class="t-stars">{stars(5)}</span>
-          <span class="t-src">{source} · {count} avis</span>
+        <div class="trust-grid">
+          {reviews.map((r, i) => (
+            <article class={`t-card${r.photos?.length && !r.morePhotos ? " t-card--photo" : ""} reveal${delay(i)}`}>
+              <div class="t-headrow">
+                <span class="t-cstars" aria-label={`${r.stars ?? 5} étoiles sur 5`}>{stars(r.stars ?? 5)}</span>
+                <span class="t-gtag">
+                  {google && (
+                    <svg class="t-glogo" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z"/><path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/></svg>
+                  )}
+                  {r.source ?? "Google"}
+                </span>
+              </div>
+              <p class="t-quote">{r.quote}</p>
+              {r.photos?.length && (
+                <div
+                  class={`t-imgs n${Math.min(r.photos.length + (r.morePhotos ? 1 : 0), 3)}`}
+                  aria-label={`${r.photos.length + (r.morePhotos ?? 0)} photos jointes à l'avis`}
+                >
+                  {r.photos.map((tag) => (
+                    <div class="ph"><span class="ph-tag">{tag}</span></div>
+                  ))}
+                  {r.morePhotos ? <div class="ph t-more" data-more={`+${r.morePhotos}`} /> : null}
+                </div>
+              )}
+              <div class="t-meta">
+                {r.photo ? <img class="t-ava" src={r.photo} alt="" /> : <span class="t-ava" aria-hidden="true">{initials(r.name)}</span>}
+                <span>
+                  <span class="t-name">{r.name}</span>
+                  <br />
+                  <span class="t-place">{r.context ? r.context + " · " : ""}{r.place}</span>
+                </span>
+              </div>
+            </article>
+          ))}
         </div>
-        {distribution && (
-          <div class="ts-bars">
-            {distribution.map((d) => (
-              <div class="ts-bar">
-                <span>{d.stars} ★</span>
-                <span class="ts-track"><span class="ts-fill" style={`width:${Math.max(2, Math.round((d.count / max) * 100))}%`} /></span>
-                <span class="n">{d.count}</span>
+        {showFigures && figures.length > 0 && (
+          <div class="trust-figs">
+            {figures.map((f) => (
+              <div class="t-fig">
+                <div class="fv">{f.v}</div>
+                <div class="fk">{f.k}</div>
               </div>
             ))}
           </div>
         )}
-        <div class="ts-cta">
-          <Button href={ctaHref}>Lire les {count} avis</Button>
-          {writeHref && <a class="t-write" href={writeHref}>Laisser un avis</a>}
-        </div>
       </div>
-      <div class="trust-grid">
-        {reviews.map((r) => (
-          <article class="t-card">
-            <div class="t-headrow">
-              <span class="t-cstars" aria-label={`${r.stars ?? 5} étoiles sur 5`}>{stars(r.stars ?? 5)}</span>
-              <span class="t-gtag">{r.source ?? "Google"}</span>
-            </div>
-            <p class="t-quote">{r.quote}</p>
-            <div class="t-meta">
-              {r.photo ? <img class="t-ava" src={r.photo} alt="" /> : <span class="t-ava" aria-hidden="true">{initials(r.name)}</span>}
-              <span>
-                <span class="t-name">{r.name}</span>
-                <br />
-                <span class="t-place">{r.context ? r.context + " · " : ""}{r.place}</span>
-              </span>
-            </div>
-          </article>
-        ))}
-      </div>
-      {showFigures && figures.length > 0 && (
-        <div class="trust-figs">
-          {figures.map((f) => (
-            <div class="t-fig">
-              <div class="fv">{f.v}</div>
-              <div class="fk">{f.k}</div>
-            </div>
-          ))}
-        </div>
-      )}
     </section>
   )
 }

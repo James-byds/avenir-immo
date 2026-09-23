@@ -1,145 +1,761 @@
 ---
-/* Page d'accueil — ASSEMBLAGE PROVISOIRE.
-   Démonstration d'adhérence au design system : classes DS pour le style,
-   grilles Tailwind pour la mise en page, alternance des fonds via .sec--*.
-   Le projet maquette (claude design) fournira la composition définitive —
-   contenu, chiffres sourcés et visuels sont ici des placeholders. */
+/* Accueil — page témoin du handoff (gabarit 01, réf. docs/handoff/reference/index.html).
+   13 sections ; les fonds sont portés par les classes DS/local (.services, .team,
+   .blog, .process--light, .estimate, .trust, #quartiers) — jamais redoublés.
+   Contenu : collections biens/articles/avis/equipe/communes ; copie de page
+   (héros, preuves, méthode, FAQ) reprise mot pour mot de la référence. */
+import { getCollection } from "astro:content";
 import PageLayout from "../layouts/PageLayout.astro";
 import Eyebrow from "../components/core/Eyebrow.astro";
+import SectionHead from "../components/core/SectionHead.astro";
 import PropertyCard from "../components/surfaces/PropertyCard.astro";
-import ArticleCard from "../components/surfaces/ArticleCard.astro";
-import SellHere from "../components/surfaces/SellHere.astro";
 import TrustSection from "../components/surfaces/TrustSection.astro";
-import ContactForm from "../components/islands/ContactForm.tsx";
+import FinalCta from "../components/surfaces/FinalCta.astro";
+import Faq from "../components/islands/Faq.tsx";
+import { faqPage, jsonLd } from "../lib/seo";
+import { formatDate, formatPrix, formatSurface } from "../lib/format";
+import { slugCombinaison, slugCommune } from "../lib/maillage";
+import type { Transaction, TypeBien } from "../lib/maillage";
+
+/* ── Biens : sélection du moment (ordre de la référence, vedette en tête) ── */
+const biens = await getCollection("biens", ({ data }) => data.publie !== false);
+const parId = new Map(biens.map((b) => [b.id, b]));
+const SELECTION = [
+  "villa-architecte-gerpinnes",
+  "penthouse-mont-sur-marchienne",
+  "maison-de-maitre-loverval",
+  "loft-angle-charleroi",
+  "maison-familiale-montigny",
+  "propriete-equestre-nalinnes",
+  "bel-etage-ransart",
+  "appartement-neuf-gilly",
+  "fermette-nalinnes",
+];
+const selection = SELECTION.map((id) => parId.get(id)).filter(
+  (b): b is NonNullable<typeof b> => Boolean(b),
+);
+
+const TYPE_SINGULIER: Record<string, string> = {
+  maison: "Maison",
+  appartement: "Appartement",
+  terrain: "Terrain",
+  commerce: "Commerce",
+  immeuble: "Immeuble",
+};
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const tagDe = (b: (typeof selection)[number]) =>
+  `${b.data.sousType ? cap(b.data.sousType) : TYPE_SINGULIER[b.data.type]} — ${b.data.commune}`;
+const badgeDe = (b: (typeof selection)[number]) =>
+  b.data.statut === "nouveau"
+    ? { label: "Nouveau", variant: "new" as const }
+    : b.data.statut === "sous-offre"
+      ? { label: "Sous offre", variant: undefined }
+      : b.data.statut === "vendu"
+        ? { label: "Vendu", variant: "sold" as const }
+        : undefined;
+const specsDe = (b: (typeof selection)[number]) =>
+  [
+    b.data.chambres != null && `${b.data.chambres} ch.`,
+    b.data.sdb != null && `${b.data.sdb} sdb`,
+    b.data.surface != null && formatSurface(b.data.surface),
+  ].filter((s): s is string => Boolean(s));
+/* Catégories du filtre (#filters de ds-script.js) — posées en data-cat par le
+   script correctif ci-dessous, PropertyCard n'acceptant pas d'attribut libre. */
+const cats = selection.map((b) =>
+  b.data.statut === "vendu" ? "vendu" : b.data.transaction === "location" ? "location" : "vente",
+);
+
+/* ── Équipe : carousel (ordre éditorial de la collection) ── */
+const equipe = (await getCollection("equipe")).sort((a, b) => a.data.ordre - b.data.ordre);
+const photoDe = (id: string) => `/assets/agent-${id.split("-")[0]}.png`;
+
+/* ── Avis : les trois de la référence, texte et signature depuis la collection ── */
+const avis = await getCollection("avis");
+const parIdAvis = new Map(avis.map((a) => [a.id, a]));
+const reviews = ["famille-lemaire", "toussaint", "sebastien-l"]
+  .map((id) => parIdAvis.get(id))
+  .filter((a): a is NonNullable<typeof a> => Boolean(a))
+  .map((a) => ({
+    quote: a.data.texte,
+    name: a.data.auteur,
+    place: (a.body ?? "").trim() || a.data.commune || "",
+    stars: a.data.note,
+    /* photos (nombre) : 2 vignettes max en bandeau .t-imgs, le surplus en
+       pastille « +n » — comme la référence (famille-lemaire n'en a pas). */
+    photos: a.data.photos
+      ? Array.from({ length: Math.min(a.data.photos, 2) }, (_, i) => `Photo ${i + 1}`)
+      : undefined,
+    morePhotos: a.data.photos && a.data.photos > 2 ? a.data.photos - 2 : undefined,
+  }));
+
+/* ── Blog : les trois articles de la référence ── */
+const articles = await getCollection("articles", ({ data }) => data.publie !== false);
+const parIdArticle = new Map(articles.map((a) => [a.id, a]));
+const posts = ["home-staging-7-gestes", "prestige-charleroi-prix-2026", "off-market-mode-emploi"]
+  .map((id) => parIdArticle.get(id))
+  .filter((a): a is NonNullable<typeof a> => Boolean(a));
+
+/* ── Quartiers : uniquement les combinaisons de localité réellement générées
+   (communes.combinaisons ∩ biens) — jamais de lien vers une page vide. ── */
+const communes = await getCollection("communes");
+const TYPE_PLURIEL: Record<string, string> = {
+  maison: "Maisons",
+  appartement: "Appartements",
+  terrain: "Terrains",
+  commerce: "Commerces",
+  immeuble: "Immeubles",
+};
+const hoods = communes.flatMap((c) =>
+  (c.data.combinaisons as { type: TypeBien; transaction: Transaction }[])
+    .map(({ type, transaction }) => {
+      const count = biens.filter(
+        (b) =>
+          b.data.commune === c.data.nom &&
+          b.data.type === type &&
+          b.data.transaction === transaction,
+      ).length;
+      return {
+        commune: c.data.nom,
+        href: `/${slugCombinaison(type, transaction, slugCommune(c.data.nom))}`,
+        label: `${TYPE_PLURIEL[type]} ${transaction === "location" ? "à louer" : "à vendre"}`,
+        count,
+      };
+    })
+    .filter((h) => h.count > 0),
+);
+
+/* ── FAQ : copie de la référence (mot pour mot) — le JSON-LD FAQPage reprend
+   EXACTEMENT ces chaînes ; l'île Faq reçoit structuredData={false}. ── */
+const faqItems = [
+  {
+    q: "L'estimation est-elle vraiment gratuite ?",
+    a: "Oui, totalement gratuite et sans engagement. Vous recevez une première fourchette en ligne, puis un conseiller affine la valeur lors d'une visite sur place. Vous restez libre à chaque étape.",
+  },
+  {
+    q: "En combien de temps vendez-vous un bien ?",
+    a: "Le délai moyen constaté chez Avenir Immobilier est de 38 jours avant compromis, contre près de 90 jours sur le marché carolorégien — grâce à une mise en valeur soignée et à un réseau d'acquéreurs qualifiés.",
+  },
+  {
+    q: "Quels sont vos honoraires ?",
+    a: "Nos honoraires sont transparents et uniquement dus en cas de vente effective. Ils sont fixés lors du mandat, selon le bien et les prestations retenues (photographie, vidéo, home-staging…).",
+  },
+  {
+    q: "Travaillez-vous en off-market ?",
+    a: "Oui. Pour les vendeurs qui souhaitent la discrétion, nous présentons d'abord le bien à notre fichier d'acquéreurs qualifiés avant toute diffusion publique.",
+  },
+  {
+    q: "Dans quels quartiers intervenez-vous ?",
+    a: "À Charleroi : Loverval, Mont-sur-Marchienne, Montigny-le-Tilleul et le centre. En périphérie sud : Gerpinnes, Marcinelle et Nalinnes. Un doute sur votre commune ? Écrivez-nous.",
+  },
+];
+
+/* ── JSON-LD — mêmes données que le HTML affiché (chrome : TopBar/SiteHeader).
+   4,8/190 = chiffre externe Google, repris tel quel (cf. section avis). ── */
+const GOOGLE_URL = "https://www.google.com/maps/search/Avenir+Immobilier+Charleroi";
+const agentLd = {
+  "@context": "https://schema.org",
+  "@type": "RealEstateAgent",
+  name: "Avenir Immobilier",
+  description:
+    "Agence immobilière de prestige spécialisée dans la vente, l'achat et l'estimation de biens d'exception à Charleroi et en Hainaut.",
+  url: Astro.site?.href ?? "https://www.lavenir-immobilier.be/",
+  telephone: "+32 71 32 14 70",
+  email: "info@avenir-immobilier.be",
+  priceRange: "€€€€",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Boulevard Tirou 102",
+    addressLocality: "Charleroi",
+    postalCode: "6000",
+    addressCountry: "BE",
+  },
+  areaServed: [
+    "Loverval",
+    "Mont-sur-Marchienne",
+    "Montigny-le-Tilleul",
+    "Charleroi",
+    "Gerpinnes",
+    "Marcinelle",
+    "Nalinnes",
+    "Liège",
+  ],
+  aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "190" },
+  openingHours: "Mo-Fr 09:00-18:30 Sa 10:00-16:00",
+  sameAs: [GOOGLE_URL],
+};
+const faqLd = faqPage(faqItems.map(({ q, a }) => ({ question: q, reponse: a })));
+
+const SOURCE_MAQUETTE = "À sourcer — valeurs maquette · 23 septembre 2026";
 ---
 
 <PageLayout
-  title="Avenir Immobilier — Agence immobilière de prestige à Charleroi"
-  description="Vente, location et estimation de biens de caractère dans le Grand Charleroi."
+  title="Avenir Immobilier · Agence immobilière de prestige à Charleroi — Vente & estimation"
+  description="Avenir Immobilier accompagne la vente, l'achat et l'estimation de biens immobiliers d'exception à Charleroi : Loverval, Mont-sur-Marchienne, Montigny, Gerpinnes. Estimation gratuite en 2 minutes, un conseiller dédié, 98 % des biens vendus au prix estimé."
+  solid={false}
+  organizationLd={false}
 >
-  <!-- 1 · Hero (fond sombre) -->
-  <section class="sec--ink on-dark">
-    <div class="wrap py-24 md:py-32">
-      <div class="max-w-3xl">
-        <Eyebrow>Agence de prestige · Charleroi</Eyebrow>
-        <h1 class="display mt-4">L'immobilier d'exception, avec la rigueur d'un conseiller local.</h1>
-        <p class="lede mt-6 text-lg" style="color:rgba(255,255,255,.8);max-width:52ch">
-          Vente, location et estimation de biens de caractère dans le Grand Charleroi.
-          Un accompagnement sur mesure, du premier rendez-vous à l'acte.
-        </p>
-        <div class="flex gap-4 flex-wrap mt-8">
-          <a class="btn" href="/estimation">Estimer mon bien <span class="arr">→</span></a>
-          <a class="btn btn--ghost" href="/biens">Voir les biens</a>
+  {/* JSON-LD de page (RealEstateAgent complet + FAQPage) dans le head, via le
+     slot relayé par PageLayout ; organizationLd={false} coupe le bloc minimal
+     du BaseLayout pour n'avoir qu'un seul RealEstateAgent. */}
+  <Fragment slot="head">
+    <script type="application/ld+json" is:inline set:html={jsonLd(agentLd)} />
+    <script type="application/ld+json" is:inline set:html={jsonLd(faqLd)} />
+  </Fragment>
+
+  <!-- ===================== 1 · HÉROS ===================== -->
+  <section class="hero hero--media" id="accueil">
+    <div class="hero-bg">
+      <!-- Pour une vidéo de fond, remplacer .hero-bg-media par :
+           <video class="hero-bg-media" autoplay muted loop playsinline poster="hero-poster.jpg">
+             <source src="hero.mp4" type="video/mp4" />
+           </video> -->
+      <div class="hero-bg-media" role="img" aria-label="Vidéo ou image d'arrière-plan à intégrer"></div>
+      <div class="hero-overlay"></div>
+      <span class="hero-bg-note"><span class="play">▶</span> Vidéo / image plein écran — façade · vue drone · art de vivre</span>
+    </div>
+    <div class="wrap hero-inner">
+      <Eyebrow>Agence de prestige à Charleroi · Depuis 1992</Eyebrow>
+      <h1>L'immobilier de prestige,<br /><em>en plus simple</em>.</h1>
+      <p class="lede">Depuis plus de 30 ans, Avenir Immobilier accompagne la vente, l'achat et l'estimation de biens d'exception à Charleroi et dans sa région — un seul interlocuteur, du premier rendez-vous à la signature.</p>
+      <div class="hero-search" aria-label="Estimer, acheter ou louer un bien">
+        <div class="hs-stack">
+          <div class="hs-tabs" role="tablist">
+            <button class="hs-tab on" type="button" data-mode="estimer" role="tab" aria-selected="true">Estimer<span class="hs-badge">Gratuit</span></button>
+            <button class="hs-tab" type="button" data-mode="acheter" role="tab" aria-selected="false">Acheter</button>
+            <button class="hs-tab" type="button" data-mode="louer" role="tab" aria-selected="false">Louer</button>
+          </div>
+          <form class="hs-bar" id="heroSearch">
+            <div class="hs-row" id="hsEstimerRow">
+              <label class="hs-field">
+                <span class="hs-flabel">Localité du bien</span>
+                <input id="hsEstLoc" placeholder="Où se trouve le bien ?" />
+              </label>
+              <button type="submit" class="hs-go" data-go="estimation">Estimer <span class="arr">→</span></button>
+            </div>
+            <div class="hs-row" id="hsSearchRow" hidden>
+              <label class="hs-field">
+                <span class="hs-flabel">Localité</span>
+                <input id="hsLoc" placeholder="Où souhaitez-vous acheter ?" />
+              </label>
+              <div class="hs-field hs-field--dd" data-name="type">
+                <span class="hs-flabel">Type de bien</span>
+                <button type="button" class="hs-dd-btn" aria-haspopup="listbox" aria-expanded="false"><span class="hs-dd-val is-placeholder">Quel type de bien ?</span></button>
+                <ul class="hs-dd-menu" role="listbox" aria-label="Type de bien">
+                  <li class="hs-dd-opt" role="option" data-v="Maison">Maison</li>
+                  <li class="hs-dd-opt" role="option" data-v="Appartement">Appartement</li>
+                  <li class="hs-dd-opt" role="option" data-v="Villa">Villa</li>
+                  <li class="hs-dd-opt" role="option" data-v="Terrain à bâtir">Terrain à bâtir</li>
+                  <li class="hs-dd-opt" role="option" data-v="Immeuble">Immeuble</li>
+                </ul>
+              </div>
+              <div class="hs-field hs-field--dd" data-name="budget">
+                <span class="hs-flabel">Budget</span>
+                <button type="button" class="hs-dd-btn" aria-haspopup="listbox" aria-expanded="false"><span class="hs-dd-val is-placeholder">Quel budget ?</span></button>
+                <ul class="hs-dd-menu" role="listbox" aria-label="Budget">
+                  <li class="hs-dd-opt" role="option" data-v="≤ 500 000 €">≤ 500 000 €</li>
+                  <li class="hs-dd-opt" role="option" data-v="500 000 – 1 M€">500 000 – 1 M€</li>
+                  <li class="hs-dd-opt" role="option" data-v="1 – 2 M€">1 – 2 M€</li>
+                  <li class="hs-dd-opt" role="option" data-v="2 M€ et +">2 M€ et +</li>
+                </ul>
+              </div>
+              <button type="submit" class="hs-go" data-go="biens"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.2-4.2"></path></svg> Chercher</button>
+            </div>
+          </form>
+        </div>
+        <a href="#estimation" class="hs-locate" id="hsLocate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z"></path><circle cx="12" cy="11" r="2"></circle></svg> Utiliser ma localisation actuelle</a>
+      </div>
+      <div class="hero-trust">
+        <span class="stars">★★★★★</span>
+        <span><strong>4,8/5</strong> — 190 avis vérifiés de vendeurs &amp; acquéreurs accompagnés</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 2 · PREUVES (pictogrammes) ===================== -->
+  <section class="proofs sec--white" id="preuves">
+    <div class="wrap">
+      <div class="reveal">
+        <SectionHead eyebrow="Nos résultats" title="Quatre raisons de nous confier votre bien" />
+      </div>
+      <div class="proof-grid">
+        <div class="proof reveal">
+          <img class="proof-ic proof-ic--wide" src="/assets/picto-25-ans.png" alt="25 ans d'expérience" width="960" height="745" loading="lazy" />
+          <h3>25 ans d'expérience</h3>
+          <p class="proof-fig">Depuis 1992 à Charleroi</p>
+          <p>Depuis 1992, nous accompagnons vendeurs et acquéreurs à Charleroi et dans sa région. Une connaissance fine du marché local qui permet d'anticiper, de conseiller juste et de mettre rapidement les bons acquéreurs face aux bons biens.</p>
+        </div>
+        <div class="proof reveal d1">
+          <img class="proof-ic" src="/assets/picto-89-rapidite.png" alt="89 % de nos biens vendus en moins d'un mois" width="819" height="1400" loading="lazy" />
+          <h3>Vendre plus rapidement</h3>
+          <p class="proof-fig">89 % vendus en moins d'un mois</p>
+          <p>Un fichier d'acquéreurs qualifiés et une stratégie de commercialisation préparée en amont donnent au bien sa visibilité maximale dès la mise en vente — sans brader le délai contre la qualité de la transaction.</p>
+        </div>
+        <div class="proof reveal d2">
+          <img class="proof-ic" src="/assets/picto-87-valorisation.png" alt="87 % de nos biens vendus plus haut que les prix affichés" width="966" height="1428" loading="lazy" />
+          <h3>Obtenir la meilleure valorisation</h3>
+          <p class="proof-fig">87 % vendus au-dessus du prix affiché</p>
+          <p>Vendre ne consiste pas à trouver un acquéreur, mais à vendre dans les meilleures conditions et au meilleur prix. Notre rôle est de défendre vos intérêts jusqu'au dernier euro de la négociation.</p>
+        </div>
+        <div class="proof reveal d3">
+          <img class="proof-ic" src="/assets/picto-0-litige.png" alt="Zéro litige judiciaire" width="781" height="1228" loading="lazy" />
+          <h3>Vendre sans mauvaise surprise</h3>
+          <p class="proof-fig">0 litige judiciaire</p>
+          <p>Dossiers d'acquéreurs vérifiés, documents analysés en amont, offres sécurisées : de l'estimation à l'acte, nous prenons en charge l'ensemble des démarches et assurons un suivi complet du dossier.</p>
+        </div>
+      </div>
+      <p class="sell-src reveal text-center">{SOURCE_MAQUETTE}</p>
+    </div>
+  </section>
+
+  <!-- ===================== 3 · SERVICES ===================== -->
+  <section class="services" id="vendre">
+    <div class="wrap">
+      <div class="reveal">
+        <SectionHead eyebrow="Un accompagnement sur-mesure" title="Quatre métiers, une exigence">
+          Que vous vendiez l'appartement d'une vie ou cherchiez la maison des trente prochaines années, vous parlez à une équipe — jamais à un standard.
+        </SectionHead>
+      </div>
+      <div class="serv-grid">
+        <div class="serv reveal"><div class="s-no">01</div><h3>Vendre</h3><p>Estimation juste, mise en scène, photographie professionnelle et diffusion ciblée auprès d'acquéreurs qualifiés.</p><a href="#estimation" class="link-arrow">Vendre avec Avenir →</a></div>
+        <div class="serv reveal d1"><div class="s-no">02</div><h3>Acheter</h3><p>Un chasseur dédié, l'accès aux biens off-market et une négociation menée dans votre seul intérêt.</p><a href="#contact" class="link-arrow">Trouver mon bien →</a></div>
+        <div class="serv reveal d2"><div class="s-no">03</div><h3>Estimer</h3><p>Une valeur de marché fiable en deux minutes en ligne, affinée par la visite d'un expert local.</p><a href="#estimation" class="link-arrow">Estimer gratuitement →</a></div>
+        <div class="serv reveal d3"><div class="s-no">04</div><h3>Gérer</h3><p>Gestion locative haut de gamme : sélection des locataires, suivi technique et reporting clair.</p><a href="#contact" class="link-arrow">Confier mon bien →</a></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 4 · BIENS ===================== -->
+  <section class="sec--white" id="biens">
+    <div class="wrap">
+      <div class="props-head reveal">
+        <SectionHead eyebrow="Sélection du moment" title="Nos biens d'exception" />
+        <div class="props-tools">
+          <div class="filters" id="filters" role="tablist" aria-label="Filtrer les biens">
+            <button class="on" data-f="all">Tous</button>
+            <button data-f="vente">À vendre</button>
+            <button data-f="location">À louer</button>
+            <button data-f="vendu">Vendu</button>
+          </div>
+          <span class="props-page" id="propPage" aria-live="polite">1 / 2</span>
+        </div>
+      </div>
+
+      <form class="hero-search hero-search--inline reveal" id="propSearch" aria-label="Rechercher un bien à acheter ou à louer">
+        <div class="hs-stack">
+          <div class="hs-tabs" role="tablist" aria-label="Acheter ou louer">
+            <button class="hs-tab on" type="button" data-pmode="acheter" role="tab" aria-selected="true">Acheter</button>
+            <button class="hs-tab" type="button" data-pmode="louer" role="tab" aria-selected="false">Louer</button>
+          </div>
+          <div class="hs-bar">
+            <div class="hs-row">
+              <label class="hs-field">
+                <span class="hs-flabel">Localité</span>
+                <input id="psLoc" placeholder="Où souhaitez-vous acheter ?" />
+              </label>
+              <div class="hs-field hs-field--dd" data-name="type">
+                <span class="hs-flabel">Type de bien</span>
+                <button type="button" class="hs-dd-btn" aria-haspopup="listbox" aria-expanded="false"><span class="hs-dd-val is-placeholder">Quel type de bien ?</span></button>
+                <ul class="hs-dd-menu" role="listbox" aria-label="Type de bien">
+                  <li class="hs-dd-opt" role="option" data-v="Maison">Maison</li>
+                  <li class="hs-dd-opt" role="option" data-v="Appartement">Appartement</li>
+                  <li class="hs-dd-opt" role="option" data-v="Villa">Villa</li>
+                  <li class="hs-dd-opt" role="option" data-v="Terrain à bâtir">Terrain à bâtir</li>
+                  <li class="hs-dd-opt" role="option" data-v="Immeuble">Immeuble</li>
+                </ul>
+              </div>
+              <div class="hs-field hs-field--dd" data-name="budget">
+                <span class="hs-flabel" id="psBudgetLabel">Budget</span>
+                <button type="button" class="hs-dd-btn" aria-haspopup="listbox" aria-expanded="false"><span class="hs-dd-val is-placeholder">Quel budget ?</span></button>
+                <ul class="hs-dd-menu" role="listbox" aria-label="Budget">
+                  <li class="hs-dd-opt" role="option" data-v="≤ 500 000 €">≤ 500 000 €</li>
+                  <li class="hs-dd-opt" role="option" data-v="500 000 – 1 M€">500 000 – 1 M€</li>
+                  <li class="hs-dd-opt" role="option" data-v="1 – 2 M€">1 – 2 M€</li>
+                  <li class="hs-dd-opt" role="option" data-v="2 M€ et +">2 M€ et +</li>
+                </ul>
+              </div>
+              <button type="submit" class="hs-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.2-4.2"></path></svg> Chercher</button>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <div class="prop-stage">
+        <button class="team-arrow prop-nav prop-nav--prev" id="propPrev" type="button" aria-label="Biens précédents">←</button>
+        <button class="team-arrow prop-nav prop-nav--next" id="propNext" type="button" aria-label="Biens suivants">→</button>
+        <div class="prop-grid" id="propGrid">
+          {selection.map((b, i) => (
+            <PropertyCard
+              variant={i === 0 ? "overlay" : undefined}
+              price={formatPrix(b.data.prix)}
+              suffix={b.data.transaction === "location" ? "/ mois" : undefined}
+              location={b.data.commune}
+              title={b.data.titre}
+              specs={specsDe(b)}
+              badge={badgeDe(b)?.label}
+              badgeVariant={badgeDe(b)?.variant}
+              tag={tagDe(b)}
+              peb={b.data.peb}
+              href={`/biens/${b.id}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* À REPRENDRE DANS LE DS — PropertyCard (port Astro) n'accepte ni
+          data-cat ni classes libres : le filtre #filters de ds-script.js lit
+          card.dataset.cat, et le scroll-reveal exige .reveal. Posés ici avant
+          le chargement de /ds-script.js (fin de body). */}
+      <script is:inline define:vars={{ cats }}>
+        document.querySelectorAll("#propGrid .card").forEach((c, i) => {
+          c.dataset.cat = cats[i] || "vente";
+          c.classList.add("reveal");
+          if (i % 3 === 1) c.classList.add("d1");
+          else if (i % 3 === 2) c.classList.add("d2");
+        });
+      </script>
+
+      <div class="props-foot reveal">
+        <a href="/biens" class="btn btn--ghost">Voir tous les biens ({biens.length}) <span class="arr">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 5 · MÉTHODE (aplat vert profond) ===================== -->
+  <section class="process process--light" id="process">
+    <div class="wrap proc-grid">
+      <div class="proc-side reveal">
+        <Eyebrow>La méthode Avenir Immobilier</Eyebrow>
+        <h2>Votre vente, en quatre temps</h2>
+        <p>Un processus lisible, des échéances claires, et un résultat : le juste prix, dans le bon délai.</p>
+        <div class="proc-stat">
+          <strong>38 jours</strong>
+          <span>délai moyen de vente constaté, contre ± 90 jours sur le marché</span>
+          <span class="sell-src">{SOURCE_MAQUETTE}</span>
+        </div>
+        <a href="#estimation" class="btn">Commencer par l'estimation <span class="arr">→</span></a>
+      </div>
+      <div class="proc-panel reveal d1">
+        <ol class="timeline">
+          <li class="tl-item reveal">
+            <div class="tl-head"><h3>Estimation</h3><span class="tl-when">Jour 0 → 48 h</span></div>
+            <p>Analyse du marché, visite sur place et fourchette de prix argumentée sous 48 h.</p>
+          </li>
+          <li class="tl-item reveal d1">
+            <div class="tl-head"><h3>Mise en valeur</h3><span class="tl-when">Semaine 1</span></div>
+            <p>Préparation du bien, shooting professionnel et rédaction d'une annonce qui raconte.</p>
+          </li>
+          <li class="tl-item reveal d2">
+            <div class="tl-head"><h3>Diffusion</h3><span class="tl-when">Semaines 2 à 5</span></div>
+            <p>Lancement ciblé, off-market puis portails premium. Visites filtrées et qualifiées.</p>
+          </li>
+          <li class="tl-item reveal d3">
+            <div class="tl-head"><h3>Signature</h3><span class="tl-when">± Jour 38</span></div>
+            <p>Négociation, accompagnement notarial et suivi jusqu'à la remise des clés.</p>
+          </li>
+          <li class="tl-end reveal d3"><span>Jour 38 · Remise des clés</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 6 · ESTIMATION (zone encre) ===================== -->
+  <section class="estimate" id="estimation">
+    <div class="wrap est-grid">
+      <div class="est-copy reveal">
+        <Eyebrow>Estimation gratuite</Eyebrow>
+        <h2>Combien vaut votre bien&nbsp;?</h2>
+        <p class="lede">Obtenez une première fourchette de prix en deux minutes. Sans engagement, sans démarchage — juste une estimation honnête fondée sur les ventes réelles de votre quartier.</p>
+        <ul class="est-points">
+          <li><span class="tick">✓</span> Réponse immédiate, affinée par un expert local</li>
+          <li><span class="tick">✓</span> Basée sur les transactions récentes comparables</li>
+          <li><span class="tick">✓</span> 100 % gratuit et confidentiel</li>
+        </ul>
+        <p style="font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:30px">Vos biens diffusés sur Immoweb · Logic-Immo · Zimmo · Realo</p>
+      </div>
+
+      <div class="est-card reveal d1">
+        <form id="estForm" novalidate>
+          <div class="ec-head">
+            <span class="ec-step" id="ecStep">Étape 1 / 3</span>
+            <span class="ec-step" style="color:var(--green)">≈ 2 min</span>
+          </div>
+          <div class="ec-progress" id="ecProgress"><span class="on"></span><span></span><span></span></div>
+
+          <div class="est-step on" data-step="1">
+            <h3>Votre bien</h3>
+            <div class="field">
+              <label>Type de bien</label>
+              <div class="choice-row" id="typeChoice">
+                <div class="choice on" data-v="Maison">Maison</div>
+                <div class="choice" data-v="Appartement">Appartement</div>
+                <div class="choice" data-v="Villa">Villa</div>
+                <div class="choice" data-v="Terrain">Terrain / autre</div>
+              </div>
+            </div>
+            <div class="field">
+              <label for="cp">Code postal</label>
+              <input id="cp" name="cp" inputmode="numeric" placeholder="6000" maxlength="4" />
+            </div>
+            <div class="est-actions"><button type="button" class="btn btn--block" data-next>Continuer <span class="arr">→</span></button></div>
+          </div>
+
+          <div class="est-step" data-step="2">
+            <h3>Quelques détails</h3>
+            <div class="field">
+              <label for="surf">Surface habitable (m²)</label>
+              <input id="surf" name="surf" inputmode="numeric" placeholder="220" />
+            </div>
+            <div class="field">
+              <label for="rooms">Nombre de chambres</label>
+              <select id="rooms" name="rooms">
+                <option value="">Sélectionner…</option>
+                <option>1 à 2</option><option>3 à 4</option><option>5 et plus</option>
+              </select>
+            </div>
+            <div class="est-actions">
+              <button type="button" class="est-back" data-back>← Retour</button>
+              <button type="button" class="btn btn--block" data-next>Continuer <span class="arr">→</span></button>
+            </div>
+          </div>
+
+          <div class="est-step" data-step="3">
+            <h3>Votre fourchette de prix</h3>
+            <div class="field">
+              <label for="name">Nom</label>
+              <input id="name" name="name" placeholder="Votre nom" />
+            </div>
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" placeholder="vous@email.be" />
+            </div>
+            <div class="field">
+              <label for="phone">Téléphone <span style="font-weight:400;color:var(--ink-mute)">— pour le rappel sous 24 h</span></label>
+              <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="0470 12 34 56" />
+            </div>
+            <div class="est-actions">
+              <button type="button" class="est-back" data-back>← Retour</button>
+              <button type="submit" class="btn btn--block">Voir ma fourchette de prix <span class="arr">→</span></button>
+            </div>
+            <p class="est-fineprint">En soumettant ce formulaire, vous acceptez d'être recontacté par Avenir Immobilier. Vos données ne sont jamais cédées à des tiers.</p>
+          </div>
+
+          <div class="est-step est-done" data-step="done">
+            <p class="ed-label">Fourchette indicative pour votre bien</p>
+            <div class="ed-range" id="edRange">—</div>
+            <div class="ed-divider"><span>estimation en ligne</span></div>
+            <h3 class="serif">Un conseiller vous rappelle sous 24&nbsp;h</h3>
+            <p>Cette première fourchette est affinée gratuitement par la visite d'un expert local de votre commune — sans engagement.</p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 7 · APPROCHE ===================== -->
+  <section class="sec--white" id="approche">
+    <div class="wrap approach-grid">
+      <div class="approach-media reveal">
+        <div class="ph"><span class="ph-tag">Portrait · Conseiller Avenir Immobilier en rendez-vous</span></div>
+        <div class="ph tall2"><span class="ph-tag">Détail · Intérieur</span></div>
+      </div>
+      <div class="approach-copy reveal d1">
+        <Eyebrow>L'agence</Eyebrow>
+        <h2>Le sur-mesure, pas la série.</h2>
+        <p class="lede">Nous prenons peu de mandats, pour les mener pleinement. Chaque bien reçoit une stratégie qui lui est propre — du choix des mots à l'heure de la première visite.</p>
+        <div class="checks">
+          <div class="check"><span class="ck">01</span><div><h4>Un seul interlocuteur</h4><p>Le conseiller qui estime votre bien est celui qui fait visiter et négocie. Aucune perte d'information.</p></div></div>
+          <div class="check"><span class="ck">02</span><div><h4>Une mise en valeur signée</h4><p>Home-staging, photographie, plans 3D et reportage vidéo réalisés par nos partenaires de métier.</p></div></div>
+          <div class="check"><span class="ck">03</span><div><h4>Un réseau d'acquéreurs réels</h4><p>Un fichier qualifié d'acheteurs et d'investisseurs prêts à se positionner, en Belgique et à l'international.</p></div></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 2 · Biens à la une (fond blanc) -->
-  <section class="sec--white">
-    <div class="wrap py-20 md:py-28">
-      <div class="section-head">
-        <Eyebrow>Sélection du moment</Eyebrow>
-        <h2>Biens à la une</h2>
-        <p>Une sélection de biens de caractère, choisis pour leur emplacement et leur qualité.</p>
+  <!-- ===================== 8 · ÉQUIPE ===================== -->
+  <section class="team" id="equipe">
+    <div class="wrap">
+      <div class="team-head reveal">
+        <SectionHead eyebrow="L'équipe" title="Des visages, pas un standard" />
+        <div class="team-ctrl">
+          <button class="team-arrow" id="teamPrev" aria-label="Membre précédent">←</button>
+          <button class="team-arrow" id="teamNext" aria-label="Membre suivant">→</button>
+        </div>
       </div>
-      <div class="grid gap-5 md:grid-cols-3 mt-10">
-        <PropertyCard
-          price="745 000 €"
-          location="Gerpinnes"
-          title="Villa d'architecte, lisière de bois"
-          specs={["5 chambres", "420 m²", "Piscine"]}
-          badge="Nouveau"
-          badgeVariant="new"
-          tag="Villa contemporaine — Gerpinnes"
-        />
-        <PropertyCard
-          price="395 000 €"
-          location="Loverval"
-          title="Maison de maître Belle Époque"
-          specs={["4 chambres", "260 m²", "Jardin"]}
-          tag="Maison de maître — Loverval"
-        />
-        <PropertyCard
-          price="1 450 €"
-          suffix="/ mois"
-          location="Charleroi"
-          title="Loft d'angle sur cour pavée"
-          specs={["2 chambres", "140 m²"]}
-          badge="Sous offre"
-          tag="Loft d'angle — Charleroi"
-        />
+      <p class="team-intro reveal">Une équipe à taille humaine, profondément ancrée à Charleroi. Chaque conseiller connaît ses quartiers, ses acquéreurs et vos attentes.</p>
+      <div class="team-carousel reveal">
+        <div class="team-track" id="teamTrack">
+          {equipe.map((e) => (
+            <a class="member" href={`/equipe/${e.id}`}>
+              <div class="member-photo">
+                <div class="ph"><img src={photoDe(e.id)} alt={`Portrait de ${e.data.nom}`} loading="lazy" /></div>
+                <span class="member-go">Voir le profil <span class="arr">→</span></span>
+              </div>
+              <div class="member-body">
+                <div class="mn">{e.data.nom}</div>
+                <div class="mr">{e.data.fonction}</div>
+              </div>
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- 3 · Vendre ici (fond vert tendre — section auto-stylée) -->
-  <SellHere
-    eyebrow="Vous vendez"
-    title="Votre bien mérite une estimation juste"
-    lede="Gratuite, sans engagement, réalisée par un conseiller qui connaît votre commune."
-    headline="34"
-    headlineLabel="jours — délai médian avant compromis"
-    rows={[
-      { label: "Prix médian maison", value: "345 000 €" },
-      { label: "Biens vendus en 2025", value: "41" },
-    ]}
-    source="Données internes Avenir · au 31 août 2026"
-  />
-
-  <!-- 4 · Confiance (fond blanc — section auto-stylée) -->
+  <!-- ===================== 9 · CONFIANCE / AVIS ===================== -->
   <TrustSection
+    id="avis"
+    eyebrow="Ils nous font confiance"
+    intro="Des avis Google vérifiés de vendeurs et d'acquéreurs de Charleroi et sa région. Pas de mise en scène — juste des ventes réussies."
+    rating="4,8"
+    count={190}
+    source="Avis Google"
+    google
     distribution={[
-      { stars: 5, count: 112 },
-      { stars: 4, count: 11 },
-      { stars: 3, count: 3 },
+      { stars: 5, count: 167 },
+      { stars: 4, count: 16 },
+      { stars: 3, count: 5 },
       { stars: 2, count: 1 },
-      { stars: 1, count: 0 },
+      { stars: 1, count: 1 },
     ]}
+    ctaHref={GOOGLE_URL}
+    writeHref={GOOGLE_URL}
+    reviews={reviews}
+    showFigures={false}
   />
 
-  <!-- 5 · Blog (fond vert tendre) -->
-  <section class="sec--tint">
-    <div class="wrap py-20 md:py-28">
-      <div class="section-head">
-        <Eyebrow>À lire</Eyebrow>
-        <h2>Comprendre le marché</h2>
-        <p>Analyses de marché, fiscalité et conseils, par nos conseillers.</p>
+  <!-- ===================== 10 · QUARTIERS (aplat vert profond, local SEO) ===================== -->
+  <section id="quartiers">
+    <div class="wrap">
+      <div class="reveal">
+        <SectionHead eyebrow="Ancrage local" title="Nos quartiers">
+          Une connaissance fine de nos communes : prix au m², écoles, transports, l'âme de chaque rue.
+        </SectionHead>
       </div>
-      <div class="grid gap-4 md:grid-cols-3 mt-10">
-        <ArticleCard
-          variant="compact"
-          category="Marché"
-          meta="14 septembre 2026 · 6 min"
-          title="Prix de l'immobilier à Charleroi : ce que révèle la rentrée 2026"
-          author={{ name: "Camille Renard" }}
-        />
-        <ArticleCard
-          variant="compact"
-          category="Fiscalité"
-          meta="4 min"
-          title="Droits d'enregistrement en Wallonie : ce qui change en 2027"
-          author={{ name: "Marc Lambert" }}
-        />
-        <ArticleCard
-          variant="compact"
-          category="Conseil"
-          meta="7 min"
-          title="Estimer son bien sans se tromper : la méthode en cinq étapes"
-          author={{ name: "Anne Vandeputte" }}
-        />
+      <div class="hoods-grid">
+        {hoods.map((h, i) => (
+          <a href={h.href} class={`hood reveal${i % 4 === 1 ? " d1" : i % 4 === 2 ? " d2" : i % 4 === 3 ? " d3" : ""}`}>
+            <div class="ph"><span class="ph-tag">{h.commune}</span></div>
+            <span class="hood-arrow">↗</span>
+            <div class="hood-cap">
+              <div class="hn">{h.commune}</div>
+              <div class="hc">{h.label} · {h.count} {h.count > 1 ? "biens" : "bien"}</div>
+            </div>
+          </a>
+        ))}
       </div>
     </div>
   </section>
 
-  <!-- 6 · Contact (fond encre — île, section auto-stylée) -->
-  <ContactForm
-    client:visible
-    tone="ink"
-    coordinates={[
-      { label: "Téléphone", value: "+32 71 32 14 70", href: "tel:+3271321470" },
-      { label: "E-mail", value: "bonjour@avenir-immobilier.be", href: "mailto:bonjour@avenir-immobilier.be" },
-      { label: "Agence", value: "Rue Saint-Gilles 118 · 6000 Charleroi" },
-    ]}
-  />
+  <!-- ===================== 11 · BLOG ===================== -->
+  <section class="blog" id="blog">
+    <div class="wrap">
+      <div class="props-head reveal">
+        <SectionHead eyebrow="Le journal Avenir Immobilier" title="Conseils & marché" />
+        <a href="/blog" class="link-arrow">Tous les articles →</a>
+      </div>
+      <div class="blog-grid">
+        {posts.map((p, i) => (
+          <article class={`post reveal${i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : ""}`}>
+            <div class="post-media">
+              {p.data.categorie && <span class="post-cat">{p.data.categorie}</span>}
+              <div class="ph"><span class="ph-tag">Article · {p.data.categorie ?? "Journal"}</span></div>
+            </div>
+            <div class="post-body">
+              <div class="post-meta">{formatDate(p.data.datePublication)}{p.data.tempsLecture ? ` · ${p.data.tempsLecture} min` : ""}</div>
+              <h3><a href={`/blog/${p.id}`}>{p.data.titre}</a></h3>
+              <p>{p.data.description}</p>
+              <span class="link-arrow">Lire l'article →</span>
+            </div>
+          </article>
+        ))}
+      </div>
+      <div class="blog-foot reveal">
+        <a href="/blog" class="btn btn--ghost">Voir tous les articles <span class="arr">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 12 · FAQ ===================== -->
+  <section class="faq" id="faq">
+    <div class="wrap faq-grid">
+      <div class="reveal">
+        <Eyebrow>Questions fréquentes</Eyebrow>
+        <h2 class="serif" style="font-size:clamp(32px,4.4vw,52px);margin-top:22px">Tout, clairement.</h2>
+        <div class="faq-aside" style="margin-top:34px">
+          <h3>Une question précise&nbsp;?</h3>
+          <p>Parlez directement à un conseiller. Réponse le jour même, sans engagement.</p>
+          <a href="#contact" class="btn">Nous contacter <span class="arr">→</span></a>
+        </div>
+      </div>
+      <Faq client:visible items={faqItems} structuredData={false} className="reveal d1" />
+    </div>
+  </section>
+
+  <!-- ===================== 13 · CTA FINAL (chevauche le pied) ===================== -->
+  <FinalCta
+    id="contact"
+    variant="photo"
+    photo={{
+      src: "/assets/conseiller-cta.png",
+      alt: "Conseiller Avenir Immobilier vous invitant à prendre contact",
+      width: 917,
+      height: 1000,
+    }}
+  >
+    <span class="eyebrow reveal">Parlons de votre projet</span>
+    <h2 class="reveal d1">Et si on commençait<br />par <em>un café</em>&nbsp;?</h2>
+    <p class="reveal d2">Vente, achat ou simple curiosité sur la valeur de votre bien : le premier échange est toujours offert, et sans engagement.</p>
+    <div class="fc-actions reveal d2">
+      <a href="#estimation" class="btn">Estimer mon bien <span class="arr">→</span></a>
+      <a href="tel:+3271321470" class="btn fc-btn-line">+32 71 32 14 70</a>
+    </div>
+  </FinalCta>
+
+  {/* À REPRENDRE DANS LE DS — script.js code en dur `window.location.href =
+      "biens.html"` au submit de #propSearch (la saisie est jetée) et se
+      contente de défiler pour #heroSearch en mode Acheter/Louer. Interception
+      en PHASE DE CAPTURE (ce script précède /ds-script.js en fin de body) pour
+      transmettre la saisie vers /biens selon le contrat d'URL du README :
+      ?cat=vente|location&loc=<slug>&type=<slug> (+ budget, conservé).
+      Le mode Estimer du héros garde le comportement DS (défilement vers
+      #estimation, le formulaire trois étapes prend le relais). */}
+  <script is:inline>
+    (function () {
+      var slug = function (s) {
+        return String(s || "")
+          .normalize("NFD")
+          .replace(/[̀-ͯ]/g, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+      };
+      var TYPES = { maison: "maison", appartement: "appartement", villa: "villa", "terrain-a-batir": "terrain", immeuble: "immeuble" };
+      document.addEventListener(
+        "submit",
+        function (e) {
+          var form = e.target;
+          if (!form || (form.id !== "propSearch" && form.id !== "heroSearch")) return;
+          var scope = form.id === "heroSearch" ? form.closest(".hero-search") : form;
+          var tab = scope.querySelector(".hs-tab.on");
+          var mode = tab ? tab.dataset.pmode || tab.dataset.mode : "acheter";
+          if (mode === "estimer") return; /* comportement DS conservé */
+          e.preventDefault();
+          e.stopPropagation();
+          var p = new URLSearchParams();
+          p.set("cat", mode === "louer" ? "location" : "vente");
+          var locInput = form.querySelector(form.id === "heroSearch" ? "#hsLoc" : "#psLoc");
+          if (locInput && locInput.value.trim()) p.set("loc", slug(locInput.value));
+          var typeDd = form.querySelector('.hs-field--dd[data-name="type"]');
+          if (typeDd && typeDd.dataset.value) {
+            var t = slug(typeDd.dataset.value);
+            p.set("type", TYPES[t] || t);
+          }
+          var budgetDd = form.querySelector('.hs-field--dd[data-name="budget"]');
+          if (budgetDd && budgetDd.dataset.value) p.set("budget", budgetDd.dataset.value);
+          window.location.assign("/biens?" + p.toString());
+        },
+        true
+      );
+    })();
+  </script>
 </PageLayout>
