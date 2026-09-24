@@ -1,0 +1,46 @@
+---
+/**
+ * Steps — variante « cartes » du process (.steps / .step / .st-no), par
+ * opposition à la frise verticale .timeline de l'accueil.
+ *
+ * Port statique : la classe DS porte tout le style (fond blanc bordé,
+ * pastille verte derrière le numéro, hover). `cols={3}` reprend la grille
+ * 3 colonnes que la référence (estimation.html) posait en style inline sur
+ * .steps — voir le <style> scopé ci-dessous.
+ */
+interface StepItem {
+  /** Numéro affiché (« 01 »). */
+  no: string;
+  title: string;
+  text: string;
+}
+interface Props {
+  items: StepItem[];
+  /** 4 (défaut du DS) ou 3 colonnes (page estimation). */
+  cols?: 3 | 4;
+}
+const { items, cols = 4 } = Astro.props;
+/* Décalages du scroll-reveal, comme la référence (.step reveal / d1 / d2). */
+const delay = (i: number) => (i % 4 === 1 ? " d1" : i % 4 === 2 ? " d2" : i % 4 === 3 ? " d3" : "");
+---
+
+<div class={`steps${cols === 3 ? " steps--3" : ""}`}>
+  {items.map((s, i) => (
+    <div class={`step reveal${delay(i)}`}>
+      <div class="st-no">{s.no}</div>
+      <h3>{s.title}</h3>
+      <p>{s.text}</p>
+    </div>
+  ))}
+</div>
+
+<style>
+  /* Grille 3 colonnes : la référence la pose en style inline
+     (grid-template-columns:repeat(3,1fr)) — recopiée ici, valeur inchangée.
+     Les replis 820/480 px reprennent ceux de .steps (site/site.css) : le
+     sélecteur scopé est plus spécifique que .steps, il doit donc les
+     rejouer, sinon la grille resterait à 3 colonnes sur mobile. */
+  .steps--3 { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 820px) { .steps--3 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .steps--3 { grid-template-columns: 1fr; } }
+</style>

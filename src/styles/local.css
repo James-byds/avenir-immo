@@ -1449,3 +1449,23 @@ a[data-planned]:hover { border-style: dashed; }
 .q-scope-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-l); flex: none; }
 .q-empty { margin-top: 8px; padding: clamp(24px, 3vw, 36px); background: var(--bg-soft); border: 1px solid var(--line-2); border-radius: var(--r); }
 .q-empty p { font-family: var(--serif); font-stretch: var(--wide); font-weight: 600; font-size: clamp(18px, 2.2vw, 22px); color: var(--ink); max-width: 34ch; }
+
+
+/* ============================================================
+   À REPRENDRE DANS LE DS — gabarit estimation (24 sept. 2026)
+   ------------------------------------------------------------
+   · .estimate h1  la référence (estimation.html) n'a pas de H1 (trou de
+     hiérarchie) : son H2 « Combien vaut votre bien ? » devient le H1 de
+     /estimation — mêmes valeurs que .est-copy h2 (site/site.css l. 672,
+     et l. 1046 pour le repli du bloc @media 640 px) ;
+   · .estimate--page  sur /estimation la section encre suit directement le
+     fil d'Ariane (.page-head ferme à padding-bottom:0) : reprise en classe
+     du style="margin-top:clamp(24px,3vw,34px)" que la référence posait en
+     attribut style sur la section.
+   ============================================================ */
+.estimate h1 { font-size: clamp(34px, 5vw, 58px); margin-top: 18px; color: #fff; }
+@media (max-width: 640px){ .estimate h1 { font-size: clamp(30px, 9vw, 40px); } }
+.estimate--page { margin-top: clamp(24px, 3vw, 34px); }
+/* · .estimate h1 strong  la référence passe « votre bien » en jaune au poids
+     du titre (em inline) ; sans ceci le strong prend le bolder du preflight. */
+.estimate h1 strong { font-weight: inherit; }

@@ -1,4 +1,156 @@
 ---
-// Stub — page «Estimation». À implémenter (voir handoff / DEMARRAGE.md).
+/* Estimation — gabarit 07 (réf. docs/handoff/reference/estimation.html).
+   4 zones, alternance blanc → encre → blanc → tendre : fil d'Ariane
+   (.page-head, ferme à padding-bottom:0 dans le DS) → section encre
+   .estimate (H1 + formulaire 3 étapes, comportement dans ds-script.js) →
+   méthode .sec--white (.steps 3 cartes + bandeau d'avis) → FAQ .sec--tint.
+
+   La référence n'a pas de H1 (trou de hiérarchie) : son H2 « Combien vaut
+   votre bien ? » devient le H1 de la page (règle .estimate h1, local.css).
+
+   Copie reprise mot pour mot de la référence — aucun contenu de collection
+   (prompt du gabarit). 4,8/5 · 190 avis = chiffres externes Google, repris
+   tels quels (précédent accueil). */
+import PageLayout from "../layouts/PageLayout.astro";
+import PageHead from "../components/chrome/PageHead.astro";
+import Breadcrumb from "../components/core/Breadcrumb.astro";
+import Eyebrow from "../components/core/Eyebrow.astro";
+import SectionHead from "../components/core/SectionHead.astro";
+import EstimateForm from "../components/forms/EstimateForm.astro";
+import Steps from "../components/surfaces/Steps.astro";
+import TrustSection from "../components/surfaces/TrustSection.astro";
+import Faq from "../components/islands/Faq.tsx";
+import { faqPage, jsonLd } from "../lib/seo";
+
+/* ── Fil d'Ariane — sert le HTML ET le JSON-LD BreadcrumbList ── */
+const fil = [{ label: "Accueil", href: "/" }, { label: "Estimation gratuite" }];
+
+/* ── Méthode : les 3 cartes de la référence ── */
+const etapes = [
+  {
+    no: "01",
+    title: "En ligne, en 2 minutes",
+    text: "Vous décrivez votre bien, nous croisons avec les transactions comparables de votre quartier : première fourchette immédiate.",
+  },
+  {
+    no: "02",
+    title: "Visite d'un expert local",
+    text: "Un conseiller de votre commune visite le bien sous 48 h : état, orientation, atouts invisibles en ligne.",
+  },
+  {
+    no: "03",
+    title: "Prix argumenté par écrit",
+    text: "Vous recevez une valeur de marché documentée — comparables à l'appui — et une stratégie de vente, sans obligation.",
+  },
+];
+
+/* ── Bandeau d'avis : initiales SL / FL / CV de la référence — pas de
+   contenu de collection sur ce gabarit ; seule la première citation est
+   affichée par TrustSection variant="band". ── */
+const bandReviews = [
+  {
+    quote:
+      "Estimation juste et argumentée, sans nous survendre. On a senti une vraie connaissance du marché local.",
+    name: "S. L.",
+    place: "",
+  },
+  { quote: "", name: "F. L.", place: "" },
+  { quote: "", name: "C. V.", place: "" },
+];
+
+/* ── FAQ : copie de la référence (mot pour mot, insécables comprises) — le
+   JSON-LD FAQPage reprend EXACTEMENT ces chaînes ; l'île Faq reçoit
+   structuredData={false}. ── */
+const faqItems = [
+  {
+    q: "L'estimation est-elle vraiment gratuite ?",
+    a: "Oui, totalement gratuite et sans engagement — en ligne comme lors de la visite d'expert. Nos honoraires ne sont dus qu'en cas de vente effective, si vous nous la confiez.",
+  },
+  {
+    q: "La fourchette en ligne est-elle fiable ?",
+    a: "Elle donne un ordre de grandeur honnête, fondé sur les ventes récentes comparables de votre quartier. La visite d'expert l'affine ensuite : 98 % de nos biens se vendent au prix estimé.",
+  },
+  {
+    q: "Serai-je démarché après coup ?",
+    a: "Non. Un seul conseiller vous rappelle sous 24 h pour vous remettre l'estimation — vous décidez de la suite. Vos données ne sont jamais cédées à des tiers.",
+  },
+  {
+    q: "Et si je ne compte pas vendre tout de suite ?",
+    a: "Aucun problème : beaucoup de propriétaires estiment leur bien pour préparer une succession, un refinancement ou simplement suivre le marché. L'estimation reste gratuite.",
+  },
+];
+
+/* ── JSON-LD — émis depuis les mêmes données que le HTML affiché ── */
+const SITE = (Astro.site?.href ?? "https://www.lavenir-immobilier.be/").replace(/\/$/, "");
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: fil.map((it, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: it.label,
+    item: it.href ? `${SITE}${it.href}` : `${SITE}/estimation`,
+  })),
+};
+const faqLd = faqPage(faqItems.map(({ q, a }) => ({ question: q, reponse: a })));
 ---
-<p>Stub : Estimation</p>
+
+<PageLayout
+  title="Estimation gratuite de votre bien — en 2 minutes · Avenir Immobilier"
+  description="Estimez gratuitement votre maison, appartement ou villa à Charleroi et dans sa région : fourchette de prix immédiate en ligne, affinée sous 48 h par la visite d'un expert local. Sans engagement."
+  active="/estimation"
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" is:inline set:html={jsonLd(faqLd)} />
+    <script type="application/ld+json" is:inline set:html={jsonLd(breadcrumbLd)} />
+  </Fragment>
+
+  <!-- ============ 1 · FIL D'ARIANE (blanc, refermé à 0 par le DS) ============ -->
+  <PageHead>
+    <Breadcrumb slot="breadcrumb" items={fil} />
+  </PageHead>
+
+  <!-- ============ 2 · ESTIMATION (zone encre — H1 + formulaire 3 étapes) ============ -->
+  <section class="estimate estimate--page" id="estimation">
+    <div class="wrap est-grid">
+      <div class="est-copy reveal">
+        <Eyebrow>Estimation gratuite</Eyebrow>
+        <h1>Combien vaut <strong>votre bien</strong>&nbsp;?</h1>
+        <p class="lede">Une première fourchette de prix en deux minutes, fondée sur les ventes réelles de votre quartier. Sans engagement, sans démarchage.</p>
+        <ul class="est-points">
+          <li><span class="tick">✓</span> Réponse immédiate, affinée par un expert local</li>
+          <li><span class="tick">✓</span> Basée sur les transactions récentes comparables</li>
+          <li><span class="tick">✓</span> 100 % gratuit et confidentiel</li>
+        </ul>
+        <p style="font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:30px">98 % des biens vendus au prix estimé · 900+ ventes depuis 1992</p>
+      </div>
+      <EstimateForm level={2} />
+    </div>
+  </section>
+
+  <!-- ============ 3 · MÉTHODE (blanc — 3 cartes + bandeau d'avis) ============ -->
+  <section class="sec--white">
+    <div class="wrap">
+      <div class="reveal">
+        <SectionHead eyebrow="La méthode" title="De la fourchette en ligne au prix juste" />
+      </div>
+      <Steps cols={3} items={etapes} />
+      <div class="reveal" style="margin-top:clamp(28px,4vw,44px)">
+        <TrustSection variant="band" rating="4,8" count={190} source="Avis Google" reviews={bandReviews} />
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4 · FAQ (vert tendre — aside sans carte) ============ -->
+  <section class="sec--tint" id="faq">
+    <div class="wrap faq-grid">
+      <div class="reveal">
+        <Eyebrow>Questions fréquentes</Eyebrow>
+        <h2 style="margin-top:14px">Avant de vous lancer</h2>
+        <p style="color:var(--ink-soft);margin-top:14px">Une autre question&nbsp;? Le premier échange est toujours offert.</p>
+        <a href="tel:+3271321470" class="btn" style="margin-top:22px">+32 71 32 14 70 <span class="arr">→</span></a>
+      </div>
+      <Faq client:visible items={faqItems} structuredData={false} className="reveal d1" />
+    </div>
+  </section>
+</PageLayout>
