@@ -65,7 +65,7 @@ const gabarits: Gabarit[] = [
     routes: [{ label: "/biens/[slug]", href: "/biens/villa-architecte-gerpinnes", file: "../biens/[slug].astro",
       instances: biens.map((b) => ({ href: `/biens/${b.id}`, label: b.data.titre })) }] },
   { n: "04", nom: "Localités — hub", vague: "F4", refs: ["localites.html"],
-    routes: [{ label: "/communes", href: "/communes", file: "../communes/index.astro" }] },
+    routes: [{ label: "/communes", href: "/communes", file: "../communes.astro" }] },
   { n: "05", nom: "Localité", vague: "F4", refs: ["maison-a-vendre-liege.html", "appartement-a-louer-liege.html"],
     routes: [{ label: "/[type]-a-[transaction]-[commune]", href: "/maison-a-vendre-liege",
       file: "../[type]-a-[transaction]-[commune].astro",
