@@ -11,7 +11,7 @@
 | F2 | `01-accueil` — page témoin, recette à 100 % avant toute vague | ✅ terminé le 24 sept. 2026 (commit `c37e852`, recette conforme) |
 | F3 | Vague A : `02-biens-liste` · `03-bien-fiche` · `07-estimation` (3 gabarits en parallèle) | ✅ terminé le 24 sept. 2026 (commits `ef993fa` → `a3736d8`, recettes conformes) |
 | F4 | Vague B : `05-localite` puis `06-quartier` · `04-localites-hub` | ✅ terminé le 24 sept. 2026 (commits `fde39c7` → `85d9ce3`, recettes conformes) |
-| F5 | Vague C : `11-equipe` · `10-a-propos` · `08-contact` · `09-avis` (3 max puis le 4e) | ⬜ |
+| F5 | Vague C : `11-equipe` · `10-a-propos` · `08-contact` · `09-avis` (3 max puis le 4e) | ✅ terminé le 24 sept. 2026 (commits `62319f9` → `54c2505`, recettes conformes) |
 | F6 | Vague D : `12-blog` · `13-auteurs` · `14-legales` | ⬜ |
 | F7 | `99-recette` globale (+ suppression de `src/pages/test.astro`) | ⬜ |
 
@@ -66,14 +66,15 @@ Trois sous-agents en parallèle maximum.
 8. **`sousType` n'a pas « loft »** : le loft de Charleroi reste type=appartement sans
    sousType. À trancher si le gabarit biens-liste en a besoin pour un filtre.
 9. **`data-planned`** : retiré de `/communes` en F4 (SiteHeader, SiteFooter, widen de
-   `/biens`, fils d'Ariane des localités — hub livré). Reste `/a-propos` (SiteHeader,
-   gabarit 10) et les pilules de communes voisines du quartier Gerpinnes.
+   `/biens`, fils d'Ariane des localités — hub livré), puis de `/a-propos` en F5
+   (SiteHeader — page livrée). Restent les pilules de communes voisines du
+   quartier Gerpinnes.
 10. **Contrat JSON-LD des pages** : `PageLayout` relaie le slot `head` ; une page qui
     émet son propre `RealEstateAgent` complet passe `organizationLd={false}` (sinon
     doublon avec le bloc minimal du `BaseLayout`). La colonne Quartiers du footer =
     `combinaisons(biens)` ∩ `communes.combinaisons` (jamais de lien sans page).
 11. **Composants disponibles depuis F2** : `surfaces/FinalCta` (`variant: plain|photo|straddle`,
-    `tone: tint|deep` — `deep` réservé, non stylé) et `surfaces/TrustSection` (photos
+    `tone: tint|deep` — `deep` stylé en F5, `.finalcta--deep` dans `local.css`) et `surfaces/TrustSection` (photos
     d'avis `.t-imgs`/`.t-more`, logo Google) — à réutiliser en 08-contact et 09-avis.
     **Depuis F3** : `surfaces/Toolbar` (props `segments`/`groups`/`search`/`sort` —
     motif partagé avec les localités, cf. `.q-toolbar` de `local.css`),
@@ -89,6 +90,18 @@ Trois sous-agents en parallèle maximum.
     `numerote`), `surfaces/NeighbourPills`, `surfaces/MarketCard` (hub) ;
     `SellHere` a gagné une prop `id` ; `src/scripts/listing-filter.ts` =
     filtre/tri/pagination partagé entre `/biens` et les localités.
+    **Depuis F5** : `surfaces/MemberContactCard` (contrat `membre` +
+    pass-through `class` — carte `.member--contact` autonome, `.m-id`/`.m-facts`
+    avec IPI en dernier, voile « Profil », liens frères), `surfaces/Commitments`
+    (`.about-dl`), `surfaces/CaseCard`, `surfaces/ContactRows` (`.c-*`),
+    `surfaces/ReviewCard` (`.t-card` + `--hl`, photos `.t-photos`),
+    `surfaces/ReviewWall` (`.av-*`, `.wall*`, lightbox vanilla) ; `MemberHero`
+    enrichi (`photo`, `source`, marqueur bio en `.mh-bio-note`) ; `AgencyCard`
+    paramétrable (rows `href`, `tag`+`open` cumulés, `directionsPrimary`/
+    `phoneLabel`/`directionsArrow`, `target/rel` sur lien externe) ;
+    `ContactForm` (ids `useId`/`htmlFor`, `consentHref`, en-tête de carte
+    opt-in en ton encre) ; `TrustSection` prop `countHref` (« Lire les
+    {count} avis → » — bandes localité).
 12. **À reprendre dans le DS (relevé F2)** : redirection `biens.html` de `ds-script.js` ;
     `PropertyCard` sans passe-through `class`/`data-cat`, sans prop de ratio, kWh PEB
     non affiché (l'accueil pose `data-cat` + `reveal` par script local) ; `local.css`
@@ -107,7 +120,7 @@ Trois sous-agents en parallèle maximum.
     `.estimate h1`/`.estimate--page`/`.estimate h1 strong`.
     **Relevé F4 (vague B)** : `TrustSection` — le `t-count` du variant band est un
     texte (« 190 avis vérifiés ») là où la maquette met un lien « Lire les avis »
-    (à restaurer quand le gabarit 09 livre `/avis`), et pas de slot de titre riche
+    (**soldé en F5** : prop `countHref`), et pas de slot de titre riche
     (`<em class="t-hl">` impossible) — le trust du quartier reste en classes DS,
     même précédent que `/biens` ; `FinalCta` sans variante encre
     (`.finalcta.sec--ink` recopié dans `local.css`) ; `MapLeaflet` mono-marqueur —
@@ -115,6 +128,24 @@ Trois sous-agents en parallèle maximum.
     chacun leur script Leaflet local) ; `local.css` additifs F4 : `.sec--short`,
     `.sec--tint .ll-mesh`, `.page-head--band .section-head p strong`,
     `.vil-pick`/`.vil-row`, `.finalcta.sec--ink`, `.loc-who .b-av img`.
+    **Relevé F5 (vague C)** : `PageHead` n'accepte ni classe additionnelle ni
+    padding paramétrable et `FinalCta` ne cumule pas `photo`+`straddle` → héros
+    du hub équipe et CTA final écrits en classes DS directes (`.eq-hero`/
+    `.eq-cols`/`.eq-photo`, scoped) ; crochet `.on-dark` du DS sans inversion du
+    fil d'Ariane (recopiée en scoped sur `/a-propos`) ; `FinalCta` ne pose pas
+    `.on-dark` lui-même (posé sur `.fc-actions` en 08/09, à remonter sur la
+    section à la reprise de `.finalcta--deep`) ; reprises livrées côté repo à
+    remonter au DS : `ContactForm` (a11y `useId`/`htmlFor`, `consentHref`,
+    en-tête encre opt-in, validation + état envoyé), `AgencyCard` (cf.
+    vigilance 11), `TrustSection.countHref` + `.t-count a{color:inherit}` ;
+    scoped « à reprendre » : `.eq-contact`, `.mh-photo--img`/`.mh-bio-note`
+    (MemberHero), base `.about-hero`/`.about-dl`/`.about-photo`/`.lx--two`
+    (a-propos), `.c-*` (ContactRows), `.av-hero`/`.av-sync`/`.av-toolhead`/
+    `.wall*`/`.t-date`/`.t-reply`/`.t-photos` (avis) ; `local.css` additifs
+    F5 : `.finalcta--deep`, `.cf-consent span a` ; contrastes corrigés sur
+    fond teinté (règle DS ≻ maquette) : `#mur .av-count`/`.tool-label`/
+    `.wall-note` et `.sc-body .ts-bar` → `--ink-soft` ; `Seg` du DS toujours
+    inutilisable en toolbar (balisage brut au mur d'avis, déjà relevé F3).
 
 13. **Schéma biens étendu en F3** (additif, tout optionnel — décision du gabarit 03,
     hors Livrable strict, assumée) : `biens.{garage, codePostal, galerie[], legales[],
@@ -161,6 +192,21 @@ Trois sous-agents en parallèle maximum.
 - Compteurs maquette non reproduits tels quels : « 28 biens », « 48 articles »,
   « 190 avis Google » — les pages devront afficher les comptes RÉELS des collections
   (règle : pas de chiffre non sourcé).
+- **Mur d'avis (F5)** : la référence `avis.html` affiche 12 avis (le prompt 09 en
+  annonçait 24) et la collection (17 entrées) couvre 100 % du corpus maquette —
+  rien à inventer. `/avis` rend les 17 cartes (SEO), 12 visibles + 5 derrière
+  « En voir plus », filtres et compteurs calculés ; 4,8/190 et la distribution
+  restent des chiffres Google externes avec source.
+- **Cartes membres (F5)** : voile « Profil » (référence) retenu contre « Voir le
+  profil » du prompt 10 (`aria-label` « Voir le profil de {nom} » conservé) ;
+  IPI affiché en dernière position des `.m-facts` et dans le `.mh-role` des
+  pages membres (« {rôle} · IPI {n°} », directive du prompt 11 — la référence
+  membre ne l'affichait qu'au hub).
+- **Incohérences maquette relevées en F5, non tranchées (à figer avant mise en
+  ligne)** : `contact@` (a-propos, contact, JSON-LD) vs `info@` (TopBar/footer/
+  accueil) ; Boulevard Tirou (chrome, pages) vs Place Desaise (footer,
+  `gerpinnes.md`) ; lat/lng du siège approchées (50.4076, 4.4418) ; « Ouvert
+  aujourd'hui jusque 18h30 » statique (faux le samedi).
 
 ## Journal
 
@@ -218,3 +264,29 @@ Trois sous-agents en parallèle maximum.
   *règle*) ; section 5 en `.lx` (balisage de la référence) plutôt que
   `LocalityLinks mesh`. Prochaine étape : **F5 vague C** (`11-equipe` ·
   `10-a-propos` · `08-contact` · `09-avis` — 3 sous-agents max puis le 4e).
+- **24 sept. 2026 — F5 vague C** (commits `62319f9` · `a53c34e` · `07cc0a9` ·
+  `54c2505`, branche `feat/vague-c` mergée) : 3 sous-agents `gabarit` en
+  parallèle (11 · 10 · 08), périmètres arbitrés AVANT lancement — les prompts 10
+  et 11 se chevauchaient : `MemberContactCard` + `Commitments` au 10 (contrat
+  d'interface `membre` + `class` dicté aux deux, le 11 l'a consommée avant
+  qu'elle existe — builds interdits, soudure vérifiée à la porte),
+  `content.config.ts` + `equipe/*` + `biens.agent` + `MemberHero`/`CaseCard`
+  au 11, `local.css` (un seul bloc `.finalcta--deep`) + `ContactForm.tsx` +
+  `ContactRows` au 08. Puis 3 recettes en parallèle, corrections orchestrateur,
+  2 contre-recettes conformes ; 09 seul ensuite. **10** : conforme d'emblée
+  (arbitrage carte `.m-id` ≻ `.m-cap` de la référence antérieure, tenu en
+  recette). **11** : 6 écarts (IPI absent des facts et du `.mh-role`, voile
+  « Voir le profil » → « Profil », en-tête du formulaire encre manquant, bio
+  provisoire sans retrait) — corrigés. **08** : 2 bloquants (noms accessibles
+  → `useId`/`htmlFor` ; lien « confidentialité » → `consentHref`) + reprises
+  `AgencyCard` (les deux références divergeaient : bouton plein = tél sur
+  a-propos, = itinéraire sur contact → props, défauts rétro-compatibles).
+  **09** : le sous-agent `contenu` a établi que le mur de la référence compte
+  12 avis (pas 24 comme le prompt) et que la collection (17) couvre 100 % du
+  corpus — rien créé ; recette 2 écarts de contraste (`#mur .tool-label`/
+  `.wall-note` → `--ink-soft`), contre-recette conforme. `TrustSection.countHref`
+  livré (relevé F4 soldé), en-tête de carte du formulaire encre opt-in (les
+  bandes localité n'en ont pas — non-régression vérifiée), `data-planned`
+  `/a-propos` retiré du chrome. À savoir : `biens.agent` était déjà conforme
+  aux arbitrages (aucune édition). Prochaine étape : **F6 vague D** (`12-blog` ·
+  `13-auteurs` · `14-legales`).
