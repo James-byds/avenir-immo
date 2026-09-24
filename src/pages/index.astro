@@ -108,11 +108,15 @@ const TYPE_PLURIEL: Record<string, string> = {
 const hoods = communes.flatMap((c) =>
   (c.data.combinaisons as { type: TypeBien; transaction: Transaction }[])
     .map(({ type, transaction }) => {
+      /* Compte = périmètre RÉEL de la page cible : une copie de localité en
+         listing:"transaction" liste tout le marché de la transaction (« 18
+         biens ») — le compte du seul type la contredirait. */
+      const cible = c.data.pages.find((p) => p.type === type && p.transaction === transaction);
       const count = biens.filter(
         (b) =>
           b.data.commune === c.data.nom &&
-          b.data.type === type &&
-          b.data.transaction === transaction,
+          b.data.transaction === transaction &&
+          (cible?.listing === "transaction" || b.data.type === type),
       ).length;
       return {
         commune: c.data.nom,

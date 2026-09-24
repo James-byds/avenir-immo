@@ -1469,3 +1469,21 @@ a[data-planned]:hover { border-style: dashed; }
 /* · .estimate h1 strong  la référence passe « votre bien » en jaune au poids
      du titre (em inline) ; sans ceci le strong prend le bolder du preflight. */
 .estimate h1 strong { font-weight: inherit; }
+
+/* ============================================================
+   À REPRENDRE DANS LE DS — gabarit page de localité (24 sept. 2026)
+   ------------------------------------------------------------
+   · .sec--short  section à respiration courte : la queue de page des
+     localités (CTA final après le maillage) se lit d'un bloc — reprise en
+     classe des style="padding-top:clamp(…)" que la référence posait en
+     attribut sur ses deux dernières sections ;
+   · .sec--tint .ll-mesh  le bloc maillage garde son fond --bg-soft, qui se
+     fond dans le vert tendre : blanc bordé --line, comme toute surface
+     interne posée sur une section teintée (règle d'adhérence nº 4) ;
+   · .page-head--band .section-head p strong  les chiffres du chapô passent
+     en blanc plein — reprise en classe des <strong style="color:#fff"> de
+     la référence maison-a-vendre-liege.html (valeur inchangée).
+   ============================================================ */
+.sec--short { padding-block: clamp(28px, 3.5vw, 44px); }
+.sec--tint .ll-mesh { background: #fff; border: 1px solid var(--line); }
+.page-head--band .section-head p strong { color: #fff; }

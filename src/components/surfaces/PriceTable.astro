@@ -1,0 +1,61 @@
+---
+/**
+ * PriceTable — prix/loyer au m² par quartier (pages de localité).
+ *
+ * Motif .lg-table.q-prices du DS (piste 1fr 1.6fr 92px — local.css).
+ * `source` est OBLIGATOIRE : chaque ligne vient de prixQuartiers[] de
+ * communes/<slug>.md, où le schéma exige une source datée par valeur.
+ *
+ * Le <style> scopé recopie, valeurs inchangées, le style inline du titre h3
+ * de la référence maison-a-vendre-liege.html (aucune classe DS n'existe pour
+ * ce titre intermédiaire) — à reprendre dans le DS.
+ */
+interface Row {
+  nom: string;
+  description?: string;
+  valeur: string;
+}
+interface Props {
+  /** Titre h3 au-dessus de la table (« Prix au m² par quartier de Liège »). */
+  title?: string;
+  head?: { c1: string; c2: string; c3: string };
+  rows: Row[];
+  /** Ligne de provenance datée (.sell-src) — obligatoire. */
+  source: string;
+  class?: string;
+}
+const {
+  title,
+  head = { c1: "Quartier", c2: "Ce qu'on y trouve", c3: "Médian / m²" },
+  rows,
+  source,
+  class: className = "",
+} = Astro.props;
+---
+
+{title && <h3 class="pt-title">{title}</h3>}
+<div class={`lg-table q-prices ${className}`.trim()} style="margin-top:16px">
+  <div class="lg-tr head"><span>{head.c1}</span><span>{head.c2}</span><span>{head.c3}</span></div>
+  {
+    rows.map((r) => (
+      <div class="lg-tr">
+        <span class="c1">{r.nom}</span>
+        <span class="c2">{r.description}</span>
+        <span class="c3">{r.valeur}</span>
+      </div>
+    ))
+  }
+</div>
+<span class="sell-src" style="margin-top:14px">{source}</span>
+
+<style>
+  /* Style inline du h3 de la référence, valeurs inchangées — à reprendre
+     dans le DS. */
+  .pt-title {
+    font-family: var(--serif);
+    font-stretch: var(--wide);
+    font-weight: 700;
+    font-size: clamp(19px, 2.2vw, 23px);
+    margin-top: 44px;
+  }
+</style>

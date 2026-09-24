@@ -24,10 +24,13 @@ interface Props {
   secondaryLabel?: string;
   secondaryHref?: string;
   fineprint?: string;
+  /** id d'ancre de la section (ex. #vendre sur les pages de localité). */
+  id?: string;
   class?: string;
 }
 const {
   variant = "band",
+  id,
   eyebrow = "Vous vendez",
   title,
   lede,
@@ -47,7 +50,7 @@ const isCompact = variant === "compact";
 
 {
   isCompact ? (
-    <section class={`sell-compact ${className}`.trim()}>
+    <section class={`sell-compact ${className}`.trim()} id={id}>
       <div>
         {eyebrow && <span class="eyebrow">{eyebrow}</span>}
         {title && <h2>{title}</h2>}
@@ -70,7 +73,7 @@ const isCompact = variant === "compact";
       </div>
     </section>
   ) : (
-    <section class={`section sell-band ${className}`.trim()}>
+    <section class={`section sell-band ${className}`.trim()} id={id}>
       <div class="wrap">
         <div class="sell-grid">
           <div>

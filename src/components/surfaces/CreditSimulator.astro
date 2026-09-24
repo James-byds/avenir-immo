@@ -1,0 +1,177 @@
+---
+/**
+ * CreditSimulator — simulateur de mensualité (pages de localité, vente).
+ *
+ * Pas encore dans le DS (exploration « simulateur de crédit v4 ») : format
+ * bande de la page de localité, montant pré-réglé vers le prix médian
+ * communal. Carte .cform blanche ; curseurs .sim-* de local.css (piste 44 px,
+ * rail 6 px, poignée = signe V blanc sur disque vert, --pct posé en JS).
+ *
+ * Les DEUX mentions légales crédit sont câblées ici (non désactivables) :
+ * « Attention, emprunter de l'argent coûte aussi de l'argent. » et
+ * « Avenir Immobilier n'est pas intermédiaire en crédit hypothécaire. »
+ *
+ * Le <style> scopé recopie, valeurs inchangées, les styles inline du bloc
+ * « Mensualité estimée » de la référence maison-a-vendre-liege.html —
+ * à reprendre dans le DS. Le <script> reprend la logique du script inline
+ * de la même référence.
+ */
+interface Props {
+  /** Montant pré-réglé (≈ prix médian communal). */
+  montant?: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  duree?: number;
+  taux?: number;
+  stepLabel?: string;
+  title?: string;
+  sub?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  class?: string;
+}
+const {
+  montant = 240000,
+  min = 50000,
+  max = 750000,
+  step = 5000,
+  duree = 25,
+  taux = 3.15,
+  stepLabel = "Simulateur de mensualité",
+  title = "Ce que ça coûte par mois.",
+  sub = "Une estimation indicative, hors assurances et frais de dossier. Votre banque reste seule à fixer le taux.",
+  ctaLabel = "Faire le point avec un conseiller",
+  ctaHref = "/contact",
+  class: className = "",
+} = Astro.props;
+
+/* Rendu initial pré-calculé côté serveur (même formule que le script). */
+const euro = (n: number) =>
+  Math.round(n).toLocaleString("fr-BE").replace(/ | /g, " ") + " €";
+const N = duree * 12;
+const i = taux / 100 / 12;
+const pay = i > 0 ? (montant * i) / (1 - Math.pow(1 + i, -N)) : montant / N;
+const pct = (v: number, lo: number, hi: number) => (((v - lo) / (hi - lo)) * 100).toFixed(2) + "%";
+const tauxLabel = taux.toFixed(2).replace(".", ",").replace(/,00$/, "") + " %";
+---
+
+<div class={`cform ${className}`.trim()} id="simCredit">
+  <span class="cform-step">{stepLabel}</span>
+  <h3>{title}</h3>
+  <p class="cf-sub">{sub}</p>
+  <div class="sim-fields">
+    <div class="sim-field">
+      <div class="sim-head">
+        <label for="simMontant">Montant emprunté</label><span class="sim-val" id="simMontantV">{euro(montant)}</span>
+      </div>
+      <input id="simMontant" class="sim-range" type="range" value={montant} min={min} max={max} step={step} style={`--pct:${pct(montant, min, max)}`} />
+      <div class="sim-scale"><span>{euro(min)}</span><span>{euro(max)}</span></div>
+    </div>
+    <div class="sim-field">
+      <div class="sim-head">
+        <label for="simDuree">Durée du crédit</label><span class="sim-val" id="simDureeV">{duree} ans</span>
+      </div>
+      <input id="simDuree" class="sim-range" type="range" value={duree} min="5" max="30" step="1" style={`--pct:${pct(duree, 5, 30)}`} />
+      <div class="sim-scale"><span>5 ans</span><span>30 ans</span></div>
+    </div>
+    <div class="sim-field">
+      <div class="sim-head">
+        <label for="simTaux">Taux fixe annuel</label><span class="sim-val" id="simTauxV">{tauxLabel}</span>
+      </div>
+      <input id="simTaux" class="sim-range" type="range" value={taux} min="1" max="7" step="0.05" style={`--pct:${pct(taux, 1, 7)}`} />
+      <div class="sim-scale"><span>1 %</span><span>7 %</span></div>
+    </div>
+  </div>
+  <div class="sim-out">
+    <span class="sim-out-k">Mensualité estimée</span>
+    <strong class="sim-out-v" id="simOut">{euro(pay)}</strong>
+  </div>
+  <p class="cf-fine" id="simTotal">Coût total du crédit : {euro(pay * N - montant)} · {N} mensualités</p>
+  <p class="sim-legal"><strong>Attention, emprunter de l'argent coûte aussi de l'argent.</strong></p>
+  <p class="sim-legal">Avenir Immobilier n'est pas intermédiaire en crédit hypothécaire.</p>
+  <a class="btn btn--block" href={ctaHref}>{ctaLabel} <span class="arr">→</span></a>
+</div>
+
+<style>
+  /* Bloc résultat : styles inline de la référence, valeurs inchangées —
+     à reprendre dans le DS. */
+  .sim-out {
+    background: var(--green-tint);
+    border: 1px solid var(--green-soft);
+    border-radius: var(--r-sm);
+    padding: 18px 20px;
+    margin-top: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .sim-out-k {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green-d);
+  }
+  .sim-out-v {
+    font-family: var(--serif);
+    font-stretch: var(--wide);
+    font-weight: 700;
+    font-size: 32px;
+    color: var(--green-d);
+    letter-spacing: -0.02em;
+  }
+  /* Mentions légales crédit : lisibles (14 px encre douce), pas des
+     capitales mono de 10 px — obligation d'information, pas une méta. */
+  .sim-legal {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    margin-top: 12px;
+  }
+  .sim-legal + .sim-legal {
+    margin-top: 4px;
+  }
+  .sim-legal strong {
+    color: var(--ink);
+  }
+</style>
+
+<script>
+  /* Logique reprise du script inline de maison-a-vendre-liege.html (réf.). */
+  (function () {
+    "use strict";
+    const m = document.getElementById("simMontant") as HTMLInputElement | null;
+    const d = document.getElementById("simDuree") as HTMLInputElement | null;
+    const t = document.getElementById("simTaux") as HTMLInputElement | null;
+    const out = document.getElementById("simOut");
+    const tot = document.getElementById("simTotal");
+    if (!m || !d || !t || !out || !tot) return;
+    const mV = document.getElementById("simMontantV")!;
+    const dV = document.getElementById("simDureeV")!;
+    const tV = document.getElementById("simTauxV")!;
+    const euro = (n: number) =>
+      Math.round(n).toLocaleString("fr-BE").replace(/ | /g, " ") + " €";
+    const fill = (el: HTMLInputElement) => {
+      const min = +el.min,
+        max = +el.max;
+      el.style.setProperty("--pct", (((+el.value - min) / (max - min)) * 100).toFixed(2) + "%");
+    };
+    const calc = () => {
+      [m, d, t].forEach(fill);
+      mV.textContent = euro(+m.value);
+      dV.textContent = d.value + (+d.value > 1 ? " ans" : " an");
+      tV.textContent = (+t.value).toFixed(2).replace(".", ",").replace(/,00$/, "") + " %";
+      const K = Math.max(1, +m.value || 0);
+      const N = Math.max(1, (+d.value || 1) * 12);
+      const i = (+t.value || 0) / 100 / 12;
+      const pay = i > 0 ? (K * i) / (1 - Math.pow(1 + i, -N)) : K / N;
+      out.textContent = euro(pay);
+      tot.textContent = "Coût total du crédit : " + euro(pay * N - K) + " · " + N + " mensualités";
+    };
+    [m, d, t].forEach((el) => el.addEventListener("input", calc));
+    calc();
+  })();
+</script>

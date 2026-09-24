@@ -1,0 +1,48 @@
+---
+/**
+ * MarketStats — chiffres du marché local (section #marche des pages de localité).
+ *
+ * Motif .q-stats du DS : panneau .big (chiffre clé, teinté — repasse en blanc
+ * bordé sur .sec--tint via local.css) + colonne .q-stat-rows/.s-row.
+ * Tout chiffre affiché ici doit exister dans communes/<slug>.md avec sa
+ * source datée ; la ligne de source (.sell-src) est rendue par la page,
+ * sous la table des quartiers.
+ */
+interface Row {
+  label: string;
+  /** Sous-ligne .k small (détail, fourchette, période). */
+  detail?: string;
+  valeur: string;
+  /** Valeur accentuée en vert (<em>), ex. « +2,4 % ». */
+  accent?: boolean;
+}
+interface Props {
+  eyebrow?: string;
+  big: { valeur: string; texte: string };
+  rows: Row[];
+  class?: string;
+  style?: string;
+}
+const { eyebrow = "Le chiffre à retenir", big, rows, class: className = "", style } = Astro.props;
+---
+
+<div class={`q-stats ${className}`.trim()} style={style}>
+  <div class="big">
+    <span class="eyebrow">{eyebrow}</span>
+    <div class="sv" style="margin-top:14px">{big.valeur}</div>
+    <div class="sk">{big.texte}</div>
+  </div>
+  <div class="q-stat-rows">
+    {
+      rows.map((r) => (
+        <div class="s-row">
+          <span class="k">
+            {r.label}
+            {r.detail && <small>{r.detail}</small>}
+          </span>
+          <span class="v">{r.accent ? <em>{r.valeur}</em> : r.valeur}</span>
+        </div>
+      ))
+    }
+  </div>
+</div>

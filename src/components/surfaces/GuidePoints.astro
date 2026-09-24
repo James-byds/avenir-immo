@@ -1,0 +1,35 @@
+---
+/**
+ * GuidePoints — guide d'achat/location local (section 4 des pages de localité).
+ *
+ * Points numérotés 01-06 FILETÉS (.guide-pts / .guide-pt de local.css —
+ * « à reprendre dans le DS ») : volontairement PAS des .atout, la page porte
+ * déjà une grille de cartes bordées (« Vivre à … ») plus bas — deux grilles
+ * identiques à la suite s'annulent.
+ *
+ * La copie vient de communes/<slug>.md (pages[].guide.points) : contenu
+ * réellement local, jamais partagé entre communes.
+ */
+interface Point {
+  titre: string;
+  texte: string;
+}
+interface Props {
+  points: Point[];
+  class?: string;
+}
+const { points, class: className = "" } = Astro.props;
+const num = (i: number) => String(i + 1).padStart(2, "0");
+---
+
+<div class={`guide-pts ${className}`.trim()}>
+  {
+    points.map((p, i) => (
+      <div class="guide-pt">
+        <span class="a-num">{num(i)}</span>
+        <h3>{p.titre}</h3>
+        <p>{p.texte}</p>
+      </div>
+    ))
+  }
+</div>
