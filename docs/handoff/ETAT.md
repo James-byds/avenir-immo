@@ -12,7 +12,7 @@
 | F3 | Vague A : `02-biens-liste` · `03-bien-fiche` · `07-estimation` (3 gabarits en parallèle) | ✅ terminé le 24 sept. 2026 (commits `ef993fa` → `a3736d8`, recettes conformes) |
 | F4 | Vague B : `05-localite` puis `06-quartier` · `04-localites-hub` | ✅ terminé le 24 sept. 2026 (commits `fde39c7` → `85d9ce3`, recettes conformes) |
 | F5 | Vague C : `11-equipe` · `10-a-propos` · `08-contact` · `09-avis` (3 max puis le 4e) | ✅ terminé le 24 sept. 2026 (commits `62319f9` → `54c2505`, recettes conformes) |
-| F6 | Vague D : `12-blog` · `13-auteurs` · `14-legales` | ⬜ |
+| F6 | Vague D : `12-blog` · `13-auteurs` · `14-legales` | ✅ terminé le 24 sept. 2026 (commits `d665c62` → `df47775`, recettes conformes) |
 | F7 | `99-recette` globale (+ suppression de `src/pages/test.astro`) | ⬜ |
 
 Protocole d'une fenêtre de vague : coller le prompt du gabarit **en entier** dans un
@@ -168,6 +168,68 @@ Trois sous-agents en parallèle maximum.
     `communes.astro` ; champ `equipe.photo` (convention actuelle
     `/assets/agent-<prénom>.png`, reprise de l'accueil).
 
+16. **Les marges Tailwind (`mt-*`, `mb-*`, `m-*`) sont inertes** : le reset
+    `* { margin: 0 }` de `site.css` (l. 4) est importé hors couche et prime sur
+    `@layer utilities` — la classe est compilée mais la marge calculée vaut 0
+    (mesuré en F6). Occurrences existantes hors vague D, à traiter en F7 :
+    `a-propos.astro:272`, `biens/[slug].astro:284,338`, `equipe/[slug].astro:243`.
+    Vague D corrigée en règles scoped (`.blog-lead`, `.art-related`, `.writers`).
+    **Décision à prendre en F7** : importer le DS dans une couche
+    (`@import "./ds/styles.css" layer(ds)` + ordre `@layer` explicite) ou
+    neutraliser le reset universel ; d'ici là, marges en scoped ou suffixe `!`.
+17. **`.sec--short` (local.css) raccourcit le haut ET le bas** ; les références
+    blog/article ne raccourcissent que le haut (`padding-top:clamp(…)` seul) →
+    padding-top scoped par page en F6. Candidat DS : `.sec--short-top`.
+18. **`markdown.smartypants: false`** dans `astro.config.mjs` (F6) : les corps
+    Markdown sont rendus tels qu'écrits — la recette compare les articles à leur
+    référence par points de code (satteri substituait 23 apostrophes en U+2019).
+19. **Composants disponibles depuis F6** : `surfaces/ArticleCard` (contrat
+    `article` + `auteur?` entrées de collection, `variant: feature|post|compact`,
+    `tint`/`thumb`, `class`, `data-cat/date/read/idx` sur la racine — racine
+    `<article>`, un seul `<a>` = le titre étendu par `::after`) ; `ArticleHeader`
+    (`title` requis, `lede` HTML léger) ; `AuthorBox` (un seul lien) ; `Byline`
+    (`<a>` si `href`, sinon `<span>`) ; `AuthorHero` (portrait/initiales,
+    `quote`, `stats` → `.ah-stats`) ; `WriterCard` (`auteur`, `count`,
+    `variant: photo|compact`, racine `<a class="writer">` comme la référence) ;
+    `EditorialCharter` (`.au-charte`) ; `EnClair`, `LegalTable`, `Droits` ;
+    `layouts/LegalLayout` (props `doc/titre/description/version/date/lecture?/toc[]/cta`,
+    slot `toc-action`, temps de lecture CALCULÉ depuis le corps rendu si `lecture`
+    absent) ; `layouts/ArticleLayout` (conventions du corps : 1er `<p>` = chapô si
+    le corps a un H2, paragraphe « **En clair** — … » = encadré, chaque H2 =
+    `<section>`, source des `chiffres[]` rendue sous le corps) ;
+    `src/scripts/blog-filter.ts` (filtre/tri/pagination du hub, contrat d'URL
+    `?cat=<slug>&page=N`, `slugCategorie()` partagé). Schémas additifs F6 :
+    `articles.{metaDescription, titreCourt}` ; `auteurs.{roleLong, ipi, citation,
+    citationCourte, specialites[], depuis, depuisLabel, externe, langues[], base,
+    portrait, ordre, metaDescription}` (citation/spécialités/langues remontées de la
+    prose en frontmatter, corps vidés).
+20. **À reprendre dans le DS (relevé F6)** : `local.css` additifs F6 —
+    `.art-feature .art-meta` (--ink-soft), `.page-head--tint .breadcrumb a` /
+    `.lg-meta` (--ink-soft, 4,46:1 → 6,31:1) + `:hover` vert, `.toc-action a`
+    (`min-height:44px`, marge 10 → 6). Scoped « à reprendre » : `.writer--photo`,
+    `.w-top/.w-portrait/.w-id/.w-quote/.w-specs/.w-count`, `.writer:focus-visible`,
+    `.au-charte`, `.au-hero/.au-stats/.au-lede`, `.au-toolhead/.au-count(--end)/
+    .au-grid/.au-side(--4)`, `.b-av--init` (13) ; `.blog-hub` (`.section-head`
+    de l'en-tête déplafonné + H1 58 px, `.blog-grid .post:last-child` visible,
+    `.toolbar-right` calé à droite + `.dd-menu` ancré à droite — le menu du
+    select débordait le viewport à 375, même défaut sur la référence),
+    `.blog-article` (`.wrap--art` 1040, `.art-layout` 56 px/1fr repliée sous
+    960, marges du corps) (12) ; `.lg-head h1` (taille) et liens du corps légal
+    (14). DS : `.tool-group{min-width:auto}` déborde à 375 sous un `.seg` long
+    (blog, auteur, /avis) ; `:focus-visible` absent sur `.btn`, `.lg-switch a`,
+    `.lg-toc a`, `.writer` ; cibles < 44 px (`.seg button` 38, `.sh-btns a` 38,
+    `.breadcrumb a` 18, `.link-arrow` 19, `#burger` 32) ; `.seg button .n`
+    inactif ≈ 2,9:1 ; `#burger` reste `aria-expanded="false"` drawer ouvert
+    (`ds-script.js`) ; `aria-pressed` sur les seg (posé en local sur la page
+    auteur, absent sur /avis et /blog). `lib/seo.ts` : `webPage()`,
+    `breadcrumbList()`, `article()`, `person()` à mutualiser (construits inline
+    dans ArticleLayout/LegalLayout/pages auteur). `SiteFooter` : lien « Gérer
+    mes cookies » (`/legal/cookies#s3`, `data-planned`) ajouté en F6 — annoncé
+    « en bas de page » par la confidentialité (s6) ; à câbler sur le bandeau de
+    consentement quand il existera. `PropertyCard`/accueil : l'accueil duplique
+    encore le balisage `.post` (`ArticleCard variant="post"` à lui faire adopter
+    hors vague, comme `EstimateForm`).
+
 ## Arbitrages de contenu (incohérences de la maquette)
 
 - Article « droits d'enregistrement » signé « Nadia Bouchard » (auteure inexistante,
@@ -207,6 +269,56 @@ Trois sous-agents en parallèle maximum.
   accueil) ; Boulevard Tirou (chrome, pages) vs Place Desaise (footer,
   `gerpinnes.md`) ; lat/lng du siège approchées (50.4076, 4.4418) ; « Ouvert
   aujourd'hui jusque 18h30 » statique (faux le samedi).
+
+- **Vague D (F6) — compteurs** : tous calculés depuis `articles` (Camille 7,
+  Julien 4, Marc 4, Sophie 3, Anne 4 ; hub blog « Tout voir 22 » ; hub auteurs
+  « 5 rédacteurs · 22 articles · depuis 2018 » ; `.ah-stats` = articles signés,
+  thématiques distinctes, lecture moyenne, dernière publication — dérivés). Les
+  « 48 / 18 / 12 / 9 / 6 / 3 articles », « 4 thématiques », « 7 min » de la
+  maquette ne sont reproduits nulle part.
+- **Hub blog** : section « Cinq rédacteurs » = pilules `.q-pill` « Nom · n
+  articles → » (référence) et non `.writers` (prompt) ; grille en cartes `.post`
+  (référence, comme les pages auteur) et non `.art-mini` (réservé à « À lire
+  aussi ») ; seg = « Tout voir » + les 11 catégories réellement présentes
+  (référence : 5 fictives) — la toolbar passe sur deux rangées à 1440 (196 px vs
+  112, calée à droite), **écart de hauteur acté** ; tri « Les plus lus » omis
+  (aucune donnée) ; l'article à la une = le plus récent, suit le filtre. Le H1
+  reprend les styles inline de blog.html (58 px, une ligne, `.section-head`
+  déplafonné) — la classe DS seule le mettait sur deux lignes.
+- **Article** : CTA final = panneau `.lg-cta` de la référence (≻ « FinalCta
+  blanc » du prompt) ; fil d'Ariane HTML = `titreCourt` (« Home-staging »), le
+  JSON-LD garde le titre complet ; `<meta description>` = `metaDescription`
+  (texte d'article.html) tandis que `description` reste l'extrait court des
+  cartes (index.html, pages auteur) — l'extrait long de la carte à la une de
+  blog.html (« … mesurés sur nos 42 dernières ventes ») n'est pas repris ; la
+  ligne « SOURCE : … » de la référence est rendue sous le corps depuis
+  `chiffres[]` (source « Données internes Avenir Immobilier · 42 ventes, 2025 —
+  1er semestre 2026 », datée 2026-06-30) ; « À lire aussi » sans `art-mini--tint`
+  (teinté sur teinté) ; la grille `.art-layout` se replie sous 960 px (la
+  référence gardait la colonne vide).
+- **Auteurs** : « Les autres rédacteurs » = 4 cartes (tous sauf le courant ; la
+  référence en montrait 3) ; h2 nus de la référence → `SectionHead` (défaut de
+  maquette, précédent F5) ; rôle d'Anne « Notaire · rédactrice invitée » partout,
+  rendu « notaire & rédactrice invitée » dans le `<title>` et la byline compacte ;
+  fil d'Ariane « Blog » (nav du site) plutôt que « Journal » ; `WriterCard` garde
+  la racine `<a>` de la référence (aucun élément interactif à l'intérieur) ;
+  `.au-stats .sv` du hub en display élargi (parti de `.ah-stats .sv`, sans
+  incidence de hauteur) ; `/contact?sujet=article` : paramètre inerte
+  (`ContactForm` ne lit pas l'URL). **Non tranché** : les bios portent des
+  chiffres non sourcés hérités (« 180 baux », « 42 ventes l'an dernier »).
+- **Légales** : `honoraires` sans aucun barème (5 × « Sur devis », Estimation
+  « Gratuite » — source : le site), aucune mensualité ; `mentions`/`cookies`/
+  `honoraires` rédigés prudemment, versions 1.0 datées 2026-09-24, temps de
+  lecture calculé, 18 blocs `<!-- À valider par le client -->` et « [à
+  compléter] » pour BCE/TVA, RC, hébergeur, licence de fonte, outils d'audience ;
+  `cookies` décrit l'état RÉEL du code (aucun cookie posé, pas de bandeau, tiers
+  = tuiles OSM + Font Awesome jsDelivr) ; `.lg-cta` confidentialité →
+  `mailto:privacy@…` (référence) ; identité = chrome (Tirou 102, info@,
+  071 22 11 41, « Agent immobilier agréé n° 509 217 — IPI »). **Non tranchés,
+  s'ajoutent au relevé F5** : téléphone 071 22 11 41 (footer) vs +32 71 32 14 70
+  (header, contact) ; IPI 509 217 attribué à trois entités (agence, Olivier
+  Monier, Camille Renard) ; confidentialité garde « BE 0712.xxx.xxx » mot pour
+  mot là où mentions dit « [numéro d'entreprise à compléter] ».
 
 ## Journal
 
@@ -290,3 +402,33 @@ Trois sous-agents en parallèle maximum.
   `/a-propos` retiré du chrome. À savoir : `biens.agent` était déjà conforme
   aux arbitrages (aucune édition). Prochaine étape : **F6 vague D** (`12-blog` ·
   `13-auteurs` · `14-legales`).
+- **24 sept. 2026 — F6 vague D** (commits `d665c62` · `6c44a14` ·
+  `df47775`, branche `feat/vague-d` mergée) : 3 sous-agents `gabarit` en
+  parallèle (12 · 13 · 14), périmètres arbitrés AVANT lancement — les prompts 12
+  et 13 se chevauchaient (`WriterCard`, `auteurs/*.md`) : `WriterCard` +
+  `content.config.ts` (schéma `auteurs` seul) + `auteurs/*.md` au 13, contrat
+  `ArticleCard` (entrées de collection, `variant post`) dicté aux deux, le 13 l'a
+  consommé avant qu'il existe — builds interdits, soudure vérifiée à la porte
+  (0 erreur, 105 pages ; seuls écarts : le banc `/test` sur l'ancienne interface
+  d'`ArticleCard`, adapté par l'orchestrateur). Puis 3 `recette-ds` en parallèle
+  (ports 4312-4314, référence sur :3000), corrections orchestrateur, 3
+  contre-recettes (13 conforme d'emblée ; 12 : 3 écarts de second passage ; 14 :
+  1 effet de bord de la correction de contraste), contrôles ciblés finaux
+  conformes. **12** : 9 écarts (méta de la carte à la une 4,46:1, trou H1→H3,
+  `.dd-menu` du tri débordant à 375, toolbar repliée calée à gauche,
+  `.sec--short` trop court en bas ×2, `mt-*` inertes ×2 — vigilance 16, « 5 min
+  de lecture ») puis 3 (`metaDescription`, H1 du hub, `titreCourt`). **13** :
+  10 écarts (`.au-quote` scoped écrasant `local.css` — même spécificité inlinée
+  après, `mt-[clamp]` inerte, débordement du seg à 375, trou H1→H3, élision
+  « d'Anne », double « · » dans le title, ligne de clôture sans pagination,
+  `aria-pressed`, `font-stretch` de la citation, `:focus-visible`). **14** :
+  3 écarts (contraste du bandeau tint, lien footer « Gérer mes cookies »
+  annoncé par la confidentialité, cible `.toc-action a` 40 px) + 1 (hover du
+  fil d'Ariane éteint par la règle de contraste). Décisions orchestrateur :
+  `smartypants: false` (vigilance 18), `ArticleCard` du banc `/test` passé sur
+  des entrées réelles, réponse (b) « rangée repliée calée à droite » plutôt qu'un
+  seg défilant à 1440. À savoir : les comptes par auteur annoncés dans le cadre
+  (Camille 8, Julien 5) étaient faux — le sous-agent a vérifié (7 et 4) ; toujours
+  faire calculer. Prochaine étape : **F7 `99-recette` globale** (+ suppression de
+  `src/pages/test.astro`, décision vigilance 16 sur le reset/les couches,
+  `mt-*` restants, incohérences chrome non tranchées).
