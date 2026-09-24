@@ -1,0 +1,43 @@
+---
+/**
+ * CaseCard — situation client du hub équipe (« Vous vous reconnaissez ? »).
+ *
+ * Carte .case (classes de local.css, recopiées de la référence equipe.html) :
+ * numéro sur photo (.case-media .a-num), récit (.case-body), puis la personne
+ * qui décroche (.case-who → page membre). UN SEUL lien par carte : .case-who —
+ * le titre n'est pas une ancre (conforme à la référence, aucune ancre imbriquée).
+ *
+ * Le récit passe par le slot (il porte des insécables et de la ponctuation
+ * fine) ; `role` est la ligne d'accroche sous le nom (« Estime et vend,
+ * discrètement »), pas la fonction officielle du membre.
+ */
+interface Props {
+  /** Numéro affiché sur la photo (« 01 »). */
+  num: string;
+  titre: string;
+  /** Légende du placeholder photo — remplacé par un <img> au même endroit. */
+  tag: string;
+  who: { name: string; role: string; href: string; photo: string };
+  /** Classes additionnelles (.reveal .d1…). */
+  class?: string;
+}
+const { num, titre, tag, who, class: className } = Astro.props;
+---
+
+<article class={`case${className ? ` ${className}` : ""}`}>
+  <div class="case-media">
+    <span class="a-num">{num}</span>
+    <div class="ph"><span class="ph-tag">{tag}</span></div>
+  </div>
+  <div class="case-body">
+    <h3>{titre}</h3>
+    <p><slot /></p>
+    <a class="case-who" href={who.href}>
+      <span class="byline">
+        <span class="b-av" aria-hidden="true"><img src={who.photo} alt="" loading="lazy" /></span>
+        <span><span class="b-name">{who.name}</span><span class="b-role">{who.role}</span></span>
+      </span>
+      <span class="arr">→</span>
+    </a>
+  </div>
+</article>

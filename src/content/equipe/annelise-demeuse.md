@@ -30,6 +30,9 @@ langues: ["FR", "EN"]
 zones: ["Grand Charleroi", "Basse-Sambre"]
 depuis: 2019
 ordre: 2
+specialites: ["Estimer", "Succession", "Valeur locative"]
+contactTitre: "Une question sur votre bien\_?"
+contactLede: "Annelise vous répond sous 24 h ouvrées. Pas de formulaire labyrinthe, pas de rappel commercial non sollicité."
 ---
 
 Annelise Demeuse est agent immobilier chez Avenir Immobilier, boulevard Tirou à Charleroi. [Bio à rédiger — texte provisoire.]

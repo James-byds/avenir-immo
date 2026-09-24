@@ -1,6 +1,30 @@
 ---
-import { getCollection, render } from "astro:content";
+/* Page membre — gabarit 11 (réf. equipe-olivier-monier.html — avec biens —
+   et equipe-agnes-quispe.html — office manager, sans biens).
+
+   Avec biens   : page-head clair → « En vente avec X » (tendre) → compteur
+                  réel + « Tous nos biens » (tendre, continuation) → bande
+                  contact encre (île ContactForm tone="ink") → autres
+                  conseillers (blanc).
+   Sans biens   : les deux sections biens n'existent pas ; la bande contact
+                  passe en vert tendre pour garder l'alternance (H2 « Un
+                  document, un rendez-vous, une question ? ») — formulaire
+                  en carte blanche (tone="light").
+
+   JSON-LD : Person (jobTitle, telephone, worksFor) — le RealEstateAgent
+   minimal du BaseLayout reste émis (organizationLd par défaut). */
+import { getCollection } from "astro:content";
 import PageLayout from "../../layouts/PageLayout.astro";
+import Breadcrumb from "../../components/core/Breadcrumb.astro";
+import Eyebrow from "../../components/core/Eyebrow.astro";
+import LinkArrow from "../../components/core/LinkArrow.astro";
+import SectionHead from "../../components/core/SectionHead.astro";
+import MemberHero from "../../components/surfaces/MemberHero.astro";
+import MemberContactCard from "../../components/surfaces/MemberContactCard.astro";
+import PropertyCard from "../../components/surfaces/PropertyCard.astro";
+import ContactForm from "../../components/islands/ContactForm.tsx";
+import { jsonLd } from "../../lib/seo";
+import { formatDate, formatPrix, formatSurface } from "../../lib/format";
 
 export async function getStaticPaths() {
   const membres = await getCollection("equipe");
@@ -8,11 +32,276 @@ export async function getStaticPaths() {
 }
 
 const { membre } = Astro.props;
-const { Content } = await render(membre);
+const { nom, fonction, ipi, telephone, email, points, stats, langues, zones, depuis } = membre.data;
+const prenom = nom.split(" ")[0];
+
+/* Portrait client : assets nommés par prénom (agent-olivier.png…). */
+const photo = `/assets/agent-${membre.id.split("-")[0]}.png`;
+
+/* « 0475/52.26.31 » → « +32475522631 » (liens tel: et JSON-LD). */
+const telHref = telephone ? `+32${telephone.replace(/\D/g, "").replace(/^0/, "")}` : undefined;
+
+/* ── Ses biens (agent === slug) + compteur RÉEL du catalogue actif ── */
+const catalogue = await getCollection("biens", ({ data }) => data.publie !== false);
+const biens = catalogue
+  .filter((b) => b.data.agent?.id === membre.id)
+  .sort((a, b) => b.data.prix - a.data.prix);
+const totalActifs = catalogue.filter((b) => b.data.statut !== "vendu").length;
+
+/* « À louer avec Briyann » quand le portefeuille est entièrement locatif. */
+const biensTitre = `${biens.length > 0 && biens.every((b) => b.data.transaction === "location") ? "À louer" : "En vente"} avec ${prenom}`;
+
+/* Cartes : mêmes conventions que la liste des biens (badge, légende, specs). */
+const TYPE_SINGULIER: Record<string, string> = {
+  maison: "Maison",
+  appartement: "Appartement",
+  terrain: "Terrain",
+  commerce: "Commerce",
+  immeuble: "Immeuble",
+};
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+type Bien = (typeof biens)[number];
+const tagDe = (b: Bien) =>
+  `${b.data.sousType ? cap(b.data.sousType) : TYPE_SINGULIER[b.data.type]} — ${b.data.commune}`;
+const badgeDe = (b: Bien) =>
+  b.data.statut === "nouveau"
+    ? { label: "Nouveau", variant: "new" as const }
+    : b.data.statut === "sous-offre"
+      ? { label: "Sous offre", variant: undefined }
+      : b.data.statut === "vendu"
+        ? { label: "Vendu", variant: "sold" as const }
+        : b.data.statut === "off-market"
+          ? { label: "Off-market", variant: undefined }
+          : undefined;
+const specsDe = (b: Bien) =>
+  [
+    b.data.chambres ? `${b.data.chambres} chambre${b.data.chambres > 1 ? "s" : ""}` : null,
+    b.data.surface != null ? formatSurface(b.data.surface) : null,
+    b.data.sdb ? `${b.data.sdb} sdb` : null,
+  ].filter((s): s is string => Boolean(s));
+const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
+
+/* ── En-tête : bio (1er paragraphe du corps), méta mono, chiffres sourcés ── */
+const bio = (membre.body ?? "").trim().split(/\r?\n\r?\n/)[0]?.trim();
+const meta = [
+  depuis ? `Chez Avenir depuis ${depuis}` : null,
+  langues.length ? langues.join(" · ") : null,
+  zones.length ? zones.join(" · ") : null,
+].filter((m): m is string => Boolean(m));
+const nf = new Intl.NumberFormat("fr-BE");
+const heroStats = stats.map((s) => ({
+  value: `${typeof s.valeur === "number" ? nf.format(s.valeur) : s.valeur}${s.unite ? ` ${s.unite}` : ""}`,
+  label: s.label,
+}));
+/* Un chiffre affiché = une source datée (motif .sell-src de l'accueil). */
+const sourceLine =
+  stats.length > 0 ? `${stats[0].source.libelle} · ${formatDate(stats[0].source.date)}` : undefined;
+
+/* ── Bande contact — copie de la fiche (réf. mot pour mot) ── */
+const contactTitre = membre.data.contactTitre ?? "Une question sur votre bien ?";
+const contactLede =
+  membre.data.contactLede ??
+  `${prenom} vous répond sous 24 h ouvrées. Pas de formulaire labyrinthe, pas de rappel commercial non sollicité.`;
+const sujets = membre.data.specialites.length ? membre.data.specialites : undefined;
+const coordonnees = [
+  ...(telephone ? [{ label: "Téléphone direct", value: telephone, href: `tel:${telHref}` }] : []),
+  ...(email ? [{ label: "Email", value: email, href: `mailto:${email}` }] : []),
+  { label: "À l'agence", value: "Boulevard Tirou 102, 6000 Charleroi" },
+];
+
+/* ── Les autres conseillers (5 cartes) ── */
+const autres = (await getCollection("equipe"))
+  .filter((m) => m.id !== membre.id)
+  .sort((a, b) => a.data.ordre - b.data.ordre);
+
+/* ── Head ── */
+const minuscule = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+const description =
+  membre.data.metaDescription ??
+  `${nom}, ${minuscule(fonction)} chez Avenir Immobilier à Charleroi. Ses biens en vente et son contact direct : ${telephone}.`;
+const site = Astro.site ?? new URL("https://www.lavenir-immobilier.be/");
+const personLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: nom,
+  jobTitle: fonction,
+  ...(telHref ? { telephone: telHref } : {}),
+  ...(email ? { email } : {}),
+  image: new URL(photo, site).href,
+  url: new URL(`/equipe/${membre.id}`, site).href,
+  worksFor: { "@type": "RealEstateAgent", name: "Avenir Immobilier" },
+};
 ---
 
-<PageLayout title={membre.data.nom} description={membre.data.fonction}>
-  <h1>{membre.data.nom}</h1>
-  {/* Stub — fiche membre (MemberHero…). */}
-  <Content />
+<PageLayout title={`${nom} — ${fonction} · Avenir Immobilier`} description={description}>
+  <Fragment slot="head">
+    <script type="application/ld+json" is:inline set:html={jsonLd(personLd)} />
+  </Fragment>
+
+  {/* ── 1 · EN-TÊTE — MemberHero sur page-head clair ── */}
+  <section class="page-head">
+    <div class="wrap">
+      <Breadcrumb
+        items={[
+          { label: "Accueil", href: "/" },
+          { label: "Équipe", href: "/equipe" },
+          { label: nom },
+        ]}
+      />
+      <MemberHero
+        name={nom}
+        role={ipi ? `${fonction} · IPI ${ipi}` : fonction}
+        bio={bio}
+        meta={meta}
+        points={points}
+        stats={heroStats}
+        source={sourceLine}
+        photo={{ src: photo, alt: nom }}
+      >
+        <a class="btn" href="#ecrire">Contacter {prenom} <span class="arr">→</span></a>
+        {telephone && <a class="btn btn--ghost" href={`tel:${telHref}`}>{telephone}</a>}
+        {membre.data.liens.map((l) => (
+          <a class="btn btn--ghost" href={l.url} target="_blank" rel="noopener">
+            {l.label} <span class="arr">↗</span>
+          </a>
+        ))}
+      </MemberHero>
+    </div>
+  </section>
+
+  {
+    biens.length > 0 && (
+      <>
+        {/* ── 2 · SES BIENS — vert tendre ── */}
+        <section class="sec--tint">
+          <div class="wrap">
+            <div class="props-head reveal">
+              <SectionHead eyebrow="Ses biens" title={biensTitre} />
+            </div>
+            <div class="prop-grid">
+              {biens.map((b, i) => (
+                <PropertyCard
+                  class={`reveal${delay(i)}`}
+                  price={formatPrix(b.data.prix)}
+                  suffix={b.data.transaction === "location" ? "/ mois" : undefined}
+                  location={b.data.commune}
+                  title={b.data.titre}
+                  specs={specsDe(b)}
+                  badge={badgeDe(b)?.label}
+                  badgeVariant={badgeDe(b)?.variant}
+                  tag={tagDe(b)}
+                  peb={b.data.peb}
+                  href={`/biens/${b.id}`}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 3 · COMPTEUR RÉEL + TOUS NOS BIENS — continuation du tendre ── */}
+        <section class="sec--tint sec--cont">
+          <div class="wrap">
+            <div class="props-head reveal">
+              <p class="text-ink-soft">
+                {prenom} en suit {biens.length} — l'agence propose en ce moment{" "}
+                <strong class="text-ink">{totalActifs} biens</strong> en vente ou en location.
+              </p>
+              <LinkArrow href="/biens">Tous nos biens</LinkArrow>
+            </div>
+          </div>
+        </section>
+      </>
+    )
+  }
+
+  {/* ── 4 · ÉCRIRE — bande encre (île) avec biens, vert tendre sans ── */}
+  {
+    biens.length > 0 ? (
+      <div id="ecrire">
+        <ContactForm
+          client:visible
+          tone="ink"
+          eyebrow="Écrire directement"
+          bandTitle={contactTitre}
+          bandIntro={contactLede}
+          step={`Message à ${nom}`}
+          title="Dites-nous l'essentiel."
+          intro="Commune, type de bien, échéance : trois lignes suffisent pour qu'on vous réponde utilement."
+          subjects={sujets}
+          coordinates={coordonnees}
+          splitName={false}
+          consentText="J'accepte d'être recontacté·e au sujet de ma demande. Mes coordonnées ne sont jamais partagées"
+          consentHref="/legal/confidentialite"
+          fineprint="Réponse sous 24 h ouvrées · sans engagement"
+        />
+      </div>
+    ) : (
+      <section class="sec--tint eq-contact" id="ecrire">
+        <div class="wrap cb-grid">
+          <div>
+            <Eyebrow>Écrire directement</Eyebrow>
+            <h2 class="mt-3.5">{contactTitre}</h2>
+            <p class="cb-lede">{contactLede}</p>
+            <div class="cb-coord">
+              {coordonnees.map((c) => (
+                <div>
+                  <b>{c.label}</b>
+                  {c.href ? <a href={c.href}>{c.value}</a> : c.value}
+                </div>
+              ))}
+            </div>
+          </div>
+          <ContactForm
+            client:visible
+            tone="light"
+            step={`Message à ${nom}`}
+            title="Dites-nous l'essentiel."
+            intro="Commune, type de bien, échéance : trois lignes suffisent pour qu'on vous réponde utilement."
+            subjects={sujets}
+            splitName={false}
+            consentText="J'accepte d'être recontacté·e au sujet de ma demande. Mes coordonnées ne sont jamais partagées"
+            consentHref="/legal/confidentialite"
+            fineprint="Réponse sous 24 h ouvrées · sans engagement"
+          />
+        </div>
+      </section>
+    )
+  }
+
+  {/* ── 5 · LES AUTRES CONSEILLERS — blanc ── */}
+  <section class="sec--white">
+    <div class="wrap">
+      <div class="reveal mb-[clamp(24px,3vw,36px)]">
+        <SectionHead eyebrow="Le reste de l'équipe" title="Les autres conseillers" />
+      </div>
+      <div class="team-grid team-grid--contact team-grid--rows">
+        {autres.map((m) => <MemberContactCard membre={m} class="reveal" />)}
+      </div>
+    </div>
+  </section>
 </PageLayout>
+
+<style>
+  /* Bande contact sur vert tendre (cas « sans biens », réf.
+     equipe-agnes-quispe.html) : la référence garde les couleurs de la bande
+     encre (.cb-coord blanc/jaune), illisibles sur --green-tint — défaut de
+     maquette corrigé ici : mêmes métriques, encres du fond clair (jaune
+     interdit sur fond clair, petits textes ≥ --ink-soft). À reprendre dans
+     le DS comme variante claire de .contact-band. */
+  .eq-contact .cb-lede {
+    color: var(--ink-soft);
+    font-size: 18px;
+    margin-top: 16px;
+    max-width: 44ch;
+    line-height: 1.6;
+  }
+  .eq-contact .cb-coord {
+    color: var(--ink-soft);
+  }
+  .eq-contact .cb-coord b {
+    color: var(--green-d);
+  }
+  .eq-contact .cb-coord a:hover {
+    color: var(--ink);
+  }
+</style>

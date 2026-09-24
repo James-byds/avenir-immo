@@ -30,6 +30,11 @@ langues: ["FR", "EN"]
 zones: ["Loverval", "Mont-sur-Marchienne", "Nalinnes"]
 depuis: 2011
 ordre: 3
+specialites: ["Vendre", "Off-market", "Villas"]
+liens:
+  - { label: "LinkedIn", url: "https://www.linkedin.com/" }
+contactTitre: "Une question sur votre bien\_?"
+contactLede: "David vous répond sous 24 h ouvrées. Pas de formulaire labyrinthe, pas de rappel commercial non sollicité."
 ---
 
 David Marini est agent immobilier partenaire chez Avenir Immobilier, boulevard Tirou à Charleroi. [Bio à rédiger — texte provisoire.]

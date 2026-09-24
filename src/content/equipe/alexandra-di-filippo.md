@@ -29,6 +29,9 @@ langues: ["FR", "NL"]
 zones: ["Grand Charleroi", "Thuin", "Walcourt"]
 depuis: 2016
 ordre: 4
+specialites: ["Acheter", "Recherche sur mandat", "Négociation"]
+contactTitre: "Une question sur votre bien\_?"
+contactLede: "Alexandra vous répond sous 24 h ouvrées. Pas de formulaire labyrinthe, pas de rappel commercial non sollicité."
 ---
 
 Alexandra Di Filippo est agent immobilier chez Avenir Immobilier, boulevard Tirou à Charleroi. [Bio à rédiger — texte provisoire.]

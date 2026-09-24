@@ -160,6 +160,18 @@ const equipe = defineCollection({
       /** Année d'entrée chez Avenir. */
       depuis: z.number().int().optional(),
       ordre: z.number().int().default(0),
+      /* ── Additifs gabarit 11 (page membre) — tous optionnels ── */
+      /** Sujets du formulaire pré-adressé (« Votre projet ») de la page membre. */
+      specialites: z.array(z.string()).default([]),
+      /** Réseaux affichés en action du MemberHero (« LinkedIn ↗ »). */
+      liens: z.array(z.object({ label: z.string(), url: z.string().url() })).default([]),
+      /** H2 de la bande contact de la page membre (réf. equipe-*.html). */
+      contactTitre: z.string().optional(),
+      /** Chapô de la bande contact de la page membre. */
+      contactLede: z.string().optional(),
+      /** Meta description spécifique (défaut : « Ses biens en vente et son
+          contact direct : {tél}. » — cas Agnès, sans biens). */
+      metaDescription: z.string().optional(),
     }),
 });
 

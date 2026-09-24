@@ -29,6 +29,9 @@ langues: ["FR", "NL", "EN"]
 zones: ["Charleroi centre", "Loverval", "Gerpinnes"]
 depuis: 1992
 ordre: 1
+specialites: ["Vendre", "Estimer", "Off-market"]
+contactTitre: "Une question sur votre bien\_?"
+contactLede: "Olivier vous répond sous 24 h ouvrées. Pas de formulaire labyrinthe, pas de rappel commercial non sollicité."
 ---
 
 Olivier Monier est agent immobilier fondateur chez Avenir Immobilier, boulevard Tirou à Charleroi. [Bio à rédiger — texte provisoire.]
