@@ -1,0 +1,106 @@
+---
+/**
+ * Gallery — galerie de la fiche bien (grande photo + 2 vignettes, boutons
+ * .g-btn) et visionneuse .lightbox plein écran (compteur n/N, légende mono,
+ * flèches, clavier ←/→/Échap, fond cliquable).
+ *
+ * La visionneuse est du VANILLA dans le <script> ci-dessous — logique reprise
+ * du script inline de docs/handoff/reference/bien.html (pas de 5e île).
+ * Les photos sont des placeholders .ph : remplacer chaque .ph par un <img>
+ * au même endroit quand les visuels de l'agence arriveront.
+ *
+ * La grille du DS (.gallery : 1.55fr/1fr × 2 rangées, g-main sur 2 rangées)
+ * n'affiche que la grande photo + 2 vignettes ; les autres légendes ne sont
+ * visibles que dans la visionneuse.
+ */
+interface Props {
+  /** Légendes des photos, dans l'ordre (la 1re = photo principale). */
+  photos: string[];
+}
+const { photos } = Astro.props;
+/* Un plan en dernière position (« Plan des niveaux »…) reçoit son bouton dédié. */
+const hasPlan = photos.length > 1 && /^plan\b/i.test(photos[photos.length - 1] ?? "");
+---
+
+<div class="gallery" id="gallery" data-captions={JSON.stringify(photos)}>
+  <div class="ph g-main" data-lb="0" role="button" tabindex="0" aria-label="Agrandir la photo 1">
+    <span class="ph-tag">{photos[0]}</span>
+  </div>
+  {photos.slice(1, 3).map((tag, i) => (
+    <div class="ph" data-lb={String(i + 1)} role="button" tabindex="0" aria-label={`Agrandir la photo ${i + 2}`}>
+      <span class="ph-tag">{tag}</span>
+    </div>
+  ))}
+  <div class="g-actions">
+    <button class="g-btn" type="button" data-lb="0">◫ {photos.length} photos</button>
+    {hasPlan && (
+      <button class="g-btn" type="button" data-lb={String(photos.length - 1)}>Voir le plan</button>
+    )}
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Galerie photos">
+  <div class="lb-top">
+    <span class="lb-count" id="lbCount">1 / {photos.length}</span>
+    <button class="lb-close" id="lbClose" type="button" aria-label="Fermer">×</button>
+  </div>
+  <div class="lb-stage">
+    <button class="lb-nav prev" id="lbPrev" type="button" aria-label="Photo précédente">←</button>
+    <div class="lb-media">
+      <div class="ph ph--green"><span class="ph-tag" id="lbTag">{photos[0]}</span></div>
+      <div class="lb-cap" id="lbCap">{photos[0]}</div>
+    </div>
+    <button class="lb-nav next" id="lbNext" type="button" aria-label="Photo suivante">→</button>
+  </div>
+</div>
+
+<script>
+  /* Visionneuse — reprise du script inline de la référence bien.html. */
+  const gallery = document.getElementById("gallery");
+  const lb = document.getElementById("lightbox");
+  if (gallery && lb) {
+    const photos: string[] = JSON.parse(gallery.dataset.captions || "[]");
+    const lbCount = document.getElementById("lbCount")!;
+    const lbTag = document.getElementById("lbTag")!;
+    const lbCap = document.getElementById("lbCap")!;
+    let cur = 0;
+
+    function show(i: number) {
+      cur = (i + photos.length) % photos.length;
+      lbCount.textContent = cur + 1 + " / " + photos.length;
+      lbTag.textContent = photos[cur] ?? "";
+      lbCap.textContent = photos[cur] ?? "";
+    }
+    function openLb(i: number) {
+      show(i);
+      lb!.classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+    function closeLb() {
+      lb!.classList.remove("open");
+      document.body.style.overflow = "";
+    }
+
+    document.querySelectorAll<HTMLElement>("[data-lb]").forEach((el) => {
+      el.addEventListener("click", () => openLb(Number(el.dataset.lb)));
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openLb(Number(el.dataset.lb));
+        }
+      });
+    });
+    document.getElementById("lbClose")?.addEventListener("click", closeLb);
+    document.getElementById("lbPrev")?.addEventListener("click", () => show(cur - 1));
+    document.getElementById("lbNext")?.addEventListener("click", () => show(cur + 1));
+    lb.addEventListener("click", (e) => {
+      if (e.target === lb) closeLb();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (!lb!.classList.contains("open")) return;
+      if (e.key === "Escape") closeLb();
+      if (e.key === "ArrowLeft") show(cur - 1);
+      if (e.key === "ArrowRight") show(cur + 1);
+    });
+  }
+</script>

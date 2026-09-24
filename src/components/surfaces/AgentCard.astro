@@ -16,7 +16,9 @@ interface Props {
   points?: string[];
 }
 const { name, role, tel, points = [] } = Astro.props;
-const telHref = tel ? `tel:${tel.split(" ").join("")}` : undefined;
+/* Les numéros de la collection equipe s'écrivent « 0475/52.26.31 » : l'URI
+   tel: ne garde que chiffres et +. À reprendre dans le DS (AgentCard.jsx). */
+const telHref = tel ? `tel:${tel.replace(/[^+\d]/g, "")}` : undefined;
 ---
 
 <div class="agent-card">

@@ -70,16 +70,30 @@ const biens = defineCollection({
       /** Terrain en m². */
       terrain: z.number().positive().optional(),
       anneeConstruction: z.number().int().optional(),
+      /** Places de garage (« 2 voit. » dans la SpecGrid de la fiche). */
+      garage: z.number().int().nonnegative().optional(),
+      /** Code postal affiché dans la ligne de localisation (« 6280 »). */
+      codePostal: z.string().optional(),
       peb: z.enum(["A++", "A+", "A", "B", "C", "D", "E", "F", "G"]).optional(),
       /** Consommation PEB en kWh/m²·an. */
       kwh: z.number().optional(),
       description: z.string(),
       photos: z.array(image()).default([]),
+      /** Légendes des photos — placeholders .ph tant que les visuels manquent. */
+      galerie: z.array(z.string()).default([]),
+      /** Lignes dt/dd du bloc « PEB & informations légales » de la fiche. */
+      legales: z.array(z.object({ label: z.string(), valeur: z.string() })).default([]),
+      /** Paragraphe « Le quartier » de la fiche bien. */
+      quartierTexte: z.string().optional(),
+      /** Repères sous la carte (« Écoles à 4 min · N5 → Charleroi en 15 min »). */
+      quartierRepere: z.string().optional(),
       agent: reference("equipe").optional(),
       /* Simulation de mensualité : la mention légale est obligatoire si affichée. */
       mensualite: z
         .object({
           montant: z.number().positive(),
+          /** Hypothèses de calcul affichées avec la mensualité (quotité, durée, taux). */
+          hypothese: z.string().optional(),
           mentionLegale: z.string(),
         })
         .optional(),

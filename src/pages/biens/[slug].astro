@@ -1,6 +1,25 @@
 ---
-import { getCollection, render } from "astro:content";
+/* Fiche bien — gabarit 03 (réf. docs/handoff/reference/bien.html).
+   Alternance : page-head encre (galerie) → blanc en continuation (listing-grid)
+   → vert tendre (biens similaires). Tout le contenu vient de content/biens ;
+   le conseiller de l'aside est celui du bien (bien.data.agent → equipe). */
+import { getCollection, getEntry, render } from "astro:content";
 import PageLayout from "../../layouts/PageLayout.astro";
+import PageHead from "../../components/chrome/PageHead.astro";
+import Breadcrumb from "../../components/core/Breadcrumb.astro";
+import SectionHead from "../../components/core/SectionHead.astro";
+import Button from "../../components/actions/Button.astro";
+import Input from "../../components/forms/Input.astro";
+import Badge from "../../components/surfaces/Badge.astro";
+import Gallery from "../../components/surfaces/Gallery.astro";
+import SpecGrid from "../../components/surfaces/SpecGrid.astro";
+import PebScale from "../../components/surfaces/PebScale.astro";
+import AgentCard from "../../components/surfaces/AgentCard.astro";
+import PropertyCard from "../../components/surfaces/PropertyCard.astro";
+import ShareBar from "../../components/islands/ShareBar.tsx";
+import { jsonLd, realEstateListing } from "../../lib/seo";
+import { formatPrix, formatSurface } from "../../lib/format";
+import { ancre, slugCombinaison, slugCommune } from "../../lib/maillage";
 
 export async function getStaticPaths() {
   const biens = await getCollection("biens", ({ data }) => data.publie !== false);
@@ -8,11 +27,424 @@ export async function getStaticPaths() {
 }
 
 const { bien } = Astro.props;
+const d = bien.data;
 const { Content } = await render(bien);
+const estLocation = d.transaction === "location";
+
+/* ── Conseiller associé au bien (sinon l'agence en repli) ── */
+const agent = d.agent ? await getEntry(d.agent) : undefined;
+const conseiller = agent
+  ? {
+      nom: agent.data.nom,
+      role: agent.data.fonction,
+      tel: agent.data.telephone,
+      prenom: agent.data.nom.split(" ")[0],
+    }
+  : {
+      nom: "Avenir Immobilier",
+      role: "Votre agence — Charleroi",
+      tel: "+32 71 32 14 70",
+      prenom: "L'agence",
+    };
+
+/* ── Galerie : légendes de la collection, repli générique si absentes ── */
+const TYPE_SINGULIER: Record<string, string> = {
+  maison: "Maison",
+  appartement: "Appartement",
+  terrain: "Terrain",
+  commerce: "Commerce",
+  immeuble: "Immeuble",
+};
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const photos = d.galerie.length
+  ? d.galerie
+  : [
+      `${d.sousType ? cap(d.sousType) : TYPE_SINGULIER[d.type]} — ${d.commune}`,
+      "Pièces de vie",
+      "Cuisine",
+      "Chambre principale",
+      "Extérieurs",
+    ];
+
+/* ── Prix, €/m², caractéristiques ── */
+const prixAffiche = estLocation ? `${formatPrix(d.prix)}/mois` : formatPrix(d.prix);
+const nombre = new Intl.NumberFormat("fr-BE", { maximumFractionDigits: 0 });
+const ppm2 = d.surface ? d.prix / d.surface : undefined;
+const ppm2Ligne = ppm2
+  ? estLocation
+    ? `${nombre.format(Math.round(ppm2 * 10) / 10)} €/m² · loyer mensuel`
+    : `${nombre.format(Math.round(ppm2))} €/m² · honoraires inclus`
+  : undefined;
+
+const specs = [
+  d.chambres ? { value: String(d.chambres), label: d.chambres > 1 ? "Chambres" : "Chambre" } : null,
+  d.sdb ? { value: String(d.sdb), label: d.sdb > 1 ? "Salles de bains" : "Salle de bains" } : null,
+  d.surface ? { value: formatSurface(d.surface), label: "Habitables" } : null,
+  d.terrain ? { value: formatSurface(d.terrain), label: "Terrain" } : null,
+  d.anneeConstruction ? { value: String(d.anneeConstruction), label: "Construction" } : null,
+  d.garage ? { value: `${d.garage} voit.`, label: "Garage" } : null,
+].filter((s): s is { value: string; label: string } => Boolean(s));
+
+/* PEB : l'échelle du DS va de A à G — A++/A+ s'affichent sur la rangée A. */
+const pebGrade =
+  d.peb === "A++" || d.peb === "A+" ? "A" : (d.peb as "A" | "B" | "C" | "D" | "E" | "F" | "G" | undefined);
+
+const badge =
+  d.statut === "nouveau"
+    ? { label: "Nouveau", variant: "new" as const }
+    : d.statut === "sous-offre"
+      ? { label: "Sous offre", variant: undefined }
+      : d.statut === "vendu"
+        ? { label: "Vendu", variant: "sold" as const }
+        : d.statut === "off-market"
+          ? { label: "Off-market", variant: undefined }
+          : undefined;
+
+/* ── Page de localité correspondante — uniquement si la combinaison est
+   déclarée pourvue (jamais de lien vers une page vide) ── */
+const communes = await getCollection("communes");
+const communeEntry = communes.find((c) => c.data.nom === d.commune);
+const localite =
+  communeEntry &&
+  communeEntry.data.combinaisons.some((c) => c.type === d.type && c.transaction === d.transaction)
+    ? {
+        href: `/${slugCombinaison(d.type, d.transaction, slugCommune(d.commune))}`,
+        ancre: ancre(d.type, d.transaction, d.commune),
+      }
+    : undefined;
+
+/* ── Fil d'Ariane (le HTML et le BreadcrumbList JSON-LD partagent ces items) ── */
+const bc: { label: string; href?: string }[] = [
+  { label: "Accueil", href: "/" },
+  { label: "Nos biens", href: "/biens" },
+  ...(localite ? [{ label: d.commune, href: localite.href }] : []),
+  { label: d.titre },
+];
+
+/* ── Biens similaires : même commune ou même type, prix ± 25 %, jamais le bien
+   courant ; on complète au-delà de la fourchette si moins de 3 candidats. ── */
+const biens = await getCollection("biens", ({ data }) => data.publie !== false);
+const enFourchette = (p: number) => Math.abs(p - d.prix) / d.prix <= 0.25;
+const tierDe = (b: (typeof biens)[number]) => {
+  const memeCommune = b.data.commune === d.commune;
+  const memeType = b.data.type === d.type;
+  if (memeCommune && enFourchette(b.data.prix)) return 0;
+  if (memeType && enFourchette(b.data.prix)) return 1;
+  if (memeCommune) return 2;
+  if (memeType) return 3;
+  return 4;
+};
+const similaires = biens
+  .filter((b) => b.id !== bien.id && b.data.transaction === d.transaction)
+  .map((b) => ({ b, tier: tierDe(b), delta: Math.abs(b.data.prix - d.prix) }))
+  .sort((x, y) => x.tier - y.tier || x.delta - y.delta)
+  .slice(0, 3)
+  .map((x) => x.b);
+
+const badgeDe = (b: (typeof biens)[number]) =>
+  b.data.statut === "nouveau"
+    ? { label: "Nouveau", variant: "new" as const }
+    : b.data.statut === "sous-offre"
+      ? { label: "Sous offre", variant: undefined }
+      : b.data.statut === "vendu"
+        ? { label: "Vendu", variant: "sold" as const }
+        : undefined;
+const specsDe = (b: (typeof biens)[number]) =>
+  [
+    b.data.chambres ? `${b.data.chambres} ch.` : null,
+    b.data.sdb ? `${b.data.sdb} sdb` : null,
+    b.data.surface ? formatSurface(b.data.surface) : null,
+  ].filter((s): s is string => Boolean(s));
+const tagDe = (b: (typeof biens)[number]) =>
+  `${b.data.sousType ? cap(b.data.sousType) : TYPE_SINGULIER[b.data.type]} — ${b.data.commune}`;
+
+/* ── Bandeau témoignage (comme la référence) : un avis de la même commune ;
+   sans avis local, le bandeau est omis. 4,8/190 = chiffre externe Google,
+   repris tel quel (cf. accueil). ── */
+const avisTous = (await getCollection("avis")).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+const temoin = avisTous.find((a) => a.data.commune === d.commune);
+const initialesDe = (nom: string) =>
+  nom
+    .split(/\s+/)
+    .map((w) => w.charAt(0))
+    .filter((ch) => /\p{L}/u.test(ch))
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+const initiales = avisTous.slice(0, 3).map((a) => initialesDe(a.data.auteur));
+
+/* ── Head : title, canonical, JSON-LD ── */
+const url = `/biens/${bien.id}`;
+const pageUrl = new URL(url, Astro.site).href;
+/* La référence titre sur la forme courte (« Villa d'architecte à Gerpinnes »),
+   pas sur le titre complet à virgule. */
+const titreCourt = d.titre.split(",")[0].trim();
+const title = `${titreCourt} à ${d.commune} — ${prixAffiche} · Avenir Immobilier`;
+const listingLd = realEstateListing({
+  titre: d.titre,
+  description: d.description,
+  prix: d.prix,
+  url,
+});
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: bc.map((it, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: it.label,
+    ...(it.href ? { item: new URL(it.href, Astro.site).href } : {}),
+  })),
+};
+
+const msgPlaceholder = d.reference
+  ? `Bonjour, je souhaite visiter le bien réf. ${d.reference}…`
+  : "Bonjour, je souhaite organiser une visite…";
+const msgSucces = `${conseiller.prenom} vous recontacte sous 24 h ouvrées pour convenir d'une visite${d.reference ? ` du bien réf. ${d.reference}` : ""}.`;
 ---
 
-<PageLayout title={bien.data.titre} description={bien.data.description}>
-  <h1>{bien.data.titre}</h1>
-  {/* Stub — fiche bien. SpecGrid, PebScale, AgentCard, galerie… à brancher. */}
-  <Content />
+<PageLayout title={title} description={d.description} canonical={pageUrl} active="/biens">
+  <Fragment slot="head">
+    <script type="application/ld+json" is:inline set:html={jsonLd(listingLd)} />
+    <script type="application/ld+json" is:inline set:html={jsonLd(breadcrumbLd)} />
+  </Fragment>
+
+  <!-- ============ 1 · BANDEAU ENCRE : titre, prix, galerie ============ -->
+  <PageHead variant="ink">
+    <Breadcrumb slot="breadcrumb" items={bc} />
+
+    <div class="listing-head">
+      <div>
+        <h1>{d.titre}</h1>
+        <div class="listing-loc">
+          <span class="u-dot"></span>{d.commune}
+          {d.codePostal && <><span class="sep">·</span>{d.codePostal}</>}
+          {d.quartier && <><span class="sep">·</span>{d.quartier}</>}
+          {d.reference && <><span class="sep">·</span>Réf. {d.reference}</>}
+          {badge && <><span class="sep">·</span><Badge variant={badge.variant}>{badge.label}</Badge></>}
+        </div>
+      </div>
+      <div class="listing-price-block">
+        <div class="listing-price">{prixAffiche}</div>
+        {ppm2Ligne && <div class="listing-ppm2">{ppm2Ligne}</div>}
+      </div>
+    </div>
+
+    <div class="est-actions">
+      <Button href="#visite">Organiser une visite</Button>
+      <Button variant="ghost" href="/contact" arrow={false}>Poser une question</Button>
+    </div>
+
+    <Gallery photos={photos} />
+  </PageHead>
+
+  <!-- ============ 2 · CORPS DE FICHE (blanc, continuation) ============ -->
+  <section class="sec--white sec--cont">
+    <div class="wrap listing-grid">
+      <div class="listing-main">
+        <div class="l-sec">
+          <h2>En deux mots</h2>
+          <Content />
+          {specs.length > 0 && <SpecGrid specs={specs} />}
+        </div>
+
+        {(pebGrade || d.legales.length > 0) && (
+          <div class="l-sec">
+            <h2>PEB &amp; informations légales</h2>
+            <div class="peb-wrap">
+              {pebGrade && (
+                <PebScale grade={pebGrade} value={d.kwh ? `${d.kwh} kWh/m²·an` : undefined} />
+              )}
+              {d.legales.length > 0 && (
+                <dl class="legal-list">
+                  {d.legales.map((l) => (
+                    <div class="legal">
+                      <dt>{l.label}</dt>
+                      <dd>{l.valeur}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </div>
+          </div>
+        )}
+
+        {(d.quartierTexte || localite) && (
+          <div class="l-sec">
+            <h2>Le quartier</h2>
+            {d.quartierTexte && <p>{d.quartierTexte}</p>}
+            <div class="map-ph">
+              <div class="ph"><span class="ph-tag">Carte — {d.commune} &amp; alentours</span></div>
+              <span class="map-pin" aria-hidden="true"></span>
+            </div>
+            {d.quartierRepere && <p class="map-note">{d.quartierRepere}</p>}
+            {localite && (
+              <div class="mt-4">
+                <a class="link-arrow" href={localite.href}>{localite.ancre} →</a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {temoin && (
+          <div class="l-sec">
+            <div class="trust--band">
+              <div class="trust-rating">
+                <span class="t-score">4,8<span class="t-den">/5</span></span>
+                <span>
+                  <span class="t-stars" aria-label="4,8 étoiles sur 5">★★★★★</span>
+                  <span class="t-src">Avis Google · 190 avis</span>
+                </span>
+              </div>
+              <p class="t-quote">{temoin.data.texte}</p>
+              <span class="t-avas">
+                {initiales.map((ini) => <span class="t-ava" aria-hidden="true">{ini}</span>)}
+                <span class="t-count">190 avis vérifiés</span>
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <!-- Aside collant : conseiller, demande de visite, prix & mensualité, partage -->
+      <aside class="listing-aside scroll-mt-24" id="visite">
+        <AgentCard
+          name={conseiller.nom}
+          role={conseiller.role}
+          tel={conseiller.tel}
+          points={[
+            "Réponse sous 24 h",
+            "Visites 6 j/7, en semaine jusqu'à 19 h",
+            "Sans engagement",
+          ]}
+        >
+          <form id="visitForm" data-succes={msgSucces} novalidate>
+            <Input label="Nom" id="vNom" name="nom" placeholder="Votre nom" autocomplete="name" />
+            <Input label="Email" id="vEmail" name="email" type="email" placeholder="vous@email.be" autocomplete="email" />
+            <Input label="Téléphone" id="vTel" name="telephone" type="tel" inputmode="tel" placeholder="0470 12 34 56" autocomplete="tel" />
+            <div class="field">
+              <label for="vMsg">Message</label>
+              <textarea id="vMsg" name="message" placeholder={msgPlaceholder}></textarea>
+            </div>
+            <div class="est-actions">
+              <Button block type="submit">Organiser une visite</Button>
+            </div>
+            <p class="est-fineprint">Réponse sous 24 h ouvrées. Vos données ne sont jamais cédées à des tiers.</p>
+          </form>
+
+          {!estLocation && (
+            <div class="mt-5">
+              <dl class="legal-list">
+                <div class="legal">
+                  <dt>Prix affiché</dt>
+                  <dd>{formatPrix(d.prix)}</dd>
+                </div>
+                {d.mensualite && (
+                  <div class="legal">
+                    <dt>Mensualité indicative</dt>
+                    <dd>≈ {formatPrix(d.mensualite.montant)}/mois</dd>
+                  </div>
+                )}
+              </dl>
+              {d.mensualite && (
+                <p class="est-fineprint">
+                  {d.mensualite.hypothese && `${d.mensualite.hypothese} `}{d.mensualite.mentionLegale}
+                </p>
+              )}
+            </div>
+          )}
+        </AgentCard>
+
+        <ShareBar client:visible url={pageUrl} title={title} label="Partager ce bien" />
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 3 · BIENS SIMILAIRES (vert tendre) ============ -->
+  {similaires.length > 0 && (
+    <section class="sec--tint" id="similaires">
+      <div class="wrap">
+        <div class="props-head reveal">
+          <SectionHead eyebrow="À voir aussi" title="Biens similaires" />
+          <a href="/biens" class="link-arrow">Tous nos biens →</a>
+        </div>
+        <div class="prop-grid">
+          {similaires.map((b) => (
+            <PropertyCard
+              price={formatPrix(b.data.prix)}
+              suffix={b.data.transaction === "location" ? "/ mois" : undefined}
+              location={b.data.commune}
+              title={b.data.titre}
+              specs={specsDe(b)}
+              badge={badgeDe(b)?.label}
+              badgeVariant={badgeDe(b)?.variant}
+              tag={tagDe(b)}
+              peb={b.data.peb}
+              href={`/biens/${b.id}`}
+            />
+          ))}
+        </div>
+        {/* À REPRENDRE DANS LE DS — PropertyCard (port Astro) n'accepte pas de
+            classes libres : le scroll-reveal exige .reveal (cf. accueil, même motif). */}
+        <script is:inline>
+          document.querySelectorAll("#similaires .card").forEach((c, i) => {
+            c.classList.add("reveal");
+            if (i === 1) c.classList.add("d1");
+            else if (i === 2) c.classList.add("d2");
+          });
+        </script>
+      </div>
+    </section>
+  )}
 </PageLayout>
+
+<script>
+  /* Formulaire de visite — validation et confirmation, logique reprise du
+     script inline de la référence bien.html (vanilla, pas d'île). */
+  const form = document.getElementById("visitForm") as HTMLFormElement | null;
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const nom = document.getElementById("vNom") as HTMLInputElement;
+      const email = document.getElementById("vEmail") as HTMLInputElement;
+      const okN = nom.value.trim().length > 1;
+      const okE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value.trim());
+      nom.classList.toggle("err", !okN);
+      email.classList.toggle("err", !okE);
+      if (!okN || !okE) return;
+      /* Marquage de la confirmation repris tel quel de la référence
+         (styles inline compris) — à reprendre dans le DS (.agent-ok). */
+      form.innerHTML =
+        '<div class="agent-ok"><div class="ed-ic">✓</div>' +
+        '<h3 class="serif" style="font-size:22px">Demande envoyée</h3>' +
+        '<p style="color:var(--ink-soft);font-size:14.5px;margin-top:10px">' +
+        (form.dataset.succes || "Nous vous recontactons sous 24 h ouvrées.") +
+        "</p></div>";
+    });
+    form
+      .querySelectorAll("input")
+      .forEach((el) => el.addEventListener("input", () => el.classList.remove("err")));
+  }
+</script>
+
+<style>
+  /* Écarts recopiés de la référence, valeurs inchangées — à reprendre dans le DS :
+     · .listing-loc .u-dot : la puce n'est dimensionnée que dans .utility
+       (site.css:158) ; sans cette règle elle est invisible (0 × 0).
+       Le fond vert clair vient déjà de .page-head--ink .listing-loc .u-dot.
+     · .t-den : le « /5 » du bandeau d'avis est un style inline dans bien.html
+       (font-size:60%;color:var(--ink-mute)). */
+  .listing-loc .u-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    display: inline-block;
+    background: var(--green-l);
+  }
+  .t-den {
+    font-size: 60%;
+    color: var(--ink-mute);
+  }
+</style>
