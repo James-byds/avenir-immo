@@ -105,7 +105,7 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
       <div class="trust-rating">
         <span class="t-score">{rating}<span style="font-size:60%;color:var(--ink-mute)">/5</span></span>
         <span style="display:flex;flex-direction:column;gap:5px">
-          <span class="t-stars" aria-label="5 étoiles sur 5">{stars(5)}</span>
+          <span class="t-stars" aria-label={`${rating} étoiles sur 5`}>{stars(5)}</span>
           <span class="t-src">{source} · {count} avis</span>
         </span>
       </div>

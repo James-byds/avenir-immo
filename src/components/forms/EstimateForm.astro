@@ -1,0 +1,106 @@
+---
+/**
+ * EstimateForm — panneau du formulaire d'estimation 3 étapes (.est-card).
+ *
+ * BALISAGE SEULEMENT : tout le comportement (navigation d'étapes, validation
+ * .err, fourchette indicative arrondie à 5 000 € dans #edRange) vit dans
+ * public/ds-script.js, bloc « Estimation multi-step form ». Le script
+ * s'accroche aux ids/classes ci-dessous — #estForm, #ecStep, #ecProgress,
+ * #typeChoice, #cp, #surf, #rooms, #name, #email, #phone, #edRange,
+ * .est-step[data-step], [data-next] / [data-back]. Ne rien renommer.
+ * Ids uniques : une seule instance par page.
+ *
+ * Les ports ChoiceRow / Select ne sont pas utilisés : ils n'exposent ni les
+ * ids requis (#typeChoice sur .choice-row, #rooms) ni le câblage label
+ * for=… — balisage repris de la référence (estimation.html), identique à la
+ * section estimation de l'accueil (page témoin validée).
+ *
+ * La fourchette est un calcul indicatif client-side (ds-script.js), pas un
+ * chiffre éditorial — aucune mensualité affichée, pas de mention crédit.
+ *
+ * `level` : niveau des titres d'étapes — 2 quand la section porte le H1 de
+ * la page (/estimation), 3 sous un H2 (accueil) ; sans lui la hiérarchie
+ * saute un niveau.
+ */
+interface Props {
+  level?: 2 | 3;
+}
+const { level = 3 } = Astro.props;
+const H = level === 2 ? "h2" : "h3";
+---
+
+<div class="est-card reveal d1">
+  <form id="estForm" novalidate>
+    <div class="ec-head">
+      <span class="ec-step" id="ecStep">Étape 1 / 3</span>
+      <span class="ec-step" style="color:var(--green)">≈ 2 min</span>
+    </div>
+    <div class="ec-progress" id="ecProgress"><span class="on"></span><span></span><span></span></div>
+
+    <div class="est-step on" data-step="1">
+      <H>Votre bien</H>
+      <div class="field">
+        <label>Type de bien</label>
+        <div class="choice-row" id="typeChoice">
+          <div class="choice on" data-v="Maison">Maison</div>
+          <div class="choice" data-v="Appartement">Appartement</div>
+          <div class="choice" data-v="Villa">Villa</div>
+          <div class="choice" data-v="Terrain">Terrain / autre</div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="cp">Code postal</label>
+        <input id="cp" name="cp" inputmode="numeric" placeholder="6000" maxlength="4" />
+      </div>
+      <div class="est-actions"><button type="button" class="btn btn--block" data-next>Continuer <span class="arr">→</span></button></div>
+    </div>
+
+    <div class="est-step" data-step="2">
+      <H>Quelques détails</H>
+      <div class="field">
+        <label for="surf">Surface habitable (m²)</label>
+        <input id="surf" name="surf" inputmode="numeric" placeholder="220" />
+      </div>
+      <div class="field">
+        <label for="rooms">Nombre de chambres</label>
+        <select id="rooms" name="rooms">
+          <option value="">Sélectionner…</option>
+          <option>1 à 2</option><option>3 à 4</option><option>5 et plus</option>
+        </select>
+      </div>
+      <div class="est-actions">
+        <button type="button" class="est-back" data-back>← Retour</button>
+        <button type="button" class="btn btn--block" data-next>Continuer <span class="arr">→</span></button>
+      </div>
+    </div>
+
+    <div class="est-step" data-step="3">
+      <H>Votre fourchette de prix</H>
+      <div class="field">
+        <label for="name">Nom</label>
+        <input id="name" name="name" placeholder="Votre nom" />
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="vous@email.be" />
+      </div>
+      <div class="field">
+        <label for="phone">Téléphone <span style="font-weight:400;color:var(--ink-mute)">— pour le rappel sous 24 h</span></label>
+        <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="0470 12 34 56" />
+      </div>
+      <div class="est-actions">
+        <button type="button" class="est-back" data-back>← Retour</button>
+        <button type="submit" class="btn btn--block">Voir ma fourchette de prix <span class="arr">→</span></button>
+      </div>
+      <p class="est-fineprint">En soumettant ce formulaire, vous acceptez d'être recontacté par Avenir Immobilier. Vos données ne sont jamais cédées à des tiers.</p>
+    </div>
+
+    <div class="est-step est-done" data-step="done">
+      <p class="ed-label">Fourchette indicative pour votre bien</p>
+      <div class="ed-range" id="edRange">—</div>
+      <div class="ed-divider"><span>estimation en ligne</span></div>
+      <H class="serif">Un conseiller vous rappelle sous 24&nbsp;h</H>
+      <p>Cette première fourchette est affinée gratuitement par la visite d'un expert local de votre commune — sans engagement.</p>
+    </div>
+  </form>
+</div>

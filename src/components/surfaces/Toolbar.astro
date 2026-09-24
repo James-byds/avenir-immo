@@ -1,0 +1,155 @@
+---
+/**
+ * Toolbar — barre de filtres des listes (liste des biens, pages de localité).
+ *
+ * Motif .toolbar du DS : segments (.seg) + selects (.tool-select) + recherche
+ * (.tool-search, local.css) + tri, compteur .tool-count, et .tool-clear qui
+ * apparaît SOUS la rangée de filtres quand un filtre est actif (le script de
+ * la page bascule son attribut hidden).
+ *
+ * Rendu STATIQUE : l'interactivité (filtrage, tri, compteur) appartient au
+ * script de la page ; ds-script.js enhance les <select> en menus .dd.
+ *
+ * Les selects ne passent PAS par forms/Select.astro (qui rend un .field de
+ * formulaire, pas une pilule .tool-select) ni le segment par forms/Seg.astro
+ * (pas de passe-through id/data-f, nécessaires au script et à la garde
+ * `#filters && !#selLoc` de ds-script.js) — à reprendre dans le DS.
+ *
+ * Le <style> scopé recopie, valeurs inchangées, les styles inline de la
+ * référence biens.html / maison-a-vendre-liege.html (rangée en colonne,
+ * alignements) — mêmes valeurs que .q-toolbar de local.css.
+ */
+interface SegOption {
+  id: string;
+  label: string;
+  count?: number;
+}
+interface Option {
+  value: string;
+  label: string;
+}
+interface SelectGroup {
+  id: string;
+  label: string;
+  ariaLabel?: string;
+  options: Option[];
+  value?: string;
+}
+interface Props {
+  /** Filtres segmentés (.seg) — id par défaut "filters" (contrat ds-script.js). */
+  segments?: { id?: string; label: string; options: SegOption[]; value?: string };
+  /** Selects pilule (.tool-select), dans la rangée de gauche. */
+  groups?: SelectGroup[];
+  /** Champ texte .tool-search (mêmes métriques que .tool-select). */
+  search?: { id?: string; label: string; placeholder?: string; ariaLabel?: string };
+  /** Select de tri, colonne de droite. */
+  sort?: SelectGroup;
+  /** Texte initial du compteur (#toolCount) — le script de page le met à jour. */
+  count?: string;
+  countId?: string;
+  clearId?: string;
+  clearLabel?: string;
+  class?: string;
+}
+const {
+  segments,
+  groups = [],
+  search,
+  sort,
+  count,
+  countId = "toolCount",
+  clearId = "toolReset",
+  clearLabel = "Effacer les filtres",
+  class: className = "",
+} = Astro.props;
+const segId = segments?.id ?? "filters";
+const segActive = segments?.value ?? segments?.options[0]?.id;
+---
+
+<div class={`toolbar ${className}`.trim()}>
+  <div class="toolbar-left">
+    <div class="tool-row">
+      {segments && (
+        <div class="tool-group">
+          <span class="tool-label" id={`${segId}-label`}>{segments.label}</span>
+          <div class="seg" id={segId} role="group" aria-labelledby={`${segId}-label`}>
+            {segments.options.map((o) => (
+              <button type="button" class={o.id === segActive ? "on" : undefined} data-f={o.id}>
+                {o.label}
+                {o.count != null && <span class="n">{o.count}</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {groups.map((g) => (
+        <div class="tool-group">
+          <span class="tool-label">{g.label}</span>
+          <div class="tool-select">
+            <select id={g.id} aria-label={g.ariaLabel ?? g.label}>
+              {g.options.map((o) => (
+                <option value={o.value} selected={o.value === g.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      ))}
+      {search && (
+        <div class="tool-group">
+          <span class="tool-label">{search.label}</span>
+          <div class="tool-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M16.5 16.5 21 21"></path></svg>
+            <input
+              id={search.id ?? "toolQ"}
+              type="search"
+              placeholder={search.placeholder}
+              aria-label={search.ariaLabel ?? search.label}
+              autocomplete="off"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+    <button class="tool-clear" id={clearId} type="button" hidden>×&nbsp; {clearLabel}</button>
+  </div>
+  <div class="toolbar-right">
+    {count && <span class="tool-count" id={countId}>{count}</span>}
+    {sort && (
+      <div class="tool-group">
+        <span class="tool-label">{sort.label}</span>
+        <div class="tool-select">
+          <select id={sort.id} aria-label={sort.ariaLabel ?? sort.label}>
+            {sort.options.map((o) => (
+              <option value={o.value} selected={o.value === sort.value}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    )}
+  </div>
+</div>
+
+<style>
+  /* Styles inline de la référence (biens.html), valeurs inchangées —
+     à reprendre dans le DS (mêmes valeurs que .q-toolbar de local.css).
+     Préfixés .toolbar : le scope Astro passe par :where() (spécificité
+     nulle), il faut dépasser les règles à classe simple de site.css. */
+  .toolbar .toolbar-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .toolbar .tool-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px 22px;
+    flex-wrap: wrap;
+  }
+  .toolbar .toolbar-right {
+    align-items: flex-end;
+    align-self: flex-start;
+  }
+  .toolbar .tool-count {
+    padding-bottom: 13px;
+  }
+</style>

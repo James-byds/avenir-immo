@@ -1,0 +1,46 @@
+---
+/**
+ * SkeletonGrid — squelette de chargement de la liste des biens.
+ *
+ * Grille .prop-grid de .sk-card (classes de local.css : .sk-media, .sk-body,
+ * .sk-line, .sk-shimmer — « à reprendre côté DS »). Affiché par le script de
+ * page entre deux jeux de résultats ; masqué par défaut ([hidden] de
+ * local.css). prefers-reduced-motion coupe l'animation (règle .sk-shimmer)
+ * et le script saute alors l'étape squelette.
+ *
+ * Les largeurs des lignes reprennent les trois motifs de la référence
+ * biens.html (38/82/60, 44/74/56, 34/88/52), cyclés.
+ */
+interface Props {
+  id?: string;
+  /** Nombre de cartes squelette (6 = deux rangées de la grille 3 colonnes). */
+  count?: number;
+  hidden?: boolean;
+  class?: string;
+  style?: string;
+}
+const { id, count = 6, hidden = true, class: className = "", style } = Astro.props;
+const PATTERNS = [
+  [38, 82, 60],
+  [44, 74, 56],
+  [34, 88, 52],
+];
+---
+
+<div class={`prop-grid ${className}`.trim()} id={id} hidden={hidden} aria-hidden="true" style={style}>
+  {
+    Array.from({ length: count }, (_, i) => {
+      const [a, b, c] = PATTERNS[i % PATTERNS.length];
+      return (
+        <div class="sk-card">
+          <div class="sk-media sk-shimmer" />
+          <div class="sk-body">
+            <div class="sk-line sk-shimmer" style={`width:${a}%`} />
+            <div class="sk-line sk-shimmer" style={`width:${b}%;height:16px`} />
+            <div class="sk-line sk-shimmer" style={`width:${c}%`} />
+          </div>
+        </div>
+      );
+    })
+  }
+</div>
