@@ -34,10 +34,13 @@ const canonicalURL = canonical ?? new URL(Astro.url.pathname, Astro.site).href;
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalURL} />
 
-    <!-- Signe V de la marque -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
-    <link rel="apple-touch-icon" href="/favicon-180.png" />
+    <!-- Signe V de la marque, sur plaque blanche : le signe seul sur fond
+         transparent disparaît dans les onglets sombres. Jeu généré par
+         scripts/favicons.mjs depuis l'artwork client (jamais recoloré) ;
+         les favicon-*.png synchronisés du DS restent en place, non liés. -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Fonte de marque : préchargement, sinon le display bascule sur system-ui -->
     <link
