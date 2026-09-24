@@ -9,7 +9,7 @@
 |---|---|---|
 | F1 | `00-preflight` | ✅ terminé le 23 sept. 2026 (commits `2213ace` → `3c0a0aa`) |
 | F2 | `01-accueil` — page témoin, recette à 100 % avant toute vague | ✅ terminé le 24 sept. 2026 (commit `c37e852`, recette conforme) |
-| F3 | Vague A : `02-biens-liste` · `03-bien-fiche` · `07-estimation` (3 gabarits en parallèle) | ⬜ |
+| F3 | Vague A : `02-biens-liste` · `03-bien-fiche` · `07-estimation` (3 gabarits en parallèle) | ✅ terminé le 24 sept. 2026 (commits `ef993fa` → `a3736d8`, recettes conformes) |
 | F4 | Vague B : `05-localite` puis `06-quartier` · `04-localites-hub` | ⬜ |
 | F5 | Vague C : `11-equipe` · `10-a-propos` · `08-contact` · `09-avis` (3 max puis le 4e) | ⬜ |
 | F6 | Vague D : `12-blog` · `13-auteurs` · `14-legales` | ⬜ |
@@ -74,11 +74,39 @@ Trois sous-agents en parallèle maximum.
 11. **Composants disponibles depuis F2** : `surfaces/FinalCta` (`variant: plain|photo|straddle`,
     `tone: tint|deep` — `deep` réservé, non stylé) et `surfaces/TrustSection` (photos
     d'avis `.t-imgs`/`.t-more`, logo Google) — à réutiliser en 08-contact et 09-avis.
+    **Depuis F3** : `surfaces/Toolbar` (props `segments`/`groups`/`search`/`sort` —
+    motif partagé avec les localités, cf. `.q-toolbar` de `local.css`),
+    `surfaces/SkeletonGrid`, `surfaces/EmptyState`, `surfaces/Gallery` (lightbox
+    vanilla dans son `<script>`), `surfaces/Steps` (`cols: 3|4`),
+    `forms/EstimateForm` (prop `level: 2|3` pour la hiérarchie de titres —
+    l'accueil duplique encore ce balisage, à lui faire adopter hors vague).
 12. **À reprendre dans le DS (relevé F2)** : redirection `biens.html` de `ds-script.js` ;
     `PropertyCard` sans passe-through `class`/`data-cat`, sans prop de ratio, kWh PEB
     non affiché (l'accueil pose `data-cat` + `reveal` par script local) ; `local.css`
     additifs — photos du carousel équipe, aspect-ratio de la carte vedette, `.sell-src`
     sur aplat sombre.
+    **Relevé F3 (vague A)** : le passe-through `class`/`data-*` de `PropertyCard` et
+    `id`/`hidden`/`planned` de `LocalityLinks` sont livrés côté repo — à remonter au
+    DS ; layout colonne du `Toolbar` (= `.q-toolbar`) ; `Seg`/`Select` du DS
+    inutilisables en toolbar (pas d'`id`/`data-f`, `.field` ≠ `.tool-select`) ;
+    `SectionHead` ne rend que des h2 ; `TrustSection` sans prop `class`
+    (l'`aria-label` des étoiles est désormais interpolé depuis `rating`, corrigé en
+    recette) ; `AgentCard` : normalisation `telHref` (numéros « 0475/52.26.31 ») ;
+    `ChoiceRow`/`Select` sans passe-through `id` ni câblage `label for=` (EstimateForm
+    porte le balisage brut) ; `lib/seo.ts` : `realEstateListing()` ne modélise pas le
+    loyer mensuel, `breadcrumbList()` à mutualiser ; `local.css` : `.sk-*`, `.empty*`,
+    `.estimate h1`/`.estimate--page`/`.estimate h1 strong`.
+
+13. **Schéma biens étendu en F3** (additif, tout optionnel — décision du gabarit 03,
+    hors Livrable strict, assumée) : `biens.{garage, codePostal, galerie[], legales[],
+    quartierTexte, quartierRepere}` + `mensualite.hypothese`. Seuls 2 biens portent les
+    nouveaux champs (villa Gerpinnes, duplex Guillemins) : les autres fiches rendent
+    avec les défauts — compléter au fil des vagues si une page l'exige.
+14. **Fiches biens : `<title>` en forme courte** (segment du titre avant la première
+    virgule, motif de la référence) — toute page qui référence un bien doit rester
+    cohérente avec ce format. Labels `Input` : le `for` reprend l'`id` passé — passer
+    un `id` à chaque `Input` associé à un champ (le banc `/test` ne le fait pas,
+    signalé en contre-recette, sans incidence : supprimé en F7).
 
 ## Arbitrages de contenu (incohérences de la maquette)
 
@@ -120,3 +148,17 @@ Trois sous-agents en parallèle maximum.
   code). Photos d'avis complétées (toussaint 2, sebastien-l 4). Prochaine étape :
   **F3 vague A** (`02-biens-liste` · `03-bien-fiche` · `07-estimation`, 3 sous-agents
   `gabarit` en parallèle).
+- **24 sept. 2026 — F3 vague A** (commits `ef993fa` · `b2f86fa` · `a3736d8`, branche
+  `feat/vague-a` mergée) : 3 sous-agents `gabarit` en parallèle dans le même arbre
+  (périmètres disjoints, propriété de `src/content/biens/` donnée au 03, builds
+  interdits pendant la vague — porte `astro check` + build passée par l'orchestrateur),
+  puis 3 `recette-ds` en parallèle. 02 conforme d'emblée ; 03 : 2 écarts (label `for`
+  d'`Input`, `<title>` en forme courte) ; 07 : 4 écarts (trou H1→H3 → prop `level`
+  d'`EstimateForm`, insécable manquante, `aria-label` des étoiles figé dans
+  `TrustSection`, `strong` du H1 en graisse 900 → `font-weight:inherit` dans
+  `local.css`) — corrigés par l'orchestrateur, contre-recettes conformes. À savoir :
+  le prompt 07 citait des crochets inexacts (`.ep`, `.step[data-step]`) —
+  `ds-script.js` prime (`#ecProgress`, `.est-step[data-step]`), acté en recette ;
+  le trust de `/biens` est en variante pleine (la référence prime sur le
+  `.trust--band` du prompt 02, même précédent que F2). Prochaine étape : **F4
+  vague B** (`05-localite` d'abord, puis `06-quartier` · `04-localites-hub`).
