@@ -28,7 +28,7 @@ Puis `claude` dans `mon-projet/`.
 ## Le prompt
 
 > Je démarre un site vitrine pour **Avenir Immobilier**, agence immobilière
-> de prestige à Charleroi (Belgique). Stack imposée : **Astro 5 + Tailwind 4**.
+> de prestige à Charleroi (Belgique). Stack imposée : **Astro 7 + Tailwind 4**.
 > Le site sera en français de Belgique.
 >
 > Le dossier est vide à part deux choses :
@@ -51,7 +51,7 @@ Puis `claude` dans `mon-projet/`.
 > Ta mission, dans cet ordre, en t'arrêtant après chaque étape pour me montrer
 > le résultat :
 >
-> 1. **Échafaudage.** Initialise le projet Astro 5 (TypeScript strict,
+> 1. **Échafaudage.** Initialise le projet Astro 7 (TypeScript strict,
 >    template minimal) avec `tailwindcss` + `@tailwindcss/vite` —
 >    surtout pas `@astrojs/tailwind`, qui cible Tailwind 3. Mets en place
 >    l'arborescence décrite dans le README.

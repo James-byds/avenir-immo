@@ -1,6 +1,7 @@
 # Avenir Immobilier — site Astro
 
-Agence immobilière de prestige, Charleroi. Astro 5 + Tailwind 4.
+Agence immobilière de prestige, Charleroi. Astro 7 + Tailwind 4 + îles React 19
+(versions réelles : `package.json`, qui fait foi).
 Site public : accueil, liste des biens, fiche bien, pages de localité, blog,
 équipe, auteurs, avis, contact, pages légales.
 

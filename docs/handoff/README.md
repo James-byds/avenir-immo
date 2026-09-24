@@ -1,6 +1,6 @@
 # Handoff — Avenir Immobilier · site complet (14 gabarits)
 
-**Pour** : le dépôt Astro `James-byds/avenir-immo` (Astro 5 + Tailwind 4, îles React), piloté dans Claude Code.
+**Pour** : le dépôt Astro `James-byds/avenir-immo` (Astro 7 + Tailwind 4, îles React), piloté dans Claude Code.
 **Depuis** : le projet maquette Avenir Immobilier (compositions de pages liées au design system).
 **Date** : 23 septembre 2026.
 

@@ -1,4 +1,4 @@
-# Handoff — Avenir Immobilier DS → Astro 5 + Tailwind 4
+# Handoff — Avenir Immobilier DS → Astro 7 + Tailwind 4
 
 Pour un environnement **Claude Code**. Ce dossier contient tout ce qu'il faut copier
 dans le dépôt Astro, plus la décision d'architecture qui conditionne le reste.
@@ -220,7 +220,7 @@ commune est du contenu dupliqué — c'est le défaut principal du concurrent an
 
 ## 7. Checklist de mise en route
 
-- [ ] Astro 5 + `@tailwindcss/vite` installés, `@astrojs/tailwind` **absent**
+- [ ] Astro 7 + `@tailwindcss/vite` installés, `@astrojs/tailwind` **absent**
 - [ ] `src/styles/ds/` copié, jamais édité ; `sync-ds.sh` en place
 - [ ] `app.css` : `tailwindcss` → `ds/styles.css` → `theme.css`, dans cet ordre
 - [ ] Fonte convertie en woff2, axes `wght` + `wdth` conservés, chemin corrigé
