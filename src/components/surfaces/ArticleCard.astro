@@ -57,7 +57,7 @@ const {
   id,
 } = Astro.props;
 
-/* Garde d'exécution : sans `article` (ancien appel du banc /test, hors
+/* Garde d'exécution : sans `article` (appel hors
    contrat) la carte ne rend rien plutôt que de casser le build. */
 const ok = Boolean(article?.data);
 const { titre, description, categorie, tempsLecture, datePublication } = article?.data ?? {

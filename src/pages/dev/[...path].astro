@@ -180,7 +180,6 @@ for (const g of gabarits) for (const r of g.routes) totaux[statut(r.file)]++;
       <footer class="hub-foot">
         <h2>Outils</h2>
         <ul>
-          <li><a href="/test">/test</a> — banc de comparaison des composants (supprimé en F7)</li>
           <li><a href="/sitemap.xml">/sitemap.xml</a> — routes émises (jamais de combinaison vide)</li>
           <li><a href="/404">/404</a></li>
           <li><a href={`${REF}/README.html`} target="_blank" rel="noopener">Index de la maquette ↗</a></li>
@@ -195,7 +194,7 @@ for (const g of gabarits) for (const r of g.routes) totaux[statut(r.file)]++;
 </style>
 
 <style>
-  /* Châssis du hub — outil interne, hors DS (comme le banc /test). */
+  /* Châssis du hub — outil interne, hors DS. */
   .hub { max-width: 1160px; margin: 0 auto; padding: 40px 24px 80px; }
   .hub-head h1 { font-size: clamp(28px, 4vw, 40px); }
   .dev-tag {
