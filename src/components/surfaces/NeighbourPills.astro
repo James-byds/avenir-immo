@@ -1,0 +1,38 @@
+---
+/**
+ * NeighbourPills — « Immobilier dans les communes voisines » (.q-others).
+ *
+ * Section blanche courte (.sec--short — reprise en classe du
+ * style="padding-block:clamp(40px,5vw,60px)" de la référence quartier.html).
+ * Les pilules .q-pill pointent vers des pages de localité : tant qu'une page
+ * n'est pas codée, son lien porte `planned` → data-planned (jamais href="#").
+ */
+import Eyebrow from "../core/Eyebrow.astro";
+
+interface Lien {
+  label: string;
+  href: string;
+  /** Page prévue mais non codée — pose data-planned. */
+  planned?: boolean;
+}
+interface Props {
+  eyebrow: string;
+  titre: string;
+  liens: Lien[];
+}
+const { eyebrow, titre, liens } = Astro.props;
+---
+
+<section class="sec--white sec--short">
+  <div class="wrap">
+    <Eyebrow>{eyebrow}</Eyebrow>
+    <h2 style="font-size:clamp(21px,2.4vw,26px);margin-top:12px">{titre}</h2>
+    <div class="q-others">
+      {
+        liens.map((l) => (
+          <a class="q-pill" href={l.href} data-planned={l.planned ? "" : undefined}>{l.label} →</a>
+        ))
+      }
+    </div>
+  </div>
+</section>

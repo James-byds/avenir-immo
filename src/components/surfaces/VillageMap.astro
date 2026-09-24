@@ -1,0 +1,245 @@
+---
+/**
+ * VillageMap — carte OSM de l'entité + sélecteur de villages (gabarit quartier).
+ *
+ * Section `.sec--tint` au motif `.q-map-band` de la référence quartier.html :
+ * colonne gauche = titre + lignes `.vil-row` (nom, €/m² sourcé, compte RÉEL de
+ * biens — jamais de lien vers une liste vide : 0 bien → « être prévenu » vers
+ * /contact) ; colonne droite = carte Leaflet + temps de trajet `.q-drive`.
+ *
+ * PAS une île React : l'île MapLeaflet n'expose pas sa carte (mono-marqueur
+ * autonome) — la logique du script inline de la référence est portée dans le
+ * <script> ci-dessous (vanilla). Leaflet touche `window` dès l'import : import
+ * DYNAMIQUE côté client uniquement, même règle que islands/MapLeaflet.tsx.
+ * Tuiles tile.openstreetmap.org + attribution — aucune clé d'API. Étiquettes
+ * de village au survol/sélection SEULEMENT (tooltip Leaflet, jamais permanent).
+ *
+ * Écart assumé vs la référence : le lien « le voir » y était imbriqué DANS le
+ * <button> .vil-row (interactif dans interactif, HTML invalide). La ligne est
+ * un <div class="vil-row"> ; le bouton .vil-pick couvre nom + prix, le lien
+ * .vil-sub vit à côté (classes .vil-pick dans local.css, à reprendre au DS).
+ */
+import "leaflet/dist/leaflet.css";
+import Eyebrow from "../core/Eyebrow.astro";
+
+export interface VillageRow {
+  /** Slug (data-v, cible /biens?loc=…). */
+  slug: string;
+  /** Libellé affiché (« Gerpinnes (centre) »). */
+  nom: string;
+  lat: number;
+  lng: number;
+  /** Prix moyen au m² formaté (« 2 260 € ») — sourcé dans communes/<slug>.md. */
+  prix: string;
+  /** Compte RÉEL de biens du village (calculé, jamais déclaré). */
+  count: number;
+  /** Cible « le voir » — absente quand count = 0. */
+  href?: string;
+}
+interface Trajet {
+  destination: string;
+  minutes: number;
+}
+interface Props {
+  eyebrow: string;
+  titre: string;
+  texte: string;
+  /** Libellé de l'en-tête de la liste (.vil-head). */
+  prixLabel?: string;
+  /** Libellé du bouton de recadrage (.vil-reset). */
+  resetLabel?: string;
+  villages: VillageRow[];
+  trajets?: Trajet[];
+  /** aria-label du conteneur de carte. */
+  mapLabel?: string;
+  /** aria-label de la ligne des temps de trajet. */
+  trajetsLabel?: string;
+}
+const {
+  eyebrow,
+  titre,
+  texte,
+  prixLabel = "Prix moyen au m²",
+  resetLabel = "Voir toute l'entité",
+  villages,
+  trajets = [],
+  mapLabel = "Carte des villages de l'entité",
+  trajetsLabel = "Temps de trajet",
+} = Astro.props;
+
+const subDe = (v: VillageRow) =>
+  v.count > 0
+    ? {
+        texte: `${v.count} bien${v.count > 1 ? "s" : ""} disponible${v.count > 1 ? "s" : ""} — `,
+        lien: v.count > 1 ? "les voir" : "le voir",
+        href: v.href ?? "/biens",
+      }
+    : { texte: "Aucun bien en ligne — ", lien: "être prévenu", href: "/contact" };
+---
+
+<section class="sec--tint">
+  <div class="wrap q-map-band">
+    <div>
+      <Eyebrow>{eyebrow}</Eyebrow>
+      <h2 style="margin-top:14px">{titre}</h2>
+      <p style="color:var(--ink-soft);margin-top:14px;max-width:44ch">{texte}</p>
+      <div class="vil-head">
+        <span class="eyebrow" style="margin:0">{prixLabel}</span>
+        <button type="button" class="vil-reset" id="vilReset">{resetLabel}</button>
+      </div>
+      <div class="vil-rows" id="vilRows" role="list">
+        {
+          villages.map((v) => {
+            const sub = subDe(v);
+            return (
+              <div
+                class="vil-row"
+                role="listitem"
+                data-v={v.slug}
+                data-name={v.nom}
+                data-lat={v.lat}
+                data-lng={v.lng}
+                data-m2={v.prix}
+                data-biens={v.count}
+                data-href={v.count > 0 ? sub.href : undefined}
+                aria-current="false"
+              >
+                <button type="button" class="vil-pick" aria-label={`Voir ${v.nom} sur la carte`}>
+                  <span class="vil-name"><i /> {v.nom}</span>
+                  <span class="vil-price">{v.prix}</span>
+                </button>
+                <span class="vil-sub">{sub.texte}<a href={sub.href}>{sub.lien}</a></span>
+              </div>
+            );
+          })
+        }
+      </div>
+    </div>
+    <div>
+      <div class="q-map">
+        <div id="osm" aria-label={mapLabel}></div>
+      </div>
+      {
+        trajets.length > 0 && (
+          <div class="q-drive" aria-label={trajetsLabel}>
+            {trajets.map((t) => (
+              <span>{t.destination} <b>{t.minutes} min</b></span>
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<script>
+  /* Logique du script inline de quartier.html, portée telle quelle : pastille
+     active vert profond avec halo, recentrage animé, étiquette au survol ou à
+     la sélection seulement, infobulle .vil-pop, recadrage « toute l'entité ».
+     Les données viennent des data-* des lignes — carte et liste partagent la
+     même source (aucun contenu en dur ici). */
+  const mapEl = document.getElementById("osm");
+  const rows = Array.from(document.querySelectorAll<HTMLElement>("#vilRows .vil-row"));
+
+  if (mapEl && rows.length > 0) {
+    (async () => {
+      /* Import dynamique : Leaflet lit `window` au chargement du module. */
+      const L = (await import("leaflet")).default;
+
+      const map = L.map(mapEl, { scrollWheelZoom: false, zoomControl: true });
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
+        maxZoom: 19,
+      }).addTo(map);
+
+      const V = rows.map((row) => ({
+        row,
+        k: row.dataset.v ?? "",
+        n: row.dataset.name ?? "",
+        ll: [Number(row.dataset.lat), Number(row.dataset.lng)] as [number, number],
+        m2: row.dataset.m2 ?? "",
+        biens: Number(row.dataset.biens ?? "0"),
+        href: row.dataset.href,
+        marker: null as ReturnType<typeof L.marker> | null,
+      }));
+
+      const bounds = L.latLngBounds(V.map((v) => v.ll));
+      const fitAll = () => map.fitBounds(bounds, { padding: [42, 42] });
+      fitAll();
+      /* Leaflet lit la taille du conteneur au montage : recalcul après layout
+         (même précaution que islands/MapLeaflet.tsx). */
+      requestAnimationFrame(() => map.invalidateSize());
+
+      /* Pastilles de marque : vert clair au repos, vert profond + halo une fois
+         sélectionnées. Valeurs du script de la référence (hex = fallbacks). */
+      const icon = (on: boolean) => {
+        const d = on ? 20 : 13;
+        const ring = on
+          ? "box-shadow:0 0 0 7px rgba(23,65,59,.2),0 0 0 15px rgba(23,65,59,.08)"
+          : "box-shadow:0 0 0 4px rgba(0,166,120,.18)";
+        const bg = on ? "var(--green,#17413B)" : "var(--green-l,#00A678)";
+        return L.divIcon({
+          className: "",
+          html:
+            '<span style="display:block;width:' + d + "px;height:" + d + "px;border-radius:50%;background:" +
+            bg + ";border:2px solid #fff;" + ring + ';transition:all .25s cubic-bezier(.22,.61,.36,1)"></span>',
+          iconSize: [d, d],
+          iconAnchor: [d / 2, d / 2],
+        });
+      };
+
+      const popupDe = (v: (typeof V)[number]) =>
+        '<span class="vil-pop"><b>' + v.n + "</b>" +
+        '<span class="p">' + v.m2 + " le m² · " +
+        (v.biens > 0
+          ? v.biens + " bien" + (v.biens > 1 ? "s" : "") + " disponible" + (v.biens > 1 ? "s" : "")
+          : "aucun bien en ligne") +
+        "</span>" +
+        (v.biens > 0 && v.href
+          ? '<a href="' + v.href + '">Voir ' + (v.biens > 1 ? "les biens" : "le bien") + " →</a>"
+          : '<a href="/contact">Être prévenu →</a>') +
+        "</span>";
+
+      const select = (k: string, openPopup: boolean) => {
+        for (const v of V) {
+          const on = v.k === k;
+          v.marker?.setIcon(icon(on));
+          v.row.setAttribute("aria-current", on ? "true" : "false");
+          if (on && v.marker) {
+            map.setView(v.ll, 13, { animate: true });
+            if (openPopup) v.marker.openPopup();
+          }
+        }
+      };
+
+      for (const v of V) {
+        v.marker = L.marker(v.ll, { icon: icon(false), title: v.n, keyboard: true }).addTo(map);
+        /* Étiquette au survol/sélection SEULEMENT — jamais permanente : le fond
+           OSM nomme déjà les villages. */
+        v.marker.bindTooltip(v.n, { direction: "top", offset: [0, -12], className: "vil-lab" });
+        v.marker.bindPopup(popupDe(v));
+        v.marker.on("click", () => select(v.k, false));
+
+        const pick = v.row.querySelector<HTMLButtonElement>(".vil-pick");
+        pick?.addEventListener("click", () => select(v.k, true));
+        v.row.addEventListener("mouseenter", () => {
+          v.marker?.openTooltip();
+          if (v.row.getAttribute("aria-current") !== "true") v.marker?.setIcon(icon(true));
+        });
+        v.row.addEventListener("mouseleave", () => {
+          v.marker?.closeTooltip();
+          if (v.row.getAttribute("aria-current") !== "true") v.marker?.setIcon(icon(false));
+        });
+      }
+
+      document.getElementById("vilReset")?.addEventListener("click", () => {
+        for (const v of V) {
+          v.marker?.setIcon(icon(false));
+          v.row.setAttribute("aria-current", "false");
+        }
+        map.closePopup();
+        fitAll();
+      });
+    })();
+  }
+</script>

@@ -1,7 +1,56 @@
 ---
 nom: "Gerpinnes"
 province: "Hainaut"
+codePostal: "6280"
 coord: { lat: 50.3383, lng: 4.5299 }
+# Gabarit 06 (réf. quartier.html) : la page maison × vente couvre l'ENTITÉ —
+# les biens des villages (communes non déclarées, sans route propre) remontent
+# dans le listing, la carte les répartit. Comptes de biens toujours calculés.
+gabarit: quartier
+villages:
+  - nom: "Gerpinnes"
+    libelle: "Gerpinnes (centre)"
+    lat: 50.3384
+    lng: 4.5245
+    prixM2: 2260
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Loverval"
+    lat: 50.3743
+    lng: 4.4548
+    prixM2: 2480
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Acoz"
+    lat: 50.3618
+    lng: 4.5354
+    prixM2: 2040
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Joncret"
+    lat: 50.3568
+    lng: 4.4972
+    prixM2: 1980
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Gougnies"
+    lat: 50.3547
+    lng: 4.5726
+    prixM2: 1940
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
+  - nom: "Villers-Poterie"
+    lat: 50.3459
+    lng: 4.5473
+    prixM2: 1890
+    source:
+      libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
+      date: 2026-06-30
 agence:
   ouverture: "Sur rendez-vous, 6 j/7"
   nom: "Avenir Immobilier — Mont-sur-Marchienne"
@@ -42,6 +91,12 @@ chiffres:
     source:
       libelle: "Ventes Avenir Immobilier & notaire.be · 1er semestre 2026"
       date: 2026-06-30
+  - label: "Prix médian de l'arrondissement de Charleroi"
+    valeur: 289000
+    unite: "€"
+    source:
+      libelle: "À sourcer — valeur maquette"
+      date: 2026-09-23
 prixQuartiers:
   - nom: "Loverval"
     description: "Villas et maisons bourgeoises sous les bois, la porte de Charleroi"
@@ -105,22 +160,29 @@ atouts:
   - titre: "Accès à Charleroi et à l'aéroport"
     texte: "N5 et R3 immédiats : Charleroi centre en 15 min, l'aéroport en 20. Commerces de proximité aux Flaches et au centre."
 faq:
-  - question: "Quels sont les droits d'enregistrement à Gerpinnes ?"
+  # `id` = ancre stable (#faq-droits…) — celles du script inline de quartier.html.
+  - id: droits
+    question: "Quels sont les droits d'enregistrement à Gerpinnes ?"
     reponse: "Gerpinnes est en Wallonie : le taux plein est de 12,5 % du prix d'achat, et le taux réduit de 3 % s'applique à l'habitation propre et unique, sous conditions de domiciliation. Sur une maison à 385 000 € — le prix médian de l'entité — l'écart entre les deux régimes dépasse 36 000 €. Nous le vérifions avant l'offre, jamais après."
     transaction: vente
-  - question: "Combien de temps faut-il pour vendre une maison à Gerpinnes ?"
+  - id: delai
+    question: "Combien de temps faut-il pour vendre une maison à Gerpinnes ?"
     reponse: "34 jours en moyenne avant compromis sur nos 74 ventes dans l'entité, contre 65 jours en moyenne wallonne. Les maisons villageoises du centre et les fermettes de Gougnies partent le plus vite ; les grandes villas de Loverval demandent davantage de temps, parce que l'acquéreur vient souvent de plus loin."
     transaction: vente
-  - question: "Quel est le prix au m² dans les villages de l'entité ?"
+  - id: prix
+    question: "Quel est le prix au m² dans les villages de l'entité ?"
     reponse: "De 1 890 € à Villers-Poterie à 2 480 € à Loverval, pour une moyenne de 2 120 € sur l'entité — un tiers d'écart d'un village à l'autre. Une estimation au prix moyen de Gerpinnes se trompe donc systématiquement : nous partons des ventes réelles du village et des rues voisines."
     transaction: vente
-  - question: "Faut-il vérifier l'assainissement avant d'acheter dans un village ?"
+  - id: assainissement
+    question: "Faut-il vérifier l'assainissement avant d'acheter dans un village ?"
     reponse: "Oui, c'est le point propre aux communes rurales. Une partie de Gougnies, Joncret et Villers-Poterie relève de l'assainissement autonome : la maison doit disposer d'un système individuel conforme, et sa mise aux normes se chiffre entre 6 000 et 12 000 €. Nous demandons le régime au dossier communal avant chaque offre."
     transaction: vente
-  - question: "Peut-on encore trouver un grand terrain à Gerpinnes ?"
+  - id: terrain
+    question: "Peut-on encore trouver un grand terrain à Gerpinnes ?"
     reponse: "Oui, mais presque uniquement en revente : les lotissements neufs sont rares depuis la révision du plan de secteur. Les parcelles de plus de 15 ares se trouvent à Gougnies et Villers-Poterie ; à Loverval, elles existent mais partent souvent avant la mise en ligne, via notre liste d'acquéreurs en attente."
     transaction: vente
-  - question: "Qui suit les biens de Gerpinnes chez Avenir Immobilier ?"
+  - id: agence
+    question: "Qui suit les biens de Gerpinnes chez Avenir Immobilier ?"
     reponse: "David Marini, conseiller du sud de Charleroi, couvre l'entité depuis 2011 — c'est lui qui visite, estime et accompagne jusqu'à l'acte. L'agence est à Mont-sur-Marchienne, à douze minutes du centre de Gerpinnes."
     transaction: vente
 pages:
@@ -129,11 +191,14 @@ pages:
   - type: maison
     transaction: vente
     listing: type
-    description: "Maisons et villas à vendre à Gerpinnes : prix médian 385 000 €, 2 120 €/m², 34 jours avant compromis. Six villages, 74 ventes Avenir dans l'entité, conseiller dédié."
-    eyebrow: "Gerpinnes & villages · 6280"
-    photo: "Place de Gerpinnes et clocher — 1600 × 700"
-    chapo: "La campagne aux portes de la ville — six villages préservés à quinze minutes de Charleroi. Nous y avons vendu <strong>74 biens</strong> ces cinq dernières années : ce qui suit vient de nos propres actes."
-    ctaGhost: { label: "Vendre ma maison à Gerpinnes", href: "#vendre" }
+    # Meta description et eyebrow : celles de la référence quartier.html.
+    description: "Le marché immobilier de Gerpinnes en chiffres : prix moyens, délais de vente, biens disponibles. Votre conseiller Avenir Immobilier connaît chaque rue de la commune."
+    eyebrow: "Vivre & investir · 6280"
+    photo: "Place de Gerpinnes — vue drone — 1600 × 700"
+    # Chapô de la référence — « Julien … depuis neuf ans » adapté au conseiller
+    # réel du contenu (David, depuis 2011), comme partout ailleurs sur la page.
+    chapo: "La campagne aux portes de la ville — six villages préservés à quinze minutes de Charleroi. Nous avons vendu <strong>74 biens</strong> dans l'entité ces cinq dernières années, et David la couvre depuis 2011."
+    ctaGhost: { label: "Estimer mon bien ici", href: "/estimation" }
     intro:
       eyebrow: "Acheter à Gerpinnes"
       titre: "Acheter une maison à Gerpinnes : six villages, six marchés"
@@ -173,19 +238,23 @@ pages:
     marche:
       eyebrow: "Le marché, chiffres en main"
       titre: "Prix au m² à Gerpinnes : 2 120 € en moyenne, 385 000 € pour une maison"
-      texte: "L'entité se vend au-dessus de la moyenne de l'arrondissement et presque deux fois plus vite que la moyenne wallonne. Voici ce que nos 74 ventes montrent, village par village."
+      # Texte de la référence — le 289 000 € est sourcé dans chiffres[]
+      # (« À sourcer — valeur maquette », 2026-09-23).
+      texte: "Gerpinnes se vend au-dessus de la moyenne de l'arrondissement (289 000 €) et presque deux fois plus vite que la moyenne wallonne. Ce sont nos 74 ventes dans l'entité qui le disent."
       big:
         valeur: "385 000 €"
-        texte: "Prix médian d'une maison à Gerpinnes — soit 2 120 €/m², avec un tiers d'écart entre Villers-Poterie et Loverval."
+        texte: "Prix médian d'une maison à Gerpinnes — au-dessus de la moyenne de l'arrondissement (289 000 €)."
       rows:
-        - { label: "Prix moyen au m²", detail: "Loverval 2 480 € · Acoz 2 040 € · Villers-Poterie 1 890 €", valeur: "2 120 €" }
-        - { label: "Délai avant compromis", detail: "65 jours en moyenne wallonne", valeur: "34 jours" }
+        - { label: "Prix moyen au m²", detail: "Loverval 2 480 € · Gerpinnes centre 2 260 € · Villers-Poterie 1 890 €", valeur: "2 120 €" }
+        - { label: "Délai moyen avant compromis", detail: "65 jours en moyenne wallonne — presque 2× plus vite ici", valeur: "34 jours" }
         - { label: "Évolution des prix sur 12 mois", valeur: "+4,2 %", accent: true }
         - { label: "Ventes Avenir dans l'entité (5 ans)", valeur: "74" }
       tableTitre: "Prix au m² par village de l'entité"
     vivre:
       eyebrow: "Cadre de vie"
       titre: "Vivre à Gerpinnes : écoles, nature et accès à Charleroi"
+      # La référence quartier numérote les trois atouts (01-03).
+      numerote: true
     vendre:
       eyebrow: "Vous vendez à Gerpinnes ?"
       titre: "74 ventes dans l'entité, 34 jours avant compromis."
@@ -210,10 +279,10 @@ pages:
         - { label: "Estimation écrite", valeur: "Sous 48 h, gratuite et sans engagement" }
         - { label: "Votre conseiller Gerpinnes", valeur: "David Marini · 0473/40.27.30", href: "tel:+32473402730" }
     faq:
-      eyebrow: "Acheter à Gerpinnes"
+      eyebrow: "Acheter & vendre à Gerpinnes"
       titre: "Questions fréquentes sur l'immobilier à Gerpinnes"
       asideTitre: "Une question sur un bien précis ?"
-      asideTexte: "David connaît chaque rue de l'entité. Réponse le jour même, sans engagement."
+      asideTexte: "David connaît les dossiers de l'entité et les rues des six villages. Réponse le jour même, sans engagement."
     agenceTitre: "Votre agence immobilière à Gerpinnes"
     meshTitre: "Chercher autrement autour de Gerpinnes"
     final:
@@ -221,6 +290,43 @@ pages:
       titre: "Vendre sa maison à Gerpinnes : elle vaut peut-être plus que vous ne pensez."
       texte: "Rapport écrit sous 48 h, comparables réels du village, aucun engagement."
       cta: { label: "Estimer mon bien", href: "/estimation" }
+    # ── Gabarit quartier (06) — blocs propres à la référence quartier.html.
+    #    Extraits mot pour mot ; « Julien » adapté en David (conseiller réel).
+    quartier:
+      title: "Immobilier à Gerpinnes — vendre & acheter · Avenir Immobilier"
+      h1: "Immobilier à Gerpinnes : maisons et villas à vendre"
+      bascule: { label: "Vous vendez à Gerpinnes ?", href: "/estimation" }
+      biensTitre: "Maisons et villas à vendre à Gerpinnes"
+      portee: "Recherche limitée à l'entité de Gerpinnes — 6 villages"
+      vide:
+        texte: "Rien ne correspond à ces critères dans l'entité aujourd'hui."
+        primaire: { label: "Être prévenu·e dès qu'un bien sort", href: "/contact" }
+        secondaire: { label: "Élargir à toutes nos communes", href: "/biens" }
+      carte:
+        eyebrow: "Se repérer"
+        titre: "Prix de l'immobilier par village : Loverval, Acoz, Gougnies…"
+        texte: "L'entité ne se vend pas d'un seul prix : de Villers-Poterie à Loverval, le mètre carré gagne un tiers. Choisissez un village — la carte suit."
+      avis:
+        titreAvant: "Ils ont vendu leur maison à Gerpinnes, ils nous notent"
+        titreEm: "4,8/5"
+        intro: "Des avis Google vérifiés de vendeurs de Gerpinnes et des villages voisins — accompagnés par David, votre conseiller du sud de Charleroi."
+        cartes: [martine-d, famille-declercq, famille-istace]
+      voisins:
+        eyebrow: "Autour de Gerpinnes"
+        titre: "Immobilier dans les communes voisines"
+        # Pages non codées : data-planned (hrefs = slugs futurs du motif figé).
+        liens:
+          - { label: "Charleroi centre", href: "/maison-a-vendre-charleroi-centre" }
+          - { label: "Fleurus", href: "/maison-a-vendre-fleurus" }
+          - { label: "Loverval", href: "/maison-a-vendre-loverval" }
+          - { label: "Mont-sur-Marchienne", href: "/maison-a-vendre-mont-sur-marchienne" }
+          - { label: "Montigny-le-Tilleul", href: "/maison-a-vendre-montigny-le-tilleul" }
+      final:
+        eyebrow: "Vous vendez à Gerpinnes ?"
+        titre: "Vendre sa maison à Gerpinnes : <em>elle vaut peut-être plus que vous ne pensez</em>."
+        texte: "34 jours en moyenne avant compromis dans l'entité — et une liste d'acquéreurs en attente pour les grandes parcelles."
+        primaire: { label: "Estimer mon bien à Gerpinnes", href: "/estimation" }
+        secondaire: { label: "Parler à un conseiller", href: "/contact" }
     conseiller: david-marini
 ---
 

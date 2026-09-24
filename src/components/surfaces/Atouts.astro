@@ -1,0 +1,34 @@
+---
+/**
+ * Atouts — cadre de vie d'une page de localité (grille .q-atouts / .atout).
+ *
+ * Trois cartes blanches bordées sur section vert tendre (motif de la référence
+ * quartier.html et des pages de localité) ; `numerote` ajoute les .a-num 01-0n
+ * (la référence quartier les a, la vente Liège non). Décalages .reveal d1/d2
+ * identiques aux autres grilles du site.
+ */
+interface Atout {
+  titre: string;
+  texte: string;
+}
+interface Props {
+  atouts: Atout[];
+  /** Numéros 01-0n sur les cartes (.a-num). */
+  numerote?: boolean;
+  class?: string;
+}
+const { atouts, numerote = false, class: className } = Astro.props;
+const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
+---
+
+<div class={`q-atouts${className ? ` ${className}` : ""}`}>
+  {
+    atouts.map((a, i) => (
+      <div class={`atout reveal${delay(i)}`}>
+        {numerote && <span class="a-num">{String(i + 1).padStart(2, "0")}</span>}
+        <h3>{a.titre}</h3>
+        <p>{a.texte}</p>
+      </div>
+    ))
+  }
+</div>

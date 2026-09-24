@@ -110,13 +110,17 @@ const hoods = communes.flatMap((c) =>
     .map(({ type, transaction }) => {
       /* Compte = périmètre RÉEL de la page cible : une copie de localité en
          listing:"transaction" liste tout le marché de la transaction (« 18
-         biens ») — le compte du seul type la contredirait. */
+         biens ») — le compte du seul type la contredirait. Gabarit quartier
+         (06) : la page cible liste TOUTE l'entité (villages inclus) — le
+         compte suit, sinon la carte contredirait son « Voir les N biens ». */
       const cible = c.data.pages.find((p) => p.type === type && p.transaction === transaction);
+      const quartier = c.data.gabarit === "quartier" && c.data.villages.length > 0;
+      const noms = new Set([c.data.nom, ...(quartier ? c.data.villages.map((v) => v.nom) : [])]);
       const count = biens.filter(
         (b) =>
-          b.data.commune === c.data.nom &&
+          noms.has(b.data.commune) &&
           b.data.transaction === transaction &&
-          (cible?.listing === "transaction" || b.data.type === type),
+          (quartier || cible?.listing === "transaction" || b.data.type === type),
       ).length;
       return {
         commune: c.data.nom,
