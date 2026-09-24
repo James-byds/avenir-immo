@@ -108,8 +108,7 @@ const widenLinks = [
   )
     .filter((q) => generees.has(q.slug))
     .map((q) => ({ text: q.ancre, href: `/${q.slug}` })),
-  /* Hub des localités — gabarit 04, pas encore codé. */
-  { text: "Toutes nos communes", href: "/communes", planned: true },
+  { text: "Toutes nos communes", href: "/communes" },
 ];
 
 /* ── Avis acquéreurs (trust) — textes de la collection ; 4,8/190 et la
