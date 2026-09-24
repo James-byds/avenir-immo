@@ -10,7 +10,7 @@
 | F1 | `00-preflight` | ✅ terminé le 23 sept. 2026 (commits `2213ace` → `3c0a0aa`) |
 | F2 | `01-accueil` — page témoin, recette à 100 % avant toute vague | ✅ terminé le 24 sept. 2026 (commit `c37e852`, recette conforme) |
 | F3 | Vague A : `02-biens-liste` · `03-bien-fiche` · `07-estimation` (3 gabarits en parallèle) | ✅ terminé le 24 sept. 2026 (commits `ef993fa` → `a3736d8`, recettes conformes) |
-| F4 | Vague B : `05-localite` puis `06-quartier` · `04-localites-hub` | ⬜ |
+| F4 | Vague B : `05-localite` puis `06-quartier` · `04-localites-hub` | ✅ terminé le 24 sept. 2026 (commits `fde39c7` → `85d9ce3`, recettes conformes) |
 | F5 | Vague C : `11-equipe` · `10-a-propos` · `08-contact` · `09-avis` (3 max puis le 4e) | ⬜ |
 | F6 | Vague D : `12-blog` · `13-auteurs` · `14-legales` | ⬜ |
 | F7 | `99-recette` globale (+ suppression de `src/pages/test.astro`) | ⬜ |
@@ -65,8 +65,9 @@ Trois sous-agents en parallèle maximum.
    Succession, Technique ; `avis.projet` — vente, achat, estimation, offmarket.
 8. **`sousType` n'a pas « loft »** : le loft de Charleroi reste type=appartement sans
    sousType. À trancher si le gabarit biens-liste en a besoin pour un filtre.
-9. **`data-planned` posé sur `/communes` et `/a-propos`** (SiteHeader nav+drawer,
-   SiteFooter « Toutes nos communes ») : à RETIRER quand les gabarits 04 et 10 livrent.
+9. **`data-planned`** : retiré de `/communes` en F4 (SiteHeader, SiteFooter, widen de
+   `/biens`, fils d'Ariane des localités — hub livré). Reste `/a-propos` (SiteHeader,
+   gabarit 10) et les pilules de communes voisines du quartier Gerpinnes.
 10. **Contrat JSON-LD des pages** : `PageLayout` relaie le slot `head` ; une page qui
     émet son propre `RealEstateAgent` complet passe `organizationLd={false}` (sinon
     doublon avec le bloc minimal du `BaseLayout`). La colonne Quartiers du footer =
@@ -80,6 +81,14 @@ Trois sous-agents en parallèle maximum.
     vanilla dans son `<script>`), `surfaces/Steps` (`cols: 3|4`),
     `forms/EstimateForm` (prop `level: 2|3` pour la hiérarchie de titres —
     l'accueil duplique encore ce balisage, à lui faire adopter hors vague).
+    **Depuis F4** : `surfaces/GuidePoints`, `surfaces/MarketStats` (`.q-stats`),
+    `surfaces/PriceTable` (`.lg-table.q-prices`), `surfaces/CreditSimulator`
+    (mentions légales incluses — porté en local, à remonter au DS),
+    `surfaces/VillageMap` (carte Leaflet des villages, script vanilla — pas de
+    6e île : `MapLeaflet` n'expose pas sa carte), `surfaces/Atouts` (prop
+    `numerote`), `surfaces/NeighbourPills`, `surfaces/MarketCard` (hub) ;
+    `SellHere` a gagné une prop `id` ; `src/scripts/listing-filter.ts` =
+    filtre/tri/pagination partagé entre `/biens` et les localités.
 12. **À reprendre dans le DS (relevé F2)** : redirection `biens.html` de `ds-script.js` ;
     `PropertyCard` sans passe-through `class`/`data-cat`, sans prop de ratio, kWh PEB
     non affiché (l'accueil pose `data-cat` + `reveal` par script local) ; `local.css`
@@ -96,6 +105,16 @@ Trois sous-agents en parallèle maximum.
     porte le balisage brut) ; `lib/seo.ts` : `realEstateListing()` ne modélise pas le
     loyer mensuel, `breadcrumbList()` à mutualiser ; `local.css` : `.sk-*`, `.empty*`,
     `.estimate h1`/`.estimate--page`/`.estimate h1 strong`.
+    **Relevé F4 (vague B)** : `TrustSection` — le `t-count` du variant band est un
+    texte (« 190 avis vérifiés ») là où la maquette met un lien « Lire les avis »
+    (à restaurer quand le gabarit 09 livre `/avis`), et pas de slot de titre riche
+    (`<em class="t-hl">` impossible) — le trust du quartier reste en classes DS,
+    même précédent que `/biens` ; `FinalCta` sans variante encre
+    (`.finalcta.sec--ink` recopié dans `local.css`) ; `MapLeaflet` mono-marqueur —
+    prop `markers[]` groupés + sélection externe souhaitée (quartier et hub portent
+    chacun leur script Leaflet local) ; `local.css` additifs F4 : `.sec--short`,
+    `.sec--tint .ll-mesh`, `.page-head--band .section-head p strong`,
+    `.vil-pick`/`.vil-row`, `.finalcta.sec--ink`, `.loc-who .b-av img`.
 
 13. **Schéma biens étendu en F3** (additif, tout optionnel — décision du gabarit 03,
     hors Livrable strict, assumée) : `biens.{garage, codePostal, galerie[], legales[],
@@ -107,6 +126,16 @@ Trois sous-agents en parallèle maximum.
     cohérente avec ce format. Labels `Input` : le `for` reprend l'`id` passé — passer
     un `id` à chaque `Input` associé à un champ (le banc `/test` ne le fait pas,
     signalé en contre-recette, sans incidence : supprimé en F7).
+15. **Schéma communes étendu en F4** (additif, tout optionnel) : `pages[]` — copie
+    complète d'une page de localité (bandeau/intro/guide/marche/vivre/vendre/
+    contact/faq/trust/final/conseiller, `listing: type|transaction`, bloc
+    `quartier`) ; `province`, `coord`, `agence`, `codePostal`, `gabarit:
+    "quartier"`, `villages[]` (nom, lat/lng, prixM2 sourcé), `faq[].{id,
+    transaction, type}` (ciblage d'une question par page, ancres stables).
+    Évolutions souhaitées NON appliquées (relevé 04) : `communes/charleroi.md` ou
+    champ `marche` pour sortir les chiffres du Grand Charleroi du frontmatter de
+    `communes.astro` ; champ `equipe.photo` (convention actuelle
+    `/assets/agent-<prénom>.png`, reprise de l'accueil).
 
 ## Arbitrages de contenu (incohérences de la maquette)
 
@@ -121,7 +150,10 @@ Trois sous-agents en parallèle maximum.
 - Conseillers « Thomas Gilles » / « Sarah » (pages Liège) inexistants : biens laissés
   sans agent (sauf les 2 de Briyann).
 - quartier.html dit « Loverval : aucun bien en ligne » alors que 3 biens Loverval
-  existent — sans incidence (Loverval n'est pas une commune déclarée), à savoir en F4.
+  existent — **résolu en F4** : la page quartier couvre l'ENTITÉ (Gerpinnes +
+  villages, filtre sur `villages[]`, biens inchangés) et affiche les comptes réels
+  (6 biens, « Loverval : 3 biens ») ; tous les comptes calculés suivent (hoods de
+  l'accueil, pastilles du maillage via `compteCible`).
 - **Valeurs « À sourcer — valeur maquette »** (datées 2026-09-23) : les 15 stats des
   pages membres (Olivier 320 ventes/34 ans/4,9 · Annelise 1 400/98 %/48 h · David
   180/31 j/96 % · Alexandra 74/9 sem./4,8 · Briyann 140/11 j/0 litige) ; dates des
@@ -167,3 +199,22 @@ Trois sous-agents en parallèle maximum.
   source des pages (marqueur « Stub ») et des collections, liens « réf » vers la
   maquette servie sur :3000. **Dev uniquement** : `getStaticPaths` renvoie `[]` au
   build, la page n'existe pas dans `dist/` (rien à retirer en F7, hors recette).
+- **24 sept. 2026 — F4 vague B** (commits `fde39c7` · `9258ed2` · `85d9ce3`, branche
+  `feat/vague-b` mergée) : 05 seul d'abord (06 en dérive), puis 06 · 04 en parallèle
+  (périmètres disjoints — `content.config.ts` et `gerpinnes.md` réservés au 06,
+  builds interdits pendant la parallélisation, portes par l'orchestrateur), puis
+  2 `recette-ds` en parallèle. **05** : copie par page dans `communes/<slug>.md`
+  (`pages[]`), 4 écarts en recette (bande trust omise → `TrustSection band` entre
+  agence et maillage ; `ctaGhost` alignés sur la référence ; compteur de pastille =
+  périmètre RÉEL de la page cible — `compteCible`, une page `listing:"transaction"`
+  affiche 18, pas 17, hood de l'accueil aligné aussi ; `.a-num` des atouts location)
+  — contre-recette conforme. **06** : conforme d'emblée ; périmètre ENTITÉ (villages
+  inclus par filtre sur `villages[]`, 6 biens réels, cf. arbitrage Loverval) ;
+  `VillageMap.astro` + script vanilla — pas de 6e île. **04** : 2 écarts (hex bruts
+  du script carte → `var(--green…)` ; `data-planned` de `/communes` périmés →
+  retirés du chrome, vigilance 9 soldée) ; hub SANS compteurs — règle du handoff
+  portée par le prompt, qui prime ici sur la référence (l'inverse du précédent
+  F2/F3, à retenir : la référence prime sur le *plan* du prompt, jamais sur une
+  *règle*) ; section 5 en `.lx` (balisage de la référence) plutôt que
+  `LocalityLinks mesh`. Prochaine étape : **F5 vague C** (`11-equipe` ·
+  `10-a-propos` · `08-contact` · `09-avis` — 3 sous-agents max puis le 4e).
