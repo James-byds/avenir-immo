@@ -1,18 +1,345 @@
 ---
-import { getCollection, render } from "astro:content";
+/* Page auteur — gabarit 13 (réf. docs/handoff/reference/auteur-camille-renard.html
+   et les 4 autres auteur-*.html).
+
+   page-head clair (Breadcrumb + AuthorHero : portrait rond, citation, bio,
+   méta mono, actions, .ah-stats) → #articles (.blog vert tendre : seg de
+   thématiques + .au-count, grille .au-grid d'ArticleCard post, Pagination
+   si > 9) → « Les autres rédacteurs » (blanc, WriterCard compact) → CTA
+   final aplat vert profond. Alternance : blanc → tendre → blanc → vert profond.
+
+   TOUS les chiffres sont calculés depuis la collection `articles` (arbitrage
+   3) : n articles, thématiques distinctes, lecture moyenne, dernière
+   publication, compteurs du seg. « Écrit depuis », langues, base et IPI
+   viennent du frontmatter. Aucune PropertyCard, aucun bien.
+
+   Filtre client : <script> vanilla reprenant le script inline de la
+   référence (le Seg du DS est inutilisable en toolbar — relevé F3). */
+import { getCollection } from "astro:content";
+import type { CollectionEntry } from "astro:content";
 import PageLayout from "../../layouts/PageLayout.astro";
+import PageHead from "../../components/chrome/PageHead.astro";
+import Breadcrumb from "../../components/core/Breadcrumb.astro";
+import LinkArrow from "../../components/core/LinkArrow.astro";
+import Pagination from "../../components/core/Pagination.astro";
+import SectionHead from "../../components/core/SectionHead.astro";
+import AuthorHero from "../../components/surfaces/AuthorHero.astro";
+import ArticleCard from "../../components/surfaces/ArticleCard.astro";
+import WriterCard from "../../components/surfaces/WriterCard.astro";
+import FinalCta from "../../components/surfaces/FinalCta.astro";
+import { jsonLd, organization } from "../../lib/seo";
+import { formatDate } from "../../lib/format";
 
 export async function getStaticPaths() {
   const auteurs = await getCollection("auteurs");
   return auteurs.map((auteur) => ({ params: { slug: auteur.id }, props: { auteur } }));
 }
 
+interface Props {
+  auteur: CollectionEntry<"auteurs">;
+}
 const { auteur } = Astro.props;
-const { Content } = await render(auteur);
+const {
+  nom,
+  role,
+  roleLong,
+  ipi,
+  bio,
+  citation,
+  specialites,
+  depuis,
+  depuisLabel,
+  langues,
+  base,
+  portrait,
+  liens,
+  externe,
+} = auteur.data;
+const prenom = nom.split(" ")[0];
+
+/* ── Ses articles (auteur === slug), du plus récent au plus ancien ── */
+const tous = (await getCollection("articles", ({ data }) => data.publie !== false)).sort(
+  (a, b) => b.data.datePublication.getTime() - a.data.datePublication.getTime(),
+);
+const articles = tous.filter((a) => a.data.auteur.id === auteur.id);
+const countDe = (id: string) => tous.filter((a) => a.data.auteur.id === id).length;
+const n = articles.length;
+const pl = (k: number, s: string) => (k > 1 ? s : "");
+const nArticles = `${n} article${pl(n, "s")}`;
+
+/* ── Thématiques : catégories distinctes, ordre de première apparition
+   (c'est l'ordre du seg de la référence), comptes réels ── */
+const slugDe = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+type Article = (typeof articles)[number];
+const catDe = (a: Article) => (a.data.categorie ? slugDe(a.data.categorie) : "autre");
+const themes: { id: string; label: string; count: number }[] = [];
+for (const a of articles) {
+  const label = a.data.categorie ?? "Autre";
+  const id = catDe(a);
+  const t = themes.find((x) => x.id === id);
+  if (t) t.count++;
+  else themes.push({ id, label, count: 1 });
+}
+
+/* ── Pagination : 9 par page, seulement si nécessaire (client, cf. script) ── */
+const PAR_PAGE = 9;
+const pages = Math.ceil(n / PAR_PAGE);
+const visibles = Math.min(n, PAR_PAGE);
+
+/* ── Chiffres du héros — tous calculés ── */
+const lectures = articles.map((a) => a.data.tempsLecture).filter((t): t is number => typeof t === "number");
+const lectureMoyenne =
+  lectures.length > 0 ? Math.round(lectures.reduce((s, t) => s + t, 0) / lectures.length) : undefined;
+const derniere = articles[0]?.data.datePublication;
+const stats = [
+  { value: String(n), label: `article${pl(n, "s")} signé${pl(n, "s")}` },
+  { value: String(themes.length), label: `thématique${pl(themes.length, "s")}` },
+  ...(lectureMoyenne ? [{ value: `${lectureMoyenne} min`, label: "lecture moyenne" }] : []),
+  ...(derniere ? [{ value: formatDate(derniere), label: "dernière publication" }] : []),
+];
+
+/* ── Héros : rôle développé (+ IPI), méta mono de la référence ── */
+const heroRole = [roleLong ?? role, ipi ? `Agent IPI ${ipi}` : null].filter(Boolean).join(" · ");
+const meta = [
+  nArticles,
+  depuis ? `${depuisLabel ?? "Écrit depuis"} ${depuis}` : null,
+  langues.length > 0 ? langues.join(" · ") : null,
+  base ?? null,
+].filter((m): m is string => Boolean(m));
+
+/* ── Les autres rédacteurs : tous sauf l'auteur courant (la référence n'en
+   montrait que 3 — la règle « les autres » prime), ordre du hub ── */
+const autres = (await getCollection("auteurs"))
+  .filter((a) => a.id !== auteur.id)
+  .sort((a, b) => a.data.ordre - b.data.ordre);
+
+const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
+
+/* ── Head ── */
+const minuscule = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+/* Le « · » du rôle (« Notaire · rédactrice invitée ») devient « & » dans le
+   <title>, dont le séparateur est déjà « · » (réf. auteur-anne-vandeputte.html). */
+const roleTitre = role ? minuscule(role).replace(" · ", " & ") : "";
+const title = `${nom}${roleTitre ? ` — ${roleTitre}` : ""} · Avenir Immobilier`;
+const lesArticles = n === 1 ? "L'article" : `Les ${n} articles`;
+const deNom = `${/^[aeiouyàâéèêëîïôöùûüh]/i.test(nom) ? "d'" : "de "}${nom}`;
+const description = auteur.data.metaDescription
+  ? `${lesArticles} ${deNom}, ${auteur.data.metaDescription}`
+  : `${lesArticles} ${deNom}${role ? `, ${minuscule(role)}` : ""}${specialites.length > 0 ? ` : ${specialites.join(", ")}.` : "."}`;
+const canonical = new URL(`/auteurs/${auteur.id}`, Astro.site).href;
+
+const org = organization();
+const personLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: nom,
+  ...(role ? { jobTitle: role } : {}),
+  ...(portrait ? { image: new URL(portrait, Astro.site).href } : {}),
+  url: canonical,
+  /* Rédactrice invitée (notaire) : pas d'employeur Avenir dans le JSON-LD. */
+  ...(externe ? {} : { worksFor: { "@type": org["@type"], name: org.name, url: org.url } }),
+  ...(liens.length > 0 ? { sameAs: liens.map((l) => l.url) } : {}),
+};
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Accueil", item: new URL("/", Astro.site).href },
+    { "@type": "ListItem", position: 2, name: "Blog", item: new URL("/blog", Astro.site).href },
+    { "@type": "ListItem", position: 3, name: "Rédacteurs", item: new URL("/auteurs", Astro.site).href },
+    { "@type": "ListItem", position: 4, name: nom, item: canonical },
+  ],
+};
 ---
 
-<PageLayout title={auteur.data.nom} description={auteur.data.bio}>
-  <h1>{auteur.data.nom}</h1>
-  {/* Stub — page auteur (AuthorHero + liste d'articles). */}
-  <Content />
+<PageLayout title={title} description={description} canonical={canonical} active="/blog">
+  <Fragment slot="head">
+    <script type="application/ld+json" is:inline set:html={jsonLd(personLd)} />
+    <script type="application/ld+json" is:inline set:html={jsonLd(breadcrumbLd)} />
+  </Fragment>
+
+  {/* ── 1 · EN-TÊTE — page-head clair ; .ah-stats rétablit le padding bas (local.css) ── */}
+  <PageHead>
+    <Breadcrumb
+      slot="breadcrumb"
+      items={[
+        { label: "Accueil", href: "/" },
+        { label: "Blog", href: "/blog" },
+        { label: "Rédacteurs", href: "/auteurs" },
+        { label: nom },
+      ]}
+    />
+    <AuthorHero
+      name={nom}
+      role={heroRole || undefined}
+      quote={citation}
+      bio={bio}
+      meta={meta}
+      photo={portrait ? { src: portrait, alt: nom } : undefined}
+      stats={stats}
+    >
+      <a class="btn" href="/contact">Écrire à {prenom} <span class="arr">→</span></a>
+      <a class="btn btn--ghost" href="#articles">{n === 1 ? "Son article" : `Ses ${nArticles}`}</a>
+    </AuthorHero>
+  </PageHead>
+
+  {/* ── 2 · SES ARTICLES — .blog vert tendre, seg de thématiques + grille ── */}
+  <section class="blog sec--tint" id="articles">
+    <div class="wrap">
+      <h2 class="sr-only">Ses articles</h2>
+      <div class="au-toolhead reveal">
+        <div class="tool-group">
+          <span class="tool-label" id="lblTheme">Thématique</span>
+          <div class="seg" id="themes" role="group" aria-labelledby="lblTheme">
+            <button type="button" class="on" data-f="all" aria-pressed="true">Tous <span class="n">{n}</span></button>
+            {
+              themes.map((t) => (
+                <button type="button" data-f={t.id} aria-pressed="false">
+                  {t.label} <span class="n">{t.count}</span>
+                </button>
+              ))
+            }
+          </div>
+        </div>
+        <span class="au-count" id="artCount">
+          {visibles} article{pl(visibles, "s")} affiché{pl(visibles, "s")} · du plus récent au plus ancien
+        </span>
+      </div>
+
+      <div class="au-grid" id="artGrid" data-page={String(PAR_PAGE)}>
+        {
+          articles.map((a, i) => (
+            <div class={`au-item${i >= PAR_PAGE ? " pg-hid" : ""}`} data-cat={catDe(a)}>
+              <ArticleCard article={a} auteur={auteur} variant="post" class={`reveal${delay(i)}`} />
+            </div>
+          ))
+        }
+      </div>
+
+      {pages > 1 && <Pagination pages={pages} current={1} hrefFor={(p) => `?page=${p}#articles`} />}
+      {pages <= 1 && (
+        <p class="au-count au-count--end">
+          {n === 1 ? `L'article signé ${nom} est sur cette page.` : `Les ${n} articles signés ${nom} sont sur cette page.`}
+        </p>
+      )}
+    </div>
+  </section>
+
+  {/* ── 3 · LES AUTRES RÉDACTEURS — blanc, cartes compactes ── */}
+  <section class="sec--white">
+    <div class="wrap">
+      <div class="props-head reveal">
+        <SectionHead eyebrow="Aussi dans le journal" title="Les autres rédacteurs" />
+        <LinkArrow href="/auteurs">Tous les rédacteurs</LinkArrow>
+      </div>
+      <div class={`au-side${autres.length === 4 ? " au-side--4" : ""}`}>
+        {autres.map((a) => <WriterCard auteur={a} count={countDe(a.id)} variant="compact" class="reveal" />)}
+      </div>
+    </div>
+  </section>
+
+  {/* ── 4 · CTA FINAL — aplat vert profond (.finalcta--deep, local.css) ;
+       .on-dark sur les actions pour le .btn--ghost (vigilance 11) ── */}
+  <FinalCta tone="deep">
+    <span class="eyebrow center reveal">Une question sur votre bien ?</span>
+    <h2 class="reveal d1">Et si on commençait par <em>un café</em> ?</h2>
+    <p class="reveal d2">{prenom} répond personnellement aux messages — sous 24 h, sans engagement.</p>
+    <div class="fc-actions on-dark reveal d2">
+      <a href="/contact" class="btn">Écrire à {prenom} <span class="arr">→</span></a>
+      <a href="/estimation" class="btn btn--ghost">Estimation gratuite</a>
+    </div>
+  </FinalCta>
 </PageLayout>
+
+<style>
+  /* ── à reprendre dans le DS — gabarit 13 : <style> de page de
+     auteur-camille-renard.html (« Spécifique page auteur »), valeurs
+     inchangées (.au-quote est portée par AuthorHero). ── */
+  .au-toolhead { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px 28px; flex-wrap: wrap; }
+  .au-count { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-mute); }
+  .au-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; margin-top: 48px; }
+  @media (max-width: 980px){ .au-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 640px){ .au-grid { grid-template-columns: 1fr; gap: 20px; } }
+  .au-side { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: clamp(24px, 3vw, 34px); }
+  @media (max-width: 980px){ .au-side { grid-template-columns: 1fr; } }
+
+  /* Adaptation de `.au-grid .post.hid { display: none }` : ArticleCard n'a
+     pas de passe-through data-*, le filtre porte sur une enveloppe .au-item
+     transparente pour la grille (display: contents) — .post reste l'enfant
+     de grille et garde son reveal. */
+  .au-grid .au-item { display: contents; }
+  .au-grid .au-item.hid, .au-grid .au-item.pg-hid { display: none; }
+
+  /* Règle DS n°3 — petits textes sur fond teinté : --ink-soft minimum (la
+     référence laissait .au-count et .tool-label en --ink-mute sur .blog ;
+     même correction qu'au mur d'avis, F5). */
+  #articles .au-count, #articles .tool-label { color: var(--ink-soft); }
+
+  /* Ligne de clôture sans pagination (style= de la référence porté en classe). */
+  .au-count--end { display: block; text-align: center; margin-top: clamp(26px, 3vw, 38px); }
+
+  /* Mobile : .tool-group (min-width:auto) adoptait la largeur min-content du
+     .seg et débordait le .wrap à 375 px (même défaut sur la référence et sur
+     /avis) — à reprendre dans le DS. */
+  @media (max-width: 640px) { .au-toolhead .tool-group { min-width: 0; max-width: 100%; } }
+
+  /* Écart assumé : « les autres » = 4 cartes (la référence n'en montrait
+     que 3 sur 3 colonnes) — 4 colonnes pour éviter l'orpheline. */
+  .au-side--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 980px){ .au-side--4 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 640px){ .au-side--4 { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+  /* Filtre par thématique + compteur — logique du script inline de
+     auteur-camille-renard.html (comptes réels), plus la pagination client
+     (PAGE lu depuis data-page, ?page= dans l'URL) quand un rédacteur dépasse
+     9 articles. */
+  const seg = document.getElementById("themes");
+  const grid = document.getElementById("artGrid");
+  if (seg && grid) {
+    const PAGE = Number(grid.dataset.page || "9");
+    const btns = Array.from(seg.querySelectorAll<HTMLButtonElement>("button"));
+    const items = Array.from(grid.querySelectorAll<HTMLElement>(".au-item"));
+    const count = document.getElementById("artCount");
+    let cat = "all";
+    let page = Math.max(1, Number(new URLSearchParams(location.search).get("page") || "1") || 1);
+
+    function apply() {
+      const matched = items.filter((it) => cat === "all" || it.dataset.cat === cat);
+      const from = (page - 1) * PAGE;
+      let n = 0;
+      items.forEach((it) => {
+        const m = matched.indexOf(it);
+        const show = m > -1 && m >= from && m < from + PAGE;
+        it.classList.toggle("hid", m === -1);
+        it.classList.toggle("pg-hid", m > -1 && !show);
+        if (show) n++;
+      });
+      if (count) {
+        count.textContent =
+          n + " article" + (n > 1 ? "s" : "") + " affiché" + (n > 1 ? "s" : "") + " · du plus récent au plus ancien";
+      }
+    }
+
+    seg.addEventListener("click", (e) => {
+      const b = (e.target as HTMLElement).closest("button");
+      if (!b) return;
+      cat = b.dataset.f || "all";
+      page = 1;
+      btns.forEach((x) => {
+        x.classList.toggle("on", x === b);
+        x.setAttribute("aria-pressed", String(x === b));
+      });
+      apply();
+    });
+
+    if (page > 1) apply();
+  }
+</script>
