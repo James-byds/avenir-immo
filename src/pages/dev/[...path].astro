@@ -1,0 +1,255 @@
+---
+/* Hub de développement — inventaire des 14 gabarits, DEV UNIQUEMENT.
+   Équivalent du README.html / hub du projet maquette, côté dépôt.
+
+   La route n'existe qu'en `astro dev` : getStaticPaths renvoie [] au build,
+   la page n'est donc jamais émise dans dist/ (rien à retirer en F7).
+
+   L'état de chaque route est DÉRIVÉ, pas déclaré : on lit la source des
+   pages (import.meta.glob ?raw) et on cherche le marqueur « Stub » ;
+   fichier absent = « à créer ». Les instances (biens, équipe, articles…)
+   viennent des collections. Document autonome : pas de BaseLayout, donc pas
+   de ds-script.js (qui exige le chrome #header/#drawer).
+
+   Comparaison maquette : servir la référence à côté —
+   `npx serve docs/handoff/reference` → les liens « réf » pointent :3000. */
+import { getCollection } from "astro:content";
+import { slugCombinaison, slugCommune, ancre } from "../../lib/maillage";
+import type { Transaction, TypeBien } from "../../lib/maillage";
+
+export function getStaticPaths() {
+  return import.meta.env.DEV ? [{ params: { path: undefined } }] : [];
+}
+
+const REF = "http://localhost:3000";
+
+/* ── État réel des fichiers de pages ─────────────────────────────────── */
+const sources = import.meta.glob<string>("../**/*.astro", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+});
+type Statut = "livré" | "stub" | "à créer";
+const statut = (file: string): Statut => {
+  const src = sources[file];
+  if (!src) return "à créer";
+  return /Stub/.test(src) ? "stub" : "livré";
+};
+
+/* ── Instances depuis les collections ────────────────────────────────── */
+const biens = await getCollection("biens", ({ data }) => data.publie !== false);
+const equipe = (await getCollection("equipe")).sort((a, b) => a.data.ordre - b.data.ordre);
+const auteurs = await getCollection("auteurs");
+const articles = await getCollection("articles", ({ data }) => data.publie !== false);
+const communes = await getCollection("communes");
+
+const combos = communes.flatMap((c) =>
+  (c.data.combinaisons as { type: TypeBien; transaction: Transaction }[]).map(
+    ({ type, transaction }) => ({
+      href: `/${slugCombinaison(type, transaction, slugCommune(c.data.nom))}`,
+      label: ancre(type, transaction, c.data.nom),
+    }),
+  ),
+);
+
+type Lien = { href: string; label: string };
+type Route = { label: string; href: string; file: string; instances?: Lien[] };
+type Gabarit = { n: string; nom: string; vague: string; refs: string[]; routes: Route[] };
+
+const gabarits: Gabarit[] = [
+  { n: "01", nom: "Accueil", vague: "F2", refs: ["index.html"],
+    routes: [{ label: "/", href: "/", file: "../index.astro" }] },
+  { n: "02", nom: "Biens — liste", vague: "F3", refs: ["biens.html"],
+    routes: [{ label: "/biens", href: "/biens", file: "../biens/index.astro" }] },
+  { n: "03", nom: "Bien — fiche", vague: "F3", refs: ["bien.html"],
+    routes: [{ label: "/biens/[slug]", href: "/biens/villa-architecte-gerpinnes", file: "../biens/[slug].astro",
+      instances: biens.map((b) => ({ href: `/biens/${b.id}`, label: b.data.titre })) }] },
+  { n: "04", nom: "Localités — hub", vague: "F4", refs: ["localites.html"],
+    routes: [{ label: "/communes", href: "/communes", file: "../communes/index.astro" }] },
+  { n: "05", nom: "Localité", vague: "F4", refs: ["maison-a-vendre-liege.html", "appartement-a-louer-liege.html"],
+    routes: [{ label: "/[type]-a-[transaction]-[commune]", href: "/maison-a-vendre-liege",
+      file: "../[type]-a-[transaction]-[commune].astro",
+      instances: combos.filter((c) => !c.href.endsWith("-gerpinnes")) }] },
+  { n: "06", nom: "Quartier (localité enrichie)", vague: "F4", refs: ["quartier.html"],
+    routes: [{ label: "/maison-a-vendre-gerpinnes", href: "/maison-a-vendre-gerpinnes",
+      file: "../[type]-a-[transaction]-[commune].astro" }] },
+  { n: "07", nom: "Estimation", vague: "F3", refs: ["estimation.html"],
+    routes: [{ label: "/estimation", href: "/estimation", file: "../estimation.astro" }] },
+  { n: "08", nom: "Contact", vague: "F5", refs: ["contact.html"],
+    routes: [{ label: "/contact", href: "/contact", file: "../contact.astro" }] },
+  { n: "09", nom: "Avis", vague: "F5", refs: ["avis.html"],
+    routes: [{ label: "/avis", href: "/avis", file: "../avis.astro" }] },
+  { n: "10", nom: "À propos", vague: "F5", refs: ["a-propos.html"],
+    routes: [{ label: "/a-propos", href: "/a-propos", file: "../a-propos.astro" }] },
+  { n: "11", nom: "Équipe", vague: "F5", refs: ["equipe.html", "equipe-olivier-monier.html"],
+    routes: [
+      { label: "/equipe", href: "/equipe", file: "../equipe/index.astro" },
+      { label: "/equipe/[slug]", href: `/equipe/${equipe[0]?.id ?? ""}`, file: "../equipe/[slug].astro",
+        instances: equipe.map((m) => ({ href: `/equipe/${m.id}`, label: m.data.nom })) },
+    ] },
+  { n: "12", nom: "Blog + article", vague: "F6", refs: ["blog.html", "article.html"],
+    routes: [
+      { label: "/blog", href: "/blog", file: "../blog/index.astro" },
+      { label: "/blog/[slug]", href: "/blog/home-staging-7-gestes", file: "../blog/[slug].astro",
+        instances: articles.map((a) => ({ href: `/blog/${a.id}`, label: a.data.titre })) },
+    ] },
+  { n: "13", nom: "Auteurs", vague: "F6", refs: ["auteurs.html", "auteur-camille-renard.html"],
+    routes: [
+      { label: "/auteurs", href: "/auteurs", file: "../auteurs/index.astro" },
+      { label: "/auteurs/[slug]", href: `/auteurs/${auteurs[0]?.id ?? ""}`, file: "../auteurs/[slug].astro",
+        instances: auteurs.map((a) => ({ href: `/auteurs/${a.id}`, label: a.data.nom })) },
+    ] },
+  { n: "14", nom: "Légales", vague: "F6", refs: ["legale.html"],
+    routes: [
+      { label: "/legal/mentions", href: "/legal/mentions", file: "../legal/mentions.astro" },
+      { label: "/legal/confidentialite", href: "/legal/confidentialite", file: "../legal/confidentialite.astro" },
+      { label: "/legal/cookies", href: "/legal/cookies", file: "../legal/cookies.astro" },
+      { label: "/legal/honoraires", href: "/legal/honoraires", file: "../legal/honoraires.astro" },
+    ] },
+];
+
+const totaux = { livré: 0, stub: 0, "à créer": 0 } as Record<Statut, number>;
+for (const g of gabarits) for (const r of g.routes) totaux[statut(r.file)]++;
+---
+
+<!doctype html>
+<html lang="fr-BE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Hub gabarits — dev · Avenir Immobilier</title>
+  </head>
+  <body>
+    <div class="hub">
+      <header class="hub-head">
+        <h1>Hub des gabarits <span class="dev-tag">dev only</span></h1>
+        <p>
+          {totaux["livré"]} routes livrées · {totaux.stub} stubs · {totaux["à créer"]} à créer —
+          état lu dans la source des pages, instances lues dans les collections.
+          Feuille de route : <code>docs/handoff/ETAT.md</code>.
+        </p>
+        <p class="hint">
+          Liens « réf » = maquette sur <code>{REF}</code> — lancer
+          <code>npx serve docs/handoff/reference</code> dans un autre terminal.
+        </p>
+      </header>
+
+      <div class="grid">
+        {gabarits.map((g) => (
+          <article class="g-card">
+            <div class="g-top">
+              <span class="g-n">{g.n}</span>
+              <h2>{g.nom}</h2>
+              <span class="g-vague">{g.vague}</span>
+            </div>
+            <ul class="g-routes">
+              {g.routes.map((r) => {
+                const s = statut(r.file);
+                return (
+                  <li>
+                    {s === "à créer" ? (
+                      <span class="route dead">{r.label}</span>
+                    ) : (
+                      <a class="route" href={r.href}>{r.label}</a>
+                    )}
+                    <span class={`chip chip--${s === "livré" ? "ok" : s === "stub" ? "stub" : "todo"}`}>{s}</span>
+                    {r.instances && r.instances.length > 0 && (
+                      <details>
+                        <summary>{r.instances.length} instances</summary>
+                        <ul>
+                          {r.instances.map((i) => (
+                            <li><a href={i.href}>{i.label}</a></li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            <div class="g-refs">
+              {g.refs.map((f) => (
+                <a href={`${REF}/${f}`} target="_blank" rel="noopener">réf · {f} ↗</a>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <footer class="hub-foot">
+        <h2>Outils</h2>
+        <ul>
+          <li><a href="/test">/test</a> — banc de comparaison des composants (supprimé en F7)</li>
+          <li><a href="/sitemap.xml">/sitemap.xml</a> — routes émises (jamais de combinaison vide)</li>
+          <li><a href="/404">/404</a></li>
+          <li><a href={`${REF}/README.html`} target="_blank" rel="noopener">Index de la maquette ↗</a></li>
+        </ul>
+      </footer>
+    </div>
+  </body>
+</html>
+
+<style is:global>
+  @import "../../styles/app.css";
+</style>
+
+<style>
+  /* Châssis du hub — outil interne, hors DS (comme le banc /test). */
+  .hub { max-width: 1160px; margin: 0 auto; padding: 40px 24px 80px; }
+  .hub-head h1 { font-size: clamp(28px, 4vw, 40px); }
+  .dev-tag {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; vertical-align: middle; margin-left: 12px;
+    padding: 5px 10px; border-radius: 100px;
+    background: var(--ink-bg); color: var(--yellow);
+  }
+  .hub-head p { color: var(--ink-soft); margin-top: 10px; max-width: 72ch; }
+  .hint code { font-family: var(--mono); font-size: 0.9em; background: var(--bg-soft); padding: 2px 6px; border-radius: 6px; }
+
+  .grid {
+    display: grid; gap: 18px; margin-top: 36px;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  }
+  .g-card {
+    background: #fff; border: 1px solid var(--line); border-radius: var(--r);
+    padding: 18px 20px; box-shadow: var(--sh-sm);
+  }
+  .g-top { display: flex; align-items: baseline; gap: 10px; }
+  .g-n { font-family: var(--mono); font-size: 12px; color: var(--ink-mute); }
+  .g-top h2 { font-size: 18px; flex: 1; }
+  .g-vague {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+    color: var(--ink-soft); border: 1px solid var(--line); border-radius: 100px;
+    padding: 2px 8px;
+  }
+  .g-routes { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 8px; }
+  .route { font-family: var(--mono); font-size: 13px; }
+  a.route { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
+  .route.dead { color: var(--ink-mute); }
+  .chip {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+    text-transform: uppercase; border-radius: 100px; padding: 2px 8px; margin-left: 8px;
+  }
+  .chip--ok { background: var(--green-l); color: var(--ink); }
+  .chip--stub { background: var(--bg-soft); color: var(--ink-soft); border: 1px dashed var(--ink-mute); }
+  .chip--todo { background: #fff; color: var(--ink-mute); border: 1px solid var(--line); }
+
+  details { margin-top: 6px; }
+  summary {
+    cursor: pointer; font-family: var(--mono); font-size: 11px;
+    color: var(--ink-soft); letter-spacing: 0.04em;
+  }
+  details ul { list-style: none; padding: 6px 0 0 14px; display: grid; gap: 4px; }
+  details a { font-size: 13.5px; color: var(--ink-soft); }
+  details a:hover { color: var(--green); }
+
+  .g-refs { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-2); }
+  .g-refs a { font-family: var(--mono); font-size: 11px; color: var(--ink-mute); }
+  .g-refs a:hover { color: var(--green); }
+
+  .hub-foot { margin-top: 48px; border-top: 1px solid var(--line); padding-top: 24px; }
+  .hub-foot h2 { font-size: 16px; }
+  .hub-foot ul { list-style: none; padding: 0; margin-top: 12px; display: grid; gap: 6px; }
+  .hub-foot a { font-family: var(--mono); font-size: 13px; color: var(--green); }
+</style>

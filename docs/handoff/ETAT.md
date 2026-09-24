@@ -6,7 +6,7 @@
 ## Feuille de route
 
 | Fenêtre | Contenu | État |
-|---|---|---|
+| --- | --- | --- |
 | F1 | `00-preflight` | ✅ terminé le 23 sept. 2026 (commits `2213ace` → `3c0a0aa`) |
 | F2 | `01-accueil` — page témoin, recette à 100 % avant toute vague | ✅ terminé le 24 sept. 2026 (commit `c37e852`, recette conforme) |
 | F3 | Vague A : `02-biens-liste` · `03-bien-fiche` · `07-estimation` (3 gabarits en parallèle) | ✅ terminé le 24 sept. 2026 (commits `ef993fa` → `a3736d8`, recettes conformes) |
@@ -162,3 +162,8 @@ Trois sous-agents en parallèle maximum.
   le trust de `/biens` est en variante pleine (la référence prime sur le
   `.trust--band` du prompt 02, même précédent que F2). Prochaine étape : **F4
   vague B** (`05-localite` d'abord, puis `06-quartier` · `04-localites-hub`).
+- **24 sept. 2026 — outillage** : hub de développement `/dev`
+  (`src/pages/dev/[...path].astro`) — inventaire des 14 gabarits, état dérivé de la
+  source des pages (marqueur « Stub ») et des collections, liens « réf » vers la
+  maquette servie sur :3000. **Dev uniquement** : `getStaticPaths` renvoie `[]` au
+  build, la page n'existe pas dans `dist/` (rien à retirer en F7, hors recette).
