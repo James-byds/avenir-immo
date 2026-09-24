@@ -108,8 +108,8 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
   variant === "band" ? (
     <div class="trust--band">
       <div class="trust-rating">
-        <span class="t-score">{rating}<span style="font-size:60%;color:var(--ink-mute)">/5</span></span>
-        <span style="display:flex;flex-direction:column;gap:5px">
+        <span class="t-score">{rating}<span class="t-den">/5</span></span>
+        <span class="flex flex-col gap-[5px]">
           <span class="t-stars" aria-label={`${rating} étoiles sur 5`}>{stars(5)}</span>
           <span class="t-src">{source} · {count} avis</span>
         </span>
@@ -128,12 +128,12 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
     <section class="trust" id={id}>
       <div class="wrap">
         <div class="trust-head reveal">
-          <div style="flex:1 1 420px">
+          <div class="flex-[1_1_420px]">
             <Eyebrow>{eyebrow}</Eyebrow>
             {title ? (
-              <h2 style="max-width:24ch">{title}</h2>
+              <h2 class="max-w-[24ch]">{title}</h2>
             ) : (
-              <h2 style="max-width:24ch">{count} familles accompagnées, notées <em class="t-hl">{rating}/5</em></h2>
+              <h2 class="max-w-[24ch]">{count} familles accompagnées, notées <em class="t-hl">{rating}/5</em></h2>
             )}
             {intro && <p class="trust-intro">{intro}</p>}
           </div>
@@ -228,6 +228,8 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
 }
 
 <style>
+  /* Dénominateur « /5 » du score (style inline de la maquette) — à reprendre dans le DS. */
+  .t-den { font-size: 60%; color: var(--ink-mute); }
   /* Référence (maison-a-vendre-liege.html : <a style="color:inherit"> dans le
      t-count du variant band) — à reprendre dans le DS. */
   .t-count a {

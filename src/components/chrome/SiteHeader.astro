@@ -64,6 +64,9 @@ const nav: NavItem[] = [
   </div>
 </header>
 
+<!-- Style inline = ÉTAT INITIAL lu par ds-script.js (openDrawer retire ces deux
+     propriétés) : évite le flash du tiroir avant le chargement du script. Toléré
+     en recette comme valeur d'exécution. -->
 <div class="drawer" id="drawer" aria-hidden="true" style="transform:translateX(100%);visibility:hidden">
   <div class="drawer-top">
     <img src="/assets/logo-lavenir-immobilier.png" alt="L'aVenir immobilier" class="brand-logo" />

@@ -1,13 +1,30 @@
 /* Avenir Immobilier — point d'entrée unique des styles
    L'ORDRE EST SIGNIFICATIF :
-     1. Tailwind      — déclare les couches (theme, base, components, utilities)
-     2. Design system — tokens puis site.css (le reset du DS doit passer
-                        après le preflight de Tailwind, pas avant)
-     3. local.css     — écarts maquette en attente de reprise dans le DS
-                        (ne rien y ajouter sans titre de bloc « à reprendre »)
+     0. Ordre des couches — déclaré AVANT l'import de Tailwind (une
+        déclaration @layer ultérieure ne réordonne pas des couches déjà
+        connues) : le DS passe après le preflight de Tailwind (base) et
+        AVANT ses recettes (components) et ses utilitaires (utilities).
+     1. Tailwind      — déclare theme, base, components, utilities
+     2. Design system — tokens puis site.css, DANS la couche `ds` : hors
+                        couche, son reset `* { margin: 0 }` et toutes ses
+                        règles primaient sur les utilitaires Tailwind
+                        (mt-*, max-w-*… compilés mais inertes — vigilance 16
+                        du handoff). En couche, un utilitaire posé sur un
+                        élément stylé par le DS s'applique, ce qui est le
+                        contrat « le DS porte le style, Tailwind pose la
+                        mise en page ».
+     3. local.css     — écarts maquette en attente de reprise dans le DS,
+                        même couche que le DS (il le complète et le
+                        surcharge à spécificité égale, par ordre)
      4. theme.css     — le pont @theme inline, qui lit les tokens des étapes 2-3
+
+   Les <style> scoped des pages et composants restent HORS couche : ils
+   priment sur le DS quelle que soit leur spécificité (comme avant, où ils
+   gagnaient par ordre d'apparition), et sur les utilitaires — un scoped
+   qui redéfinit une marge posée en `mt-*` gagne, à dessein.
 */
+@layer theme, base, ds, components, utilities;
 @import "tailwindcss";
-@import "./ds/styles.css";
-@import "./local.css";
+@import "./ds/styles.css" layer(ds);
+@import "./local.css" layer(ds);
 @import "./theme.css";

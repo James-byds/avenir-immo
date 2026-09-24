@@ -5,7 +5,8 @@
  * Section blanche courte (.sec--short — reprise en classe du
  * style="padding-block:clamp(40px,5vw,60px)" de la référence quartier.html).
  * Les pilules .q-pill pointent vers des pages de localité : tant qu'une page
- * n'est pas codée, son lien porte `planned` → data-planned (jamais href="#").
+ * n'est pas codée, sa pilule porte `planned` → data-planned SANS href (jamais
+ * de lien vers une 404), l'URL prévue étant conservée en data-href.
  */
 import Eyebrow from "../core/Eyebrow.astro";
 
@@ -26,13 +27,18 @@ const { eyebrow, titre, liens } = Astro.props;
 <section class="sec--white sec--short">
   <div class="wrap">
     <Eyebrow>{eyebrow}</Eyebrow>
-    <h2 style="font-size:clamp(21px,2.4vw,26px);margin-top:12px">{titre}</h2>
+    <h2 class="np-title mt-3">{titre}</h2>
     <div class="q-others">
       {
         liens.map((l) => (
-          <a class="q-pill" href={l.href} data-planned={l.planned ? "" : undefined}>{l.label} →</a>
+          <a class="q-pill" href={l.planned ? undefined : l.href} data-href={l.planned ? l.href : undefined} data-planned={l.planned ? "" : undefined}>{l.label} →</a>
         ))
       }
     </div>
   </div>
 </section>
+
+<style>
+  /* à reprendre dans le DS — quartier.html : taille du H2 « communes voisines » (style inline de la maquette). */
+  .np-title { font-size: clamp(21px, 2.4vw, 26px); }
+</style>

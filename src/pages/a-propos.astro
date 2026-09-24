@@ -286,14 +286,14 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
   <section class="sec--white" id="equipe">
     <div class="wrap">
       <div class="props-head reveal">
-        <div class="section-head" style="margin:0">
+        <div class="section-head m-0">
           <Eyebrow>Qui fait quoi</Eyebrow>
           <h2>Appelez directement la bonne personne</h2>
           <p>Cinq agents et une office manager, chacun avec son numéro direct. La personne qui décroche est celle qui suivra votre dossier jusqu'à l'acte.</p>
         </div>
         <LinkArrow href="/equipe">Toute l'équipe</LinkArrow>
       </div>
-      <div class="team-grid team-grid--contact" style="margin-top:clamp(26px,3.4vw,40px)">
+      <div class="team-grid team-grid--contact mt-[clamp(26px,3.4vw,40px)]">
         {equipe.map((m, i) => <MemberContactCard membre={m} class={`reveal${delay(i)}`} />)}
       </div>
     </div>
@@ -304,9 +304,9 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
     <div class="wrap two-col two-col--a">
       <div class="reveal sticky-side">
         <Eyebrow>Notre charte</Eyebrow>
-        <h2 style="margin-top:14px">Ce que vous pouvez exiger de nous</h2>
-        <p style="color:var(--ink-soft);margin-top:14px;max-width:44ch">Cinq engagements écrits, les mêmes depuis 1992. Ils figurent sur chaque mandat que nous signons — et vous pouvez nous les rappeler à tout moment.</p>
-        <a href="/estimation" class="btn" style="margin-top:26px">Commencer par une estimation <span class="arr">→</span></a>
+        <h2 class="mt-3.5">Ce que vous pouvez exiger de nous</h2>
+        <p class="text-ink-soft mt-3.5 max-w-[44ch]">Cinq engagements écrits, les mêmes depuis 1992. Ils figurent sur chaque mandat que nous signons — et vous pouvez nous les rappeler à tout moment.</p>
+        <a href="/estimation" class="btn mt-6.5">Commencer par une estimation <span class="arr">→</span></a>
       </div>
       <Commitments items={engagements} class="reveal d1" />
     </div>
@@ -317,9 +317,9 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
     <div class="wrap two-col two-col--b">
       <div class="reveal">
         <Eyebrow>Là où nous travaillons</Eyebrow>
-        <h2 style="margin-top:14px">Le prix d'une rue, pas seulement d'un code postal</h2>
-        <p style="color:var(--ink-soft);margin-top:14px;max-width:44ch">Nous ne couvrons pas « toute la Wallonie ». Nous couvrons les communes où nous avons vendu assez de biens pour connaître le prix d'une rue. Chacune a sa page, avec ses chiffres, ses biens disponibles et le conseiller qui la suit.</p>
-        <p style="color:var(--ink-soft);margin-top:12px;max-width:44ch">Le Grand Charleroi d'abord, depuis 1992. Puis Namur et <a href="/maison-a-vendre-liege" style="color:var(--green-d);font-weight:600">Liège</a>, où l'équipe vend et loue depuis 2024.</p>
+        <h2 class="mt-3.5">Le prix d'une rue, pas seulement d'un code postal</h2>
+        <p class="text-ink-soft mt-3.5 max-w-[44ch]">Nous ne couvrons pas « toute la Wallonie ». Nous couvrons les communes où nous avons vendu assez de biens pour connaître le prix d'une rue. Chacune a sa page, avec ses chiffres, ses biens disponibles et le conseiller qui la suit.</p>
+        <p class="text-ink-soft mt-3 max-w-[44ch]">Le Grand Charleroi d'abord, depuis 1992. Puis Namur et <a href="/maison-a-vendre-liege" class="text-green-d font-semibold">Liège</a>, où l'équipe vend et loue depuis 2024.</p>
       </div>
       <div class="lx lx--two reveal d1">
         {lxCols.map((col) => (
@@ -354,17 +354,17 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
     <div class="wrap two-col two-col--c">
       <div class="reveal">
         <Eyebrow>Nous recevons ici</Eyebrow>
-        <h2 style="margin-top:14px">Boulevard Tirou, depuis le premier jour</h2>
-        <p style="color:var(--ink-soft);margin-top:14px;max-width:46ch">À quatre cents mètres de la gare de Charleroi-Sud. Passez sans rendez-vous du lundi au vendredi : il y a toujours un conseiller à l'agence. Parking gratuit dans la cour, rez-de-chaussée accessible.</p>
+        <h2 class="mt-3.5">Boulevard Tirou, depuis le premier jour</h2>
+        <p class="text-ink-soft mt-3.5 max-w-[46ch]">À quatre cents mètres de la gare de Charleroi-Sud. Passez sans rendez-vous du lundi au vendredi : il y a toujours un conseiller à l'agence. Parking gratuit dans la cour, rez-de-chaussée accessible.</p>
         <div class="loc-figs">
           <div class="lf"><span class="lf-v">9h–18h30</span><span class="lf-k">En semaine, sans rendez-vous</span></div>
           <div class="lf"><span class="lf-v">10h–16h</span><span class="lf-k">Le samedi</span></div>
           <div class="lf"><span class="lf-v">400 m</span><span class="lf-k">De la gare de Charleroi-Sud</span></div>
           <div class="lf"><span class="lf-v">Gratuit</span><span class="lf-k">Parking dans la cour</span></div>
         </div>
-        <div class="enclair" style="margin-top:30px">
+        <div class="enclair mt-7.5">
           <span class="e-tag">Nous recrutons</span>
-          <p>Un·e conseiller·ère pour Liège, IPI ou stagiaire IPI. Si vous connaissez le prix d'une rue à Cointe ou à Outremeuse, <a href="/contact" style="color:var(--green-d);font-weight:600">écrivez à Olivier</a>.</p>
+          <p>Un·e conseiller·ère pour Liège, IPI ou stagiaire IPI. Si vous connaissez le prix d'une rue à Cointe ou à Outremeuse, <a href="/contact" class="text-green-d font-semibold">écrivez à Olivier</a>.</p>
         </div>
       </div>
       <AgencyCard

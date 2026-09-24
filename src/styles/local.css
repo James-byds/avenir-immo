@@ -309,7 +309,7 @@ h1, h2, h3, h4.mn, .card-price, .hero h1, .finalcta h2, .ts-score .v, .t-score,
 /* Le panneau chevauche le footer : peu de blanc autour, incrusté entre les deux */
 .finalcta--photo { position: relative; z-index: 2; padding-bottom: 0; margin-bottom: calc(-1 * clamp(70px, 9vw, 128px)); }
 .finalcta--photo .wrap { text-align: left; padding-block: clamp(12px, 1.6vw, 24px) 0; }
-/* Pied de page : vert profond #17413B de la prémaquette (et non --ink-bg #0E2B27) */
+/* Pied de page : vert profond --green de la prémaquette (et non --ink-bg) */
 .footer { background: var(--green); padding-top: clamp(34px, 4vw, 52px); }
 /* Le panneau CTA chevauche le pied (margin-bottom négatif de .finalcta--photo) :
    sur ces pages seulement, le pied réserve la hauteur du chevauchement en plus
@@ -1561,3 +1561,12 @@ a[data-planned]:hover { border-style: dashed; }
    consentement (référence : <a style="color:inherit;text-decoration:
    underline"> dans .cf-consent / .est-fineprint — valeurs inchangées). */
 .cf-consent span a { color: inherit; text-decoration: underline; }
+
+/* ============================================================
+   Ligne de preuve sous les points de l'estimateur (index.html et
+   estimation.html : <p style="font-family:var(--mono);font-size:11.5px;
+   letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.55)">
+   inline dans la maquette, valeurs inchangées) — à reprendre dans le DS
+   (.est-proof, à côté de .est-points).
+   ============================================================ */
+.est-proof { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.55); }

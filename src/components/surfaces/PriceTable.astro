@@ -34,7 +34,7 @@ const {
 ---
 
 {title && <h3 class="pt-title">{title}</h3>}
-<div class={`lg-table q-prices ${className}`.trim()} style="margin-top:16px">
+<div class={`lg-table q-prices mt-4 ${className}`.trim()}>
   <div class="lg-tr head"><span>{head.c1}</span><span>{head.c2}</span><span>{head.c3}</span></div>
   {
     rows.map((r) => (
@@ -46,7 +46,7 @@ const {
     ))
   }
 </div>
-<span class="sell-src" style="margin-top:14px">{source}</span>
+<span class="sell-src mt-3.5">{source}</span>
 
 <style>
   /* Style inline du h3 de la référence, valeurs inchangées — à reprendre

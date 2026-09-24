@@ -53,7 +53,7 @@ export default function MapLeaflet({ lat, lng, zoom = 15, label }: MapLeafletPro
         className: "agc-leaflet-pin",
         html:
           '<span style="display:block;width:18px;height:18px;border-radius:50%;' +
-          "background:var(--green,#17413B);box-shadow:0 0 0 8px rgba(23,65,59,.18)," +
+          "background:var(--green);box-shadow:0 0 0 8px rgba(23,65,59,.18)," +
           '0 0 0 18px rgba(23,65,59,.07)"></span>',
         iconSize: [18, 18],
         iconAnchor: [9, 9],

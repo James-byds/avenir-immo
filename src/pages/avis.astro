@@ -138,14 +138,14 @@ const agentLd = {
     <div class="av-hero">
       <div>
         <Eyebrow>Ils nous font confiance</Eyebrow>
-        <h1 style="font-size:clamp(36px,4.8vw,64px);margin-top:16px">
-          Ce que nos clients disent, <em style="font-style:normal;color:var(--green-l)">sans filtre</em>.
+        <h1 class="av-title mt-4">
+          Ce que nos clients disent, <em class="av-hl">sans filtre</em>.
         </h1>
-        <p style="color:var(--ink-soft);font-size:17px;margin-top:18px;max-width:56ch">
+        <p class="av-lede text-ink-soft mt-4.5 max-w-[56ch]">
           Chaque avis de cette page est repris automatiquement de notre fiche Google. Rien n'est
           réécrit, rien n'est retiré — les moins bons aussi.
         </p>
-        <div class="fc-actions" style="justify-content:flex-start;margin-top:28px">
+        <div class="fc-actions justify-start mt-7">
           <a href="/contact" class="btn">Parler à un conseiller <span class="arr">→</span></a>
           <a href={GOOGLE_URL} target="_blank" rel="noopener" class="btn btn--ghost">Voir la fiche Google ↗</a>
         </div>
@@ -206,6 +206,11 @@ const agentLd = {
 </PageLayout>
 
 <style is:global>
+  /* ── à reprendre dans le DS — héros de avis.html : styles inline du H1
+     (taille), du surlignage <em> et du chapô (17 px), passés en classes. ── */
+  .av-hero .av-title { font-size: clamp(36px, 4.8vw, 64px); }
+  .av-hero .av-hl { font-style: normal; color: var(--green-l); }
+  .av-hero .av-lede { font-size: 17px; }
   /* ── à reprendre dans le DS — gabarit 09 : <style> de page de avis.html
      (héros), valeurs inchangées. local.css porte déjà .sum-c/.sc-* et la
      couleur verte de .av-sync en page-head — seules les bases manquent. ── */

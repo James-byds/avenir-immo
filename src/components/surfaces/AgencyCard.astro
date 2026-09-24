@@ -81,7 +81,7 @@ const telAttr = phone ? `tel:${phone.replace(/[^+0-9]/g, "")}` : undefined;
   <div class="agc-media">
     {
       photo ? (
-        <img src={photo} alt={label} style="display:block;width:100%;aspect-ratio:16 / 8.2;object-fit:cover" />
+        <img src={photo} alt={label} class="agc-img" />
       ) : media === "map" && lat != null && lng != null ? (
         <MapLeaflet client:visible lat={lat} lng={lng} zoom={zoom} label={name} />
       ) : (
@@ -158,6 +158,8 @@ const telAttr = phone ? `tel:${phone.replace(/[^+0-9]/g, "")}` : undefined;
 </article>
 
 <style>
+  /* Photo cliente dans le cadre média (ratio de la référence) — à reprendre dans le DS. */
+  .agc-img { display: block; width: 100%; aspect-ratio: 16 / 8.2; object-fit: cover; }
   /* Référence (a-propos.html : liens tel/mail des ag-rows en color:inherit
      inline) — à reprendre dans le DS. */
   .ag-rows dd a {

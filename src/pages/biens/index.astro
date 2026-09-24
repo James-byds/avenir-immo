@@ -169,7 +169,7 @@ const itemListLd = {
     </Fragment>
     {/* .section-head avec H1 : core/SectionHead ne rend que des h2 — motif
        écrit en classes DS, marge de la référence. */}
-    <div class="section-head" style="margin-top:clamp(22px,3vw,32px)">
+    <div class="section-head mt-[clamp(22px,3vw,32px)]">
       <Eyebrow>Acheter · Louer</Eyebrow>
       <h1>Nos biens d'exception</h1>
       <p>Villas, maisons de maître et appartements de standing à Charleroi et dans sa région — chaque bien est visité, estimé et mis en valeur par nos soins.</p>
@@ -240,17 +240,17 @@ const itemListLd = {
         hidden
         label="Peu de biens ici — élargir autour"
         links={widenLinks}
-        style="margin-top:26px"
+        class="mt-6.5"
       />
 
-      <SkeletonGrid id="skGrid" count={6} style="margin-top:40px" />
+      <SkeletonGrid id="skGrid" count={6} class="mt-10" />
 
       <EmptyState
         id="emptyState"
         title="Aucun bien ne correspond à ces critères"
         critId="emptyCrit"
         widenLabel="Chercher autour"
-        style="margin-top:40px"
+        class="mt-10"
       >
         Notre catalogue reste volontairement court : nous ne prenons que les mandats que nous
         pouvons suivre nous-mêmes. Retirez un critère, ou dites-nous ce que vous cherchez — nous
@@ -266,7 +266,7 @@ const itemListLd = {
         </Fragment>
       </EmptyState>
 
-      <div class="prop-grid" id="propGrid" style="margin-top:40px">
+      <div class="prop-grid mt-10" id="propGrid">
         {biens.map((b, i) => (
           <PropertyCard
             class={`reveal${delay(i)}`}
@@ -300,9 +300,9 @@ const itemListLd = {
   <section class="trust sec--cont">
     <div class="wrap">
       <div class="trust-head reveal">
-        <div style="flex:1 1 420px">
+        <div class="flex-[1_1_420px]">
           <Eyebrow>Ils nous font confiance</Eyebrow>
-          <h2 style="max-width:24ch">Des acquéreurs accompagnés, notés <em class="t-hl">4,8/5</em></h2>
+          <h2 class="max-w-[24ch]">Des acquéreurs accompagnés, notés <em class="t-hl">4,8/5</em></h2>
           <p class="trust-intro">Des avis Google vérifiés d'acheteurs de Charleroi et sa région — du premier contact à la signature chez le notaire.</p>
         </div>
       </div>
@@ -351,7 +351,7 @@ const itemListLd = {
   <!-- ===================== 4 · CTA FINAL (vert tendre) ===================== -->
   <FinalCta tone="tint">
     <span class="eyebrow center reveal">Recherche sur-mesure</span>
-    <h2 class="reveal d1" style="font-size:clamp(32px,4.6vw,60px)">Le bien idéal est peut-être <em>off-market</em>.</h2>
+    <h2 class="reveal d1 bl-offmarket">Le bien idéal est peut-être <em>off-market</em>.</h2>
     <p class="reveal d2">Confiez-nous votre recherche : nos chasseurs présentent chaque mois des biens vendus en toute discrétion, avant toute publication.</p>
     <div class="fc-actions reveal d2">
       <a href="/contact" class="btn">Confier ma recherche <span class="arr">→</span></a>
@@ -392,3 +392,8 @@ const itemListLd = {
     });
   </script>
 </PageLayout>
+
+<style>
+  /* à reprendre dans le DS — biens.html : taille du H2 « off-market » (style inline de la maquette). */
+  .bl-offmarket { font-size: clamp(32px, 4.6vw, 60px); }
+</style>

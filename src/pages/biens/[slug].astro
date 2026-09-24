@@ -414,12 +414,13 @@ const msgSucces = `${conseiller.prenom} vous recontacte sous 24 h ouvrées pour 
       nom.classList.toggle("err", !okN);
       email.classList.toggle("err", !okE);
       if (!okN || !okE) return;
-      /* Marquage de la confirmation repris tel quel de la référence
-         (styles inline compris) — à reprendre dans le DS (.agent-ok). */
+      /* Marquage de la confirmation repris de la référence — ses styles inline
+         passés en classes globales .ok-title / .ok-text (le HTML est injecté,
+         un <style> scoped ne le couvrirait pas) ; à reprendre dans le DS (.agent-ok). */
       form.innerHTML =
         '<div class="agent-ok"><div class="ed-ic">✓</div>' +
-        '<h3 class="serif" style="font-size:22px">Demande envoyée</h3>' +
-        '<p style="color:var(--ink-soft);font-size:14.5px;margin-top:10px">' +
+        '<h3 class="serif ok-title">Demande envoyée</h3>' +
+        '<p class="ok-text">' +
         (form.dataset.succes || "Nous vous recontactons sous 24 h ouvrées.") +
         "</p></div>";
     });
@@ -447,4 +448,11 @@ const msgSucces = `${conseiller.prenom} vous recontacte sous 24 h ouvrées pour 
     font-size: 60%;
     color: var(--ink-mute);
   }
+</style>
+
+<style is:global>
+  /* à reprendre dans le DS — bien.html : confirmation « Demande envoyée » injectée
+     par script (styles inline de la maquette, valeurs inchangées). */
+  .agent-ok .ok-title { font-size: 22px; }
+  .agent-ok .ok-text { color: var(--ink-soft); font-size: 14.5px; margin-top: 10px; }
 </style>

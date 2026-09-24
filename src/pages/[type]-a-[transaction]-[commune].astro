@@ -593,12 +593,12 @@ const listingCfg = {
         <Fragment slot="aside">
           <a href={q.bascule.href} class="link-arrow bc-switch">{q.bascule.label} →</a>
         </Fragment>
-        <div class="section-head" style="margin-top:22px">
+        <div class="section-head mt-5.5">
           <Eyebrow>{page.eyebrow}</Eyebrow>
-          <h1 style="font-size:clamp(32px,4.2vw,56px);margin-top:16px;max-width:26ch">{q.h1}</h1>
-          <p style="font-size:18px;margin-top:20px;max-width:56ch" set:html={page.chapo} />
+          <h1 class="q-title mt-4 max-w-[26ch]">{q.h1}</h1>
+          <p class="lo-chapo mt-5 max-w-[56ch]" set:html={page.chapo} />
         </div>
-        <div class="fc-actions" style="justify-content:flex-start;margin-top:30px">
+        <div class="fc-actions justify-start mt-7.5">
           <a href="#biens-quartier" class="btn">{ctaVoirQ} <span class="arr">↓</span></a>
           <a href={page.ctaGhost.href} class="btn btn--ghost">{page.ctaGhost.label}</a>
         </div>
@@ -609,7 +609,7 @@ const listingCfg = {
       <section class="sec--white" id="biens-quartier">
         <div class="wrap">
           <div class="props-head reveal">
-            <div class="section-head" style="margin:0">
+            <div class="section-head m-0">
               <Eyebrow>Disponibles aujourd'hui</Eyebrow>
               <h2>{q.biensTitre}</h2>
             </div>
@@ -679,7 +679,7 @@ const listingCfg = {
           </div>
           <div class="q-empty" id="qEmpty" hidden>
             <p>{q.vide.texte}</p>
-            <div class="fc-actions" style="justify-content:flex-start;margin-top:18px">
+            <div class="fc-actions justify-start mt-4.5">
               <a href={q.vide.primaire.href} class="btn">{q.vide.primaire.label} <span class="arr">→</span></a>
               <a href={q.vide.secondaire.href} class="btn btn--ghost">{q.vide.secondaire.label}</a>
             </div>
@@ -703,11 +703,11 @@ const listingCfg = {
         <div class="wrap">
           <div class="section-head reveal">
             <Eyebrow>{page.marche.eyebrow}</Eyebrow>
-            <h2 style="max-width:28ch">{page.marche.titre}</h2>
-            <p style="margin-top:16px;max-width:58ch">{page.marche.texte}</p>
+            <h2 class="max-w-[28ch]">{page.marche.titre}</h2>
+            <p class="mt-4 max-w-[58ch]">{page.marche.texte}</p>
           </div>
           <MarketStats big={page.marche.big} rows={page.marche.rows} />
-          <p style="font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:12px;letter-spacing:.05em;text-transform:uppercase">
+          <p class="lo-src mt-3">
             {sourceMarche}
           </p>
         </div>
@@ -731,9 +731,9 @@ const listingCfg = {
       <section class="trust">
         <div class="wrap">
           <div class="trust-head reveal">
-            <div style="flex:1 1 420px">
+            <div class="flex-[1_1_420px]">
               <Eyebrow>Ils nous font confiance</Eyebrow>
-              <h2 style="max-width:26ch">{q.avis.titreAvant} <em class="t-hl">{q.avis.titreEm}</em></h2>
+              <h2 class="max-w-[26ch]">{q.avis.titreAvant} <em class="t-hl">{q.avis.titreEm}</em></h2>
               <p class="trust-intro">{q.avis.intro}</p>
             </div>
           </div>
@@ -786,8 +786,8 @@ const listingCfg = {
           <div class="wrap faq-grid">
             <div class="reveal">
               <Eyebrow>{page.faq.eyebrow}</Eyebrow>
-              <h2 class="serif" style="font-size:clamp(28px,3.6vw,44px);margin-top:22px">{page.faq.titre}</h2>
-              <div class="faq-aside" style="margin-top:34px">
+              <h2 class="serif lo-faq-title mt-5.5">{page.faq.titre}</h2>
+              <div class="faq-aside mt-8.5">
                 <h3>{page.faq.asideTitre}</h3>
                 <p>{page.faq.asideTexte}</p>
                 <a href="/contact" class="btn">Poser ma question <span class="arr">→</span></a>
@@ -831,12 +831,12 @@ const listingCfg = {
         <Fragment slot="aside">
           {soeur && <a href={`/${soeur.slug}`} class="link-arrow bc-switch">{switchLabel} →</a>}
         </Fragment>
-        <div class="section-head" style="margin-top:22px">
+        <div class="section-head mt-5.5">
           <Eyebrow>{page.eyebrow}</Eyebrow>
-          <h1 style="font-size:clamp(34px,4.6vw,60px);margin-top:16px;max-width:22ch">{h1}</h1>
-          <p style="font-size:18px;margin-top:20px;max-width:54ch" set:html={page.chapo} />
+          <h1 class="lo-title mt-4 max-w-[22ch]">{h1}</h1>
+          <p class="lo-chapo mt-5 max-w-[54ch]" set:html={page.chapo} />
         </div>
-        <div class="fc-actions" style="justify-content:flex-start;margin-top:30px">
+        <div class="fc-actions justify-start mt-7.5">
           <a href="#resultats" class="btn">{ctaVoir} <span class="arr">↓</span></a>
           <a href={page.ctaGhost.href} class="btn btn--ghost">{page.ctaGhost.label}</a>
         </div>
@@ -845,10 +845,10 @@ const listingCfg = {
       {/* ── 2 · INTRO LOCALE (texte + image) ── */}
       <section class="sec--tint">
         <div class="wrap">
-          <div class="two-col two-col--b" style="align-items:center">
+          <div class="two-col two-col--b items-center">
             <div class="reveal">
               <Eyebrow>{page.intro.eyebrow}</Eyebrow>
-              <h2 style="margin-top:16px;max-width:26ch">{page.intro.titre}</h2>
+              <h2 class="mt-4 max-w-[26ch]">{page.intro.titre}</h2>
               {page.intro.paragraphes.map((p, i) => (
                 <p
                   style={
@@ -860,10 +860,10 @@ const listingCfg = {
                   {p}
                 </p>
               ))}
-              <p style="margin-top:26px"><a href="#marche" class="link-arrow">{page.intro.lien} →</a></p>
+              <p class="mt-6.5"><a href="#marche" class="link-arrow">{page.intro.lien} →</a></p>
             </div>
             <div class="reveal d1">
-              <div class="ph" style="aspect-ratio:4/3.2;border-radius:var(--r)">
+              <div class="ph aspect-[4/3.2] rounded-card">
                 <span class="ph-tag">{page.intro.photo}</span>
               </div>
             </div>
@@ -914,12 +914,12 @@ const listingCfg = {
             hidden={nbTotal > 3}
             label="Peu de biens ici — élargir autour"
             links={widenLinks}
-            style="margin-top:18px"
+            class="mt-4.5"
           />
 
-          <SkeletonGrid id="skGrid" count={3} style="margin-top:30px" />
+          <SkeletonGrid id="skGrid" count={3} class="mt-7.5" />
 
-          <EmptyState id="emptyState" title={page.vide.titre} widenLabel="Chercher autour" style="margin-top:30px">
+          <EmptyState id="emptyState" title={page.vide.titre} widenLabel="Chercher autour" class="mt-7.5">
             {page.vide.texte}
             <Fragment slot="actions">
               <button class="btn" type="button" id="emptyReset">Effacer les filtres <span class="arr">→</span></button>
@@ -932,7 +932,7 @@ const listingCfg = {
             </Fragment>
           </EmptyState>
 
-          <div class="prop-grid" id="propGrid" style="margin-top:30px">
+          <div class="prop-grid mt-7.5" id="propGrid">
             {biensListe.map((b, i) => (
               <PropertyCard
                 class={`reveal${delay(i)}`}
@@ -965,14 +965,14 @@ const listingCfg = {
           <div class="two-col two-col--c">
             <div class="reveal sticky-side">
               <Eyebrow>{page.guide.eyebrow}</Eyebrow>
-              <h2 style="margin-top:16px;max-width:24ch">{page.guide.titre}</h2>
-              <p style="color:var(--ink-soft);margin-top:16px;max-width:42ch">{page.guide.texte}</p>
+              <h2 class="mt-4 max-w-[24ch]">{page.guide.titre}</h2>
+              <p class="text-ink-soft mt-4 max-w-[42ch]">{page.guide.texte}</p>
               {/* .enclair repasse en blanc bordé sur .sec--tint (local.css). */}
-              <div class="enclair" style="margin-top:26px">
+              <div class="enclair mt-6.5">
                 <span class="e-tag">En clair</span>
                 <p set:html={page.guide.enclair} />
               </div>
-              <div class="fc-actions" style="justify-content:flex-start;margin-top:26px">
+              <div class="fc-actions justify-start mt-6.5">
                 <a href="/contact" class="btn">Parler à {prenom} <span class="arr">→</span></a>
               </div>
             </div>
@@ -986,10 +986,10 @@ const listingCfg = {
         <div class="wrap">
           <div class="section-head reveal">
             <Eyebrow>{page.marche.eyebrow}</Eyebrow>
-            <h2 style="max-width:28ch">{page.marche.titre}</h2>
-            <p style="margin-top:16px;max-width:58ch">{page.marche.texte}</p>
+            <h2 class="max-w-[28ch]">{page.marche.titre}</h2>
+            <p class="mt-4 max-w-[58ch]">{page.marche.texte}</p>
           </div>
-          <MarketStats big={page.marche.big} rows={page.marche.rows} style="margin-top:38px" />
+          <MarketStats big={page.marche.big} rows={page.marche.rows} class="mt-9.5" />
           <PriceTable title={page.marche.tableTitre} head={tableHead} rows={tableRows} source={sourceMarche} />
         </div>
       </section>
@@ -1003,7 +1003,7 @@ const listingCfg = {
           </div>
           <Atouts atouts={atoutsVivre} numerote={page.vivre.numerote} />
           {commune.data.trajets.length > 0 && (
-            <ul class="q-poi" style="max-width:560px">
+            <ul class="q-poi max-w-[560px]">
               {commune.data.trajets.map((t) => (
                 <li>
                   <span class="k"><i></i>{t.destination}</span>
@@ -1061,8 +1061,8 @@ const listingCfg = {
           <div class="wrap faq-grid">
             <div class="reveal">
               <Eyebrow>{page.faq.eyebrow}</Eyebrow>
-              <h2 class="serif" style="font-size:clamp(28px,3.6vw,44px);margin-top:22px">{page.faq.titre}</h2>
-              <div class="faq-aside" style="margin-top:34px">
+              <h2 class="serif lo-faq-title mt-5.5">{page.faq.titre}</h2>
+              <div class="faq-aside mt-8.5">
                 <h3>{page.faq.asideTitre}</h3>
                 <p>{page.faq.asideTexte}</p>
                 <a href="/contact" class="btn">Poser ma question <span class="arr">→</span></a>
@@ -1077,15 +1077,14 @@ const listingCfg = {
       <section class="sec--tint">
         <div class="wrap">
           <div class="props-head reveal">
-            <div class="section-head" style="margin:0">
+            <div class="section-head m-0">
               <Eyebrow>Votre interlocuteur</Eyebrow>
               <h2>{page.agenceTitre}</h2>
             </div>
             <a href="/equipe" class="link-arrow">Toute l'équipe →</a>
           </div>
           <div
-            class="grid items-start gap-[clamp(26px,4vw,56px)] md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]"
-            style="margin-top:clamp(22px,3vw,32px)"
+            class="grid items-start gap-[clamp(26px,4vw,56px)] md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] mt-[clamp(22px,3vw,32px)]"
           >
             <AgentCard
               name={conseiller.data.nom}
@@ -1093,13 +1092,13 @@ const listingCfg = {
               tel={conseiller.data.telephone}
             >
               {conseiller.data.points.length > 0 && (
-                <ul class="agent-points" style="margin-top:20px">
+                <ul class="agent-points mt-5">
                   {conseiller.data.points.map((p) => (
                     <li><span class="tick">✓</span> {p}</li>
                   ))}
                 </ul>
               )}
-              <div class="fc-actions" style="justify-content:flex-start;margin-top:22px">
+              <div class="fc-actions justify-start mt-5.5">
                 {conseiller.data.email && (
                   <a class="btn" href={`mailto:${conseiller.data.email}`}>Écrire à {prenom} <span class="arr">→</span></a>
                 )}
@@ -1151,7 +1150,7 @@ const listingCfg = {
       {/* ── 12 · CTA FINAL (.lg-cta, section blanche courte) ── */}
       <section class="sec--white sec--short">
         <div class="wrap">
-          <div class="lg-cta" style="margin-top:0">
+          <div class="lg-cta mt-0">
             <div>
               <Eyebrow>{page.final.eyebrow}</Eyebrow>
               <h2>{page.final.titre}</h2>
@@ -1230,3 +1229,12 @@ const listingCfg = {
     }
   </script>
 </PageLayout>
+
+<style>
+  /* à reprendre dans le DS — maison-a-vendre-liege.html / quartier.html : tailles des H1 et du H2 de la FAQ, chapô 18 px, ligne de source du marché (styles inline de la maquette). */
+  .q-title { font-size: clamp(32px, 4.2vw, 56px); }
+  .lo-title { font-size: clamp(34px, 4.6vw, 60px); }
+  .lo-chapo { font-size: 18px; }
+  .lo-faq-title { font-size: clamp(28px, 3.6vw, 44px); }
+  .lo-src { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: .05em; text-transform: uppercase; }
+</style>
