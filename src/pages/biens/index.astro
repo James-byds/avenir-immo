@@ -108,8 +108,7 @@ const widenLinks = [
   )
     .filter((q) => generees.has(q.slug))
     .map((q) => ({ text: q.ancre, href: `/${q.slug}` })),
-  /* Hub des localités — gabarit 04, pas encore codé. */
-  { text: "Toutes nos communes", href: "/communes", planned: true },
+  { text: "Toutes nos communes", href: "/communes" },
 ];
 
 /* ── Avis acquéreurs (trust) — textes de la collection ; 4,8/190 et la
@@ -360,282 +359,36 @@ const itemListLd = {
     </div>
   </FinalCta>
 
-  {/* Filtrage, tri, pagination, 5 états et contrat d'URL — logique reprise
-     des scripts inline de biens.html et maison-a-vendre-liege.html (réf.).
-     Script traité (module) : il s'exécute APRÈS /ds-script.js (classique en
-     fin de body), dont il utilise l'enhanceur de <select> (_ddSync). La garde
-     `#filters && !#selLoc` de ds-script.js laisse le segment à ce script. */}
+  {/* Filtrage, tri, pagination, 5 états et contrat d'URL — logique commune
+     extraite vers src/scripts/listing-filter.ts (partagée avec les pages de
+     localité). Script traité (module) : il s'exécute APRÈS /ds-script.js
+     (classique en fin de body), dont il utilise l'enhanceur de <select>
+     (_ddSync). La garde `#filters && !#selLoc` de ds-script.js laisse le
+     segment à ce script.
+
+     Particularité conservée : l'accueil transmet parfois le LIBELLÉ du budget
+     (« ≤ 500 000 € ») au lieu de la valeur bornée — rattrapé avant init. */}
   <script>
-    (function () {
-      "use strict";
-      const grid = document.getElementById("propGrid");
-      const sk = document.getElementById("skGrid");
-      if (!grid || !sk) return;
-      const cards = Array.from(grid.children) as HTMLElement[];
-      const selLoc = document.getElementById("selLoc") as HTMLSelectElement;
-      const selType = document.getElementById("selType") as HTMLSelectElement;
-      const selBudget = document.getElementById("selBudget") as HTMLSelectElement;
-      const selSort = document.getElementById("selSort") as HTMLSelectElement;
-      const qIn = document.getElementById("toolQ") as HTMLInputElement;
-      const count = document.getElementById("toolCount")!;
-      const reset = document.getElementById("toolReset") as HTMLButtonElement;
-      const widen = document.getElementById("widenBand")!;
-      const empty = document.getElementById("emptyState")!;
-      const crit = document.getElementById("emptyCrit")!;
-      const hint = document.getElementById("searchHint")!;
-      const pagi = document.querySelector(".pagination") as HTMLElement;
-      const segBtns = Array.from(document.querySelectorAll("#filters button")) as HTMLElement[];
-      const CAT: Record<string, string> = { vente: "Acheter", location: "Louer", vendu: "Déjà vendus" };
-      const PER_PAGE = 9;
-      const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      let cat = "all";
-      let page = 1;
-      let pending: ReturnType<typeof setTimeout> | undefined;
+    import { initListingFilter } from "../../scripts/listing-filter";
 
-      const norm = (s: string | null | undefined) =>
-        (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
-      const labelOf = (sel: HTMLSelectElement) =>
-        sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : "";
-      const sync = (sel: HTMLSelectElement) => {
-        const s = sel as HTMLSelectElement & { _ddSync?: () => void };
-        if (s._ddSync) s._ddSync();
-      };
+    const selBudget = document.getElementById("selBudget") as HTMLSelectElement | null;
+    const b0 = new URLSearchParams(location.search).get("budget");
+    if (selBudget && b0) {
+      const opt = Array.from(selBudget.options).find((o) => o.text.trim() === b0.trim());
+      if (opt) selBudget.value = opt.value;
+    }
 
-      /* Dictionnaire « vouliez-vous dire » : communes + types du filtre, plus
-         nos marchés voisins (référence). */
-      const DICT: string[] = [];
-      [selLoc, selType].forEach((s) =>
-        Array.from(s.options).forEach((o) => {
-          if (o.value !== "all") DICT.push(o.text);
-        }),
-      );
-      ["Namur", "Piscine", "Loft"].forEach((w) => {
-        if (!DICT.includes(w)) DICT.push(w);
-      });
-
-      function lev(a: string, b: string) {
-        const m = a.length, n = b.length;
-        if (!m || !n) return Math.max(m, n);
-        let prev = Array.from({ length: n + 1 }, (_, j) => j);
-        for (let i = 1; i <= m; i++) {
-          const cur = [i];
-          for (let j = 1; j <= n; j++) {
-            cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-          }
-          prev = cur;
-        }
-        return prev[n];
-      }
-      function suggest(term: string) {
-        const t = norm(term);
-        if (t.length < 4) return null;
-        let best: string | null = null;
-        let score = 3; /* Levenshtein ≤ 2 */
-        DICT.forEach((w) => {
-          const d = lev(t, norm(w));
-          if (d > 0 && d < score) { score = d; best = w; }
-        });
-        return best;
-      }
-
-      /* État initial depuis l'URL : ?cat&loc&type&q (+ budget de l'accueil, + page). */
-      const p0 = new URLSearchParams(location.search);
-      const urlCat = p0.get("cat");
-      if (urlCat && CAT[urlCat]) cat = urlCat;
-      const setSel = (sel: HTMLSelectElement, v: string | null) => {
-        if (v && Array.from(sel.options).some((o) => o.value === v)) sel.value = v;
-      };
-      setSel(selLoc, p0.get("loc"));
-      setSel(selType, p0.get("type"));
-      const b0 = p0.get("budget");
-      if (b0) {
-        /* L'accueil transmet le LIBELLÉ (« ≤ 500 000 € ») — accepté au même
-           titre que la valeur bornée. */
-        const opt = Array.from(selBudget.options).find(
-          (o) => o.value === b0 || o.text.trim() === b0.trim(),
-        );
-        if (opt) selBudget.value = opt.value;
-      }
-      if (p0.get("q")) qIn.value = p0.get("q")!;
-      const pg0 = parseInt(p0.get("page") || "", 10);
-      if (pg0 > 1) page = pg0;
-      segBtns.forEach((x) => x.classList.toggle("on", x.dataset.f === cat));
-      [selLoc, selType, selBudget].forEach(sync);
-
-      function matches(c: HTMLElement) {
-        const q = norm(qIn.value);
-        if (cat !== "all" && c.dataset.cat !== cat) return false;
-        if (selLoc.value !== "all" && c.dataset.loc !== selLoc.value) return false;
-        if (selType.value !== "all" && c.dataset.type !== selType.value) return false;
-        if (selBudget.value !== "all") {
-          const [lo, hi] = selBudget.value.split("-").map(Number);
-          const price = +(c.dataset.price || 0);
-          if (price < lo || price > hi) return false;
-        }
-        if (q && !norm(c.textContent).includes(q)) return false;
-        return true;
-      }
-
-      /* Contrat d'URL : l'état courant est reflété à chaque rendu. */
-      function syncUrl() {
-        const p = new URLSearchParams();
-        if (cat !== "all") p.set("cat", cat);
-        if (selLoc.value !== "all") p.set("loc", selLoc.value);
-        if (selType.value !== "all") p.set("type", selType.value);
-        if (selBudget.value !== "all") p.set("budget", selBudget.value);
-        if (qIn.value.trim()) p.set("q", qIn.value.trim());
-        if (page > 1) p.set("page", String(page));
-        const qs = p.toString();
-        history.replaceState(null, "", location.pathname + (qs ? "?" + qs : ""));
-      }
-
-      function render() {
-        const kept = cards.filter(matches);
-        const s = selSort.value;
-        kept.sort((a, b) =>
-          s === "asc" ? +a.dataset.price! - +b.dataset.price! :
-          s === "desc" ? +b.dataset.price! - +a.dataset.price! :
-          s === "surf" ? +(b.dataset.surface || 0) - +(a.dataset.surface || 0) :
-          +a.dataset.idx! - +b.dataset.idx!,
-        );
-        const pages = Math.max(1, Math.ceil(kept.length / PER_PAGE));
-        if (page > pages) page = 1;
-        const shown = kept.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-
-        cards.forEach((c) => c.classList.add("hide"));
-        shown.forEach((c) => { c.classList.remove("hide"); grid!.appendChild(c); });
-
-        count.textContent =
-          kept.length === 0
-            ? "Aucun bien ne correspond"
-            : kept.length + (kept.length > 1 ? " biens affichés" : " bien affiché") +
-              " · page " + page + " sur " + pages;
-
-        const active =
-          cat !== "all" || selLoc.value !== "all" || selType.value !== "all" ||
-          selBudget.value !== "all" || qIn.value.trim() !== "";
-        reset.hidden = !active;
-
-        grid!.hidden = kept.length === 0;
-        empty.hidden = kept.length !== 0;
-        widen.hidden = !(kept.length > 0 && kept.length <= 3);
-
-        /* Pagination réelle — puces régénérées, « suivant » = puce → */
-        pagi.textContent = "";
-        pagi.hidden = pages < 2;
-        const goTo = (n: number) => () => { page = n; run(); };
-        for (let i = 1; i <= pages; i++) {
-          if (i === page) {
-            const cur = document.createElement("span");
-            cur.className = "cur";
-            cur.textContent = String(i);
-            pagi.appendChild(cur);
-          } else {
-            const a = document.createElement("a");
-            a.href = "#resultats";
-            a.textContent = String(i);
-            a.addEventListener("click", goTo(i));
-            pagi.appendChild(a);
-          }
-        }
-        if (pages > 1 && page < pages) {
-          const nx = document.createElement("a");
-          nx.href = "#resultats";
-          nx.setAttribute("aria-label", "Page suivante");
-          nx.textContent = "→";
-          nx.addEventListener("click", goTo(page + 1));
-          pagi.appendChild(nx);
-        }
-
-        /* Critères actifs, retirables un par un (état zéro) */
-        crit.textContent = "";
-        if (kept.length === 0) {
-          const chips: [string, () => void][] = [];
-          if (cat !== "all")
-            chips.push([CAT[cat], () => { cat = "all"; segBtns.forEach((x) => x.classList.toggle("on", x.dataset.f === "all")); }]);
-          if (selLoc.value !== "all")
-            chips.push([labelOf(selLoc), () => { selLoc.value = "all"; sync(selLoc); }]);
-          if (selType.value !== "all")
-            chips.push([labelOf(selType), () => { selType.value = "all"; sync(selType); }]);
-          if (selBudget.value !== "all")
-            chips.push([labelOf(selBudget), () => { selBudget.value = "all"; sync(selBudget); }]);
-          if (qIn.value.trim()) chips.push(["« " + qIn.value.trim() + " »", () => { qIn.value = ""; }]);
-          chips.forEach(([label, undo]) => {
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.textContent = label + " "; /* pas d'innerHTML : label peut venir de q */
-            const x = document.createElement("span");
-            x.setAttribute("aria-hidden", "true");
-            x.textContent = "×";
-            btn.appendChild(x);
-            btn.setAttribute("aria-label", "Retirer le critère " + label);
-            btn.addEventListener("click", () => { undo(); page = 1; run(); });
-            crit.appendChild(btn);
-          });
-        }
-
-        /* « Vouliez-vous dire » (Levenshtein ≤ 2 sur communes et types) */
-        const term = qIn.value.trim();
-        const alt = kept.length === 0 && term ? suggest(term) : null;
-        if (alt) {
-          hint.hidden = false;
-          /* pas d'innerHTML : term est une saisie utilisateur (aussi via ?q=) */
-          hint.textContent = "Aucun résultat pour « " + term + " ». Vouliez-vous dire ";
-          const btn = document.createElement("button");
-          btn.type = "button";
-          const b = document.createElement("b");
-          b.textContent = alt;
-          btn.appendChild(b);
-          btn.addEventListener("click", () => { qIn.value = alt; page = 1; run(); });
-          hint.appendChild(btn);
-          hint.appendChild(document.createTextNode(" ?"));
-        } else {
-          hint.hidden = true;
-          hint.textContent = "";
-        }
-
-        syncUrl();
-      }
-
-      /* Squelette entre deux jeux de résultats — coupé si reduced motion. */
-      function run() {
-        if (REDUCED) { render(); return; }
-        clearTimeout(pending);
-        count.textContent = "Recherche…";
-        sk!.hidden = false;
-        grid!.hidden = true;
-        empty.hidden = true;
-        widen.hidden = true;
-        hint.hidden = true;
-        pagi.hidden = true;
-        pending = setTimeout(() => { sk!.hidden = true; render(); }, 340);
-      }
-
-      document.getElementById("filters")!.addEventListener("click", (e) => {
-        const btn = (e.target as HTMLElement).closest("button");
-        if (!btn) return;
-        cat = btn.dataset.f || "all";
-        segBtns.forEach((x) => x.classList.toggle("on", x === btn));
-        page = 1;
-        run();
-      });
-      function clearAll() {
-        cat = "all"; selLoc.value = "all"; selType.value = "all"; selBudget.value = "all";
-        qIn.value = ""; page = 1;
-        [selLoc, selType, selBudget].forEach(sync);
-        segBtns.forEach((x) => x.classList.toggle("on", x.dataset.f === "all"));
-        run();
-      }
-      reset.addEventListener("click", clearAll);
-      document.getElementById("emptyReset")!.addEventListener("click", clearAll);
-      [selLoc, selType, selBudget, selSort].forEach((s) =>
-        s.addEventListener("change", () => { page = 1; run(); }),
-      );
-      let typing: ReturnType<typeof setTimeout> | undefined;
-      qIn.addEventListener("input", () => { page = 1; clearTimeout(typing); typing = setTimeout(run, 260); });
-      qIn.addEventListener("search", () => { page = 1; run(); });
-
-      render();
-    })();
+    initListingFilter({
+      perPage: 9,
+      catLabels: { vente: "Acheter", location: "Louer", vendu: "Déjà vendus" },
+      catParam: "cat",
+      selects: [
+        { id: "selLoc", data: "loc", param: "loc" },
+        { id: "selType", data: "type", param: "type" },
+        { id: "selBudget", data: "price", param: "budget", range: true },
+      ],
+      search: { id: "toolQ", hintId: "searchHint", param: "q", dict: ["Namur", "Piscine", "Loft"] },
+      urlSync: true,
+    });
   </script>
 </PageLayout>

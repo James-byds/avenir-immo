@@ -1,45 +1,1232 @@
 ---
-/* Pages de localité — route dynamique UNIQUE.
-   Motif d'URL FIGÉ : /maison-a-vendre-gerpinnes, /appartement-a-louer-charleroi.
-   Alimentée par content/communes/ ; n'émet que les combinaisons déclarées
-   disponibles pour chaque commune (garde-fou anti-contenu-dupliqué). */
-import { getCollection } from "astro:content";
+/* Page de localité — gabarit 05, route dynamique UNIQUE.
+   Réf. : docs/handoff/reference/maison-a-vendre-liege.html (vente)
+   et appartement-a-louer-liege.html (location).
+
+   Motif d'URL FIGÉ : /maison-a-vendre-liege, /appartement-a-louer-liege.
+   Routes = combinaisons DÉCLARÉES par communes/<slug>.md ∩ combinaisons NON
+   VIDES calculées depuis les biens (lib/maillage) — jamais de page sans bien.
+
+   Toute la copie vient de communes/<slug>.md (pages[] du schéma), jamais
+   partagée entre communes ; les chiffres cités y portent leur source datée.
+
+   Ordre des sections (figé — transactionnel avant éditorial) :
+   1 bandeau encre · 2 tint intro · 3 blanc #resultats · 4 tint guide ·
+   5 blanc #marche · 6 tint vivre · 7 #vendre SellHere band (+ simulateur,
+   vente) en CONTINUATION du tint · 8 encre contact (seule encre du corps) ·
+   9 blanc FAQ · 10 tint agence · 11 tint (cont) maillage · 12 blanc CTA.
+
+   GABARIT 06 « QUARTIER » (réf. quartier.html) : quand la commune déclare
+   `gabarit: quartier` + `villages[]`, la même route rend la variante
+   entité-et-villages — 1 bandeau encre · 2 blanc #biens-quartier (listing
+   d'entité, .q-toolbar) · 3 tint carte des villages (VillageMap) · 4 blanc
+   marché · 5 tint vivre · 6 trust blanc (avis situés) · 7 tint FAQ · 8 blanc
+   court communes voisines · 9 encre CTA final (seule encre du corps). */
+import { getCollection, getEntry } from "astro:content";
+import type { CollectionEntry } from "astro:content";
 import PageLayout from "../layouts/PageLayout.astro";
-import { slugCommune, ancre } from "../lib/maillage";
-import type { TypeBien, Transaction } from "../lib/maillage";
+import PageHead from "../components/chrome/PageHead.astro";
+import Eyebrow from "../components/core/Eyebrow.astro";
+import LocalityLinks from "../components/core/LocalityLinks.astro";
+import Pagination from "../components/core/Pagination.astro";
+import PropertyCard from "../components/surfaces/PropertyCard.astro";
+import Toolbar from "../components/surfaces/Toolbar.astro";
+import SkeletonGrid from "../components/surfaces/SkeletonGrid.astro";
+import EmptyState from "../components/surfaces/EmptyState.astro";
+import GuidePoints from "../components/surfaces/GuidePoints.astro";
+import MarketStats from "../components/surfaces/MarketStats.astro";
+import PriceTable from "../components/surfaces/PriceTable.astro";
+import SellHere from "../components/surfaces/SellHere.astro";
+import CreditSimulator from "../components/surfaces/CreditSimulator.astro";
+import AgencyCard from "../components/surfaces/AgencyCard.astro";
+import AgentCard from "../components/surfaces/AgentCard.astro";
+import TrustSection from "../components/surfaces/TrustSection.astro";
+import VillageMap from "../components/surfaces/VillageMap.astro";
+import Atouts from "../components/surfaces/Atouts.astro";
+import NeighbourPills from "../components/surfaces/NeighbourPills.astro";
+import Faq from "../components/islands/Faq.tsx";
+import ContactForm from "../components/islands/ContactForm.tsx";
+import { faqPage, jsonLd } from "../lib/seo";
+import { formatPrix, formatSurface } from "../lib/format";
+import { ancre, combinaisons, slugCombinaison, slugCommune } from "../lib/maillage";
+import type { Transaction, TypeBien } from "../lib/maillage";
 
 export async function getStaticPaths() {
   const communes = await getCollection("communes");
-  const paths = [];
+  const biens = await getCollection("biens", ({ data }) => data.publie !== false);
+  /* Combinaisons non vides (lib/maillage) : une combinaison déclarée mais
+     sans bien publié n'émet PAS de route. */
+  const nonVides = new Set(
+    combinaisons(
+      biens.map(({ data }) => ({ type: data.type, transaction: data.transaction, commune: data.commune })),
+    ).map((c) => c.slug),
+  );
 
+  const paths = [];
   for (const commune of communes) {
     const communeSlug = slugCommune(commune.data.nom);
-    // `combinaisons` liste les paires type × transaction RÉELLEMENT pourvues —
-    // jamais de produit cartésien, donc jamais de page sans bien.
-    for (const { type, transaction } of commune.data.combinaisons as {
-      type: TypeBien;
-      transaction: Transaction;
-    }[]) {
-      // Le motif [type]-a-[transaction]-[commune] met le VERBE dans l'URL
-      // (maison-a-vendre-gerpinnes) : le param `transaction` vaut vendre/louer.
+    for (const { type, transaction } of commune.data.combinaisons) {
+      if (!nonVides.has(slugCombinaison(type, transaction, communeSlug))) continue;
       paths.push({
         params: {
           type,
+          // Le motif [type]-a-[transaction]-[commune] met le VERBE dans l'URL.
           transaction: transaction === "vente" ? "vendre" : "louer",
           commune: communeSlug,
         },
-        props: { commune, type, transaction, titre: ancre(type, transaction, commune.data.nom) },
+        props: { commune, type, transaction },
       });
     }
   }
   return paths;
 }
 
-const { commune, titre } = Astro.props;
+interface Props {
+  commune: CollectionEntry<"communes">;
+  type: TypeBien;
+  transaction: Transaction;
+}
+const { commune, type, transaction } = Astro.props;
+const nom = commune.data.nom;
+const communeSlug = slugCommune(nom);
+const currentSlug = slugCombinaison(type, transaction, communeSlug);
+
+/* ── Copie de la page : OBLIGATOIRE dans communes/<slug>.md (pages[]) ── */
+const page = commune.data.pages.find((p) => p.type === type && p.transaction === transaction);
+if (!page) {
+  throw new Error(
+    `communes/${commune.id} : aucune entrée pages[] pour ${type} × ${transaction} — ` +
+      `la combinaison est déclarée mais sa copie de page manque.`,
+  );
+}
+
+/* ── Gabarit « quartier » (06) : commune à villages[] — réf. quartier.html.
+   La page couvre l'ENTITÉ : les biens des villages (communes non déclarées,
+   donc sans route propre) remontent dans le listing, la carte les répartit. ── */
+const villages = commune.data.villages;
+const isQuartier = commune.data.gabarit === "quartier" && villages.length > 0;
+const q = isQuartier ? page.quartier : undefined;
+if (isQuartier && !q) {
+  throw new Error(
+    `communes/${commune.id} : gabarit "quartier" déclaré sans bloc pages[].quartier ` +
+      `pour ${type} × ${transaction}.`,
+  );
+}
+const perimetre = new Set(isQuartier ? [nom, ...villages.map((v) => v.nom)] : [nom]);
+
+/* ── Listing : biens de la commune, périmètre « type » ou tout le marché de
+   la transaction (référence appartement-a-louer-liege = tout le locatif) ;
+   gabarit quartier = toute l'entité (villages inclus), tous types.
+   Ordre initial « plus récents » = celui de la référence : prix décroissant
+   en vente, croissant en location. ── */
+const biensListe = (
+  await getCollection(
+    "biens",
+    ({ data }) =>
+      data.publie !== false &&
+      perimetre.has(data.commune) &&
+      data.transaction === transaction &&
+      (isQuartier || page.listing === "transaction" || data.type === type),
+  )
+).sort((a, b) =>
+  transaction === "vente" ? b.data.prix - a.data.prix : a.data.prix - b.data.prix,
+);
+type Bien = (typeof biensListe)[number];
+const nbTotal = biensListe.length;
+const PER_PAGE = 6;
+const pages = Math.max(1, Math.ceil(nbTotal / PER_PAGE));
+
+/* Gabarit quartier : le segment « Acheter / Louer » porte les deux marchés de
+   l'entité — l'autre transaction est rendue (cartes masquées par le filtre
+   client) avec son compte réel, sans jamais générer de route à part. */
+const biensAutres = isQuartier
+  ? (
+      await getCollection(
+        "biens",
+        ({ data }) =>
+          data.publie !== false && perimetre.has(data.commune) && data.transaction !== transaction,
+      )
+    ).sort((a, b) => a.data.prix - b.data.prix)
+  : [];
+const biensQuartier = [...biensListe, ...biensAutres];
+const nVente = transaction === "vente" ? biensListe.length : biensAutres.length;
+const nLocation = transaction === "location" ? biensListe.length : biensAutres.length;
+
+/* Options « Type de bien » du listing d'entité — la villa (sous-type exposé)
+   est éclatée comme sur /biens ; uniquement les types réellement présents. */
+const typeSlugQ = (b: Bien) => (b.data.sousType === "villa" ? "villa" : b.data.type);
+const TYPE_Q_LABEL: Record<string, string> = {
+  villa: "Villa",
+  maison: "Maison",
+  appartement: "Appartement",
+  terrain: "Terrain",
+  commerce: "Commerce",
+  immeuble: "Immeuble",
+};
+const typesQuartier = [...new Set(biensQuartier.map(typeSlugQ))]
+  .map((id) => ({ id, label: TYPE_Q_LABEL[id] ?? id }))
+  .sort((a, b) => a.label.localeCompare(b.label, "fr"));
+
+/* Lignes de la carte des villages : prix déclaré (sourcé dans villages[]),
+   compte RÉEL calculé sur la transaction de la page — jamais de lien vers une
+   liste vide (0 bien → « être prévenu » vers /contact, posé par VillageMap). */
+const villageRows = villages.map((v) => {
+  const slug = slugCommune(v.nom);
+  const count = biensListe.filter((b) => b.data.commune === v.nom).length;
+  return {
+    slug,
+    nom: v.libelle ?? v.nom,
+    option: v.nom,
+    lat: v.lat,
+    lng: v.lng,
+    prix: formatPrix(v.prixM2),
+    count,
+    href: count > 0 ? `/biens?loc=${slug}` : undefined,
+  };
+});
+
+/* Catégories du segment : villa/studio/duplex sont des sous-types exposés,
+   tout le reste retombe sur le type (le type reste la clé du maillage). */
+const SOUS_CATS = new Set(["villa", "studio", "duplex"]);
+const catDe = (b: Bien) =>
+  b.data.sousType && SOUS_CATS.has(b.data.sousType) ? b.data.sousType : b.data.type;
+const CAT_LABEL: Record<string, string> = {
+  maison: "Maison",
+  appartement: "Appartement",
+  villa: "Villa",
+  studio: "Studio",
+  duplex: "Duplex",
+  terrain: "Terrain",
+  commerce: "Commerce",
+  immeuble: "Immeuble",
+};
+const catCounts = new Map<string, number>();
+for (const b of biensListe) catCounts.set(catDe(b), (catCounts.get(catDe(b)) ?? 0) + 1);
+const cats = [...catCounts.entries()].sort((a, b) => b[1] - a[1]);
+const TOUS: Record<string, string> = { maison: "Toutes maisons", appartement: "Tous appartements" };
+const allLabel = page.listing === "transaction" ? "Tout voir" : (TOUS[type] ?? "Tout voir");
+const segOptions = [
+  { id: "all", label: allLabel, count: nbTotal },
+  ...cats.map(([id, count]) => ({ id, label: CAT_LABEL[id] ?? id, count })),
+];
+const catLabels = Object.fromEntries(cats.map(([id]) => [id, CAT_LABEL[id] ?? id]));
+
+/* Quartiers : ordre de la table des prix, comptes réels du listing. */
+const prixRows = commune.data.prixQuartiers.filter((q2) => q2.transaction === transaction);
+const quartierCounts = new Map<string, { label: string; count: number }>();
+for (const b of biensListe) {
+  if (!b.data.quartier) continue;
+  const s = slugCommune(b.data.quartier);
+  const cur = quartierCounts.get(s);
+  quartierCounts.set(s, { label: b.data.quartier, count: (cur?.count ?? 0) + 1 });
+}
+const quartierOrder = [
+  ...prixRows.map((q2) => slugCommune(q2.nom)),
+  ...[...quartierCounts.keys()].filter((s) => !prixRows.some((q2) => slugCommune(q2.nom) === s)),
+];
+const quartierOptions = quartierOrder
+  .filter((s, i, arr) => arr.indexOf(s) === i && quartierCounts.has(s))
+  .map((s) => ({ value: s, label: `${quartierCounts.get(s)!.label} (${quartierCounts.get(s)!.count})` }));
+
+/* ── Cartes : mêmes conventions que /biens ── */
+const specsDe = (b: Bien) =>
+  [
+    b.data.chambres
+      ? `${b.data.chambres} chambre${b.data.chambres > 1 ? "s" : ""}`
+      : b.data.sousType === "studio"
+        ? "Studio"
+        : null,
+    b.data.surface != null ? formatSurface(b.data.surface) : null,
+    b.data.sdb ? `${b.data.sdb} sdb` : null,
+  ].filter((s): s is string => Boolean(s));
+const badgeDe = (b: Bien) =>
+  b.data.statut === "nouveau"
+    ? { label: "Nouveau", variant: "new" as const }
+    : b.data.statut === "sous-offre"
+      ? { label: "Sous offre", variant: undefined }
+      : b.data.statut === "off-market"
+        ? { label: "Off-market", variant: undefined }
+        : undefined;
+const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
+/* Localité affichée : sur le gabarit quartier, le village EST la localité
+   (« Loverval ») — sinon commune (— quartier), comme la référence. */
+const localiteDe = (b: Bien) =>
+  isQuartier && b.data.commune !== nom
+    ? b.data.commune
+    : b.data.quartier
+      ? `${nom} — ${b.data.quartier}`
+      : nom;
+
+/* ── Maillage : combinaisons réelles (biens ∩ déclarations des communes) ── */
+const toutesCommunes = await getCollection("communes");
+const tousBiens = await getCollection("biens", ({ data }) => data.publie !== false);
+const declarees = new Set(
+  toutesCommunes.flatMap((c) =>
+    c.data.combinaisons.map(({ type: t, transaction: tr }) =>
+      slugCombinaison(t, tr, slugCommune(c.data.nom)),
+    ),
+  ),
+);
+const combosAll = combinaisons(
+  tousBiens.map(({ data }) => ({ type: data.type, transaction: data.transaction, commune: data.commune })),
+).filter((c) => declarees.has(c.slug));
+const combosCommune = combosAll.filter((c) => c.communeSlug === communeSlug);
+
+/* Bascule du bandeau : la combinaison sœur (autre transaction) la mieux
+   pourvue de la commune — rien si elle n'existe pas. */
+const soeur = combosCommune
+  .filter((c) => c.transaction !== transaction)
+  .sort((a, b) => b.count - a.count)[0];
+const switchLabel = transaction === "vente" ? "Vous cherchez à louer ?" : "Vous cherchez à acheter ?";
+
+/* « Élargir autour » : autres combinaisons réelles de la commune + hub des
+   communes. Pas de communes voisines inventées : jamais de lien vers une
+   combinaison sans bien. */
+const widenLinks = [
+  ...combosCommune
+    .filter((c) => c.slug !== currentSlug)
+    .map((c) => ({ text: c.ancre, href: `/${c.slug}` })),
+  { text: "Toutes nos communes", href: "/communes" },
+];
+
+/* Compte affiché sur une pastille = périmètre RÉEL de la page cible : quand sa
+   copie déclare listing:"transaction", la page liste tout le marché de la
+   transaction (« 18 biens ») — le compte du seul type (17) la contredirait.
+   Gabarit quartier : la page cible liste TOUTE l'entité (villages inclus) —
+   compte = biens de la transaction dans l'entité, sinon la pastille
+   contredirait le « Voir les N biens » de la page. */
+const compteCible = (c: (typeof combosAll)[number]) => {
+  const communeCible = toutesCommunes.find((k) => slugCommune(k.data.nom) === c.communeSlug);
+  if (communeCible?.data.gabarit === "quartier" && communeCible.data.villages.length > 0) {
+    const noms = new Set([communeCible.data.nom, ...communeCible.data.villages.map((v) => v.nom)]);
+    return tousBiens.filter((b) => noms.has(b.data.commune) && b.data.transaction === c.transaction)
+      .length;
+  }
+  const cible = communeCible?.data.pages.find((p) => p.type === c.type && p.transaction === c.transaction);
+  return cible?.listing === "transaction"
+    ? combosAll
+        .filter((k) => k.communeSlug === c.communeSlug && k.transaction === c.transaction)
+        .reduce((n, k) => n + k.count, 0)
+    : c.count;
+};
+
+/* Maillage de fin de page, groupé par intention. */
+const meshGroups = [
+  {
+    label: "Par type",
+    links: combosCommune
+      .filter((c) => c.transaction === transaction)
+      .map((c) => ({
+        text: c.ancre,
+        href: `/${c.slug}`,
+        count: compteCible(c),
+        current: c.slug === currentSlug,
+      })),
+  },
+  ...(combosAll.some((c) => c.communeSlug !== communeSlug)
+    ? [
+        {
+          label: "Dans nos autres communes",
+          links: combosAll
+            .filter((c) => c.communeSlug !== communeSlug)
+            .map((c) => ({ text: c.ancre, href: `/${c.slug}`, count: compteCible(c) })),
+        },
+      ]
+    : []),
+  {
+    label: "Par intention",
+    links: [
+      ...combosCommune
+        .filter((c) => c.transaction !== transaction)
+        .map((c) => ({ text: c.ancre, href: `/${c.slug}`, count: compteCible(c) })),
+      transaction === "vente"
+        ? { text: `Estimer un bien à ${nom}`, href: "/estimation" }
+        : { text: "Estimer un loyer", href: "/estimation" },
+      transaction === "vente"
+        ? { text: `Vendre à ${nom}`, href: "/contact" }
+        : { text: "Confier un bien en gestion", href: "/contact" },
+    ],
+  },
+];
+
+/* Zones de la carte agence = pilules vers les autres pages de localité. */
+const zones = combosAll
+  .filter((c) => c.slug !== currentSlug)
+  .map((c) => ({ label: c.ancre, href: `/${c.slug}` }));
+
+/* ── Conseiller référent (collection equipe) ── */
+const conseiller = await getEntry(page.conseiller);
+if (!conseiller) throw new Error(`communes/${commune.id} : conseiller introuvable.`);
+const prenom = conseiller.data.nom.split(" ")[0];
+
+/* ── FAQ locale : questions de la commune ciblées sur cette page ── */
+const faqEntries = commune.data.faq.filter(
+  (f) => (!f.transaction || f.transaction === transaction) && (!f.type || f.type === type),
+);
+const faqItems = faqEntries.map((f) => ({ q: f.question, a: f.reponse, id: f.id }));
+
+/* ── Avis situés du gabarit quartier (collection avis, t-place = corps) ── */
+const avisQuartier = q
+  ? (await Promise.all(q.avis.cartes.map((r) => getEntry(r)))).filter(
+      (a): a is NonNullable<typeof a> => Boolean(a),
+    )
+  : [];
+const initialesDe = (nomComplet: string) => {
+  const mots = nomComplet.split(/\s+/).filter((m) => /^\p{L}/u.test(m));
+  return ((mots[0]?.[0] ?? "") + (mots.length > 1 ? mots[mots.length - 1][0] : "")).toUpperCase();
+};
+/* 4,8/190 et la distribution sont des chiffres EXTERNES Google, repris tels
+   quels — même précédent que l'accueil et /biens. */
+const GOOGLE_URL = "https://www.google.com/maps/search/Avenir+Immobilier+Charleroi";
+const distribution = [
+  { stars: 5, count: 167 },
+  { stars: 4, count: 16 },
+  { stars: 3, count: 5 },
+  { stars: 2, count: 1 },
+  { stars: 1, count: 1 },
+];
+const maxCount = Math.max(...distribution.map((d) => d.count), 1);
+const barWidth = (count: number) => Math.max(2, Math.round((count / maxCount) * 100));
+
+/* ── Head : title compté, description sourcée, canonical, JSON-LD ── */
+const ancrePage = ancre(type, transaction, nom);
+const h1 = q?.h1 ?? ancrePage;
+const title = q
+  ? q.title
+  : `${ancrePage} — ${nbTotal} bien${nbTotal > 1 ? "s" : ""} · Avenir Immobilier`;
+const canonical = new URL(`/${currentSlug}`, Astro.site).href;
+const TYPE_PLURIEL: Record<TypeBien, string> = {
+  maison: "maisons",
+  appartement: "appartements",
+  terrain: "terrains",
+  commerce: "commerces",
+  immeuble: "immeubles",
+};
+const ctaVoir =
+  nbTotal > 1
+    ? `Voir les ${nbTotal} ${page.listing === "transaction" ? "biens" : TYPE_PLURIEL[type]}`
+    : "Voir le bien";
+/* CTA du bandeau quartier — compte réel de l'entité (réf. « Voir les 3 biens
+   disponibles »). */
+const ctaVoirQ = nbTotal > 1 ? `Voir les ${nbTotal} biens disponibles` : "Voir le bien disponible";
+
+const breadcrumbLd = isQuartier
+  ? {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Accueil", item: new URL("/", Astro.site).href },
+        { "@type": "ListItem", position: 2, name: "Communes", item: new URL("/communes", Astro.site).href },
+        { "@type": "ListItem", position: 3, name: `Immobilier à ${nom}`, item: canonical },
+      ],
+    }
+  : {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Accueil", item: new URL("/", Astro.site).href },
+        { "@type": "ListItem", position: 2, name: "Nos biens", item: new URL("/biens", Astro.site).href },
+        { "@type": "ListItem", position: 3, name: "Communes", item: new URL("/communes", Astro.site).href },
+        { "@type": "ListItem", position: 4, name: h1, item: canonical },
+      ],
+    };
+
+/* Place (gabarit quartier) : l'entité et ses villages en GeoCoordinates —
+   mêmes coordonnées que la carte affichée (villages[] de la commune). */
+const centreEntite = villages.find((v) => v.nom === nom) ?? commune.data.coord;
+const placeLd =
+  isQuartier && centreEntite
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Place",
+        name: nom,
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: nom,
+          ...(commune.data.codePostal ? { postalCode: commune.data.codePostal } : {}),
+          ...(commune.data.province ? { addressRegion: commune.data.province } : {}),
+          addressCountry: "BE",
+        },
+        geo: { "@type": "GeoCoordinates", latitude: centreEntite.lat, longitude: centreEntite.lng },
+        containsPlace: villages.map((v) => ({
+          "@type": "Place",
+          name: v.nom,
+          geo: { "@type": "GeoCoordinates", latitude: v.lat, longitude: v.lng },
+        })),
+      }
+    : null;
+
+/* RealEstateAgent complet (gabarit quartier) : mêmes données que le chrome
+   (siège du footer) et que la section d'avis (4,8/190, chiffres Google repris
+   tels quels) — PageLayout reçoit organizationLd={false} pour éviter le doublon. */
+const agentLd = isQuartier
+  ? {
+      "@context": "https://schema.org",
+      "@type": "RealEstateAgent",
+      name: "Avenir Immobilier",
+      telephone: "+3271221141",
+      url: new URL("/", Astro.site).href,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: "Place Roger Desaise 5",
+        postalCode: "6032",
+        addressLocality: "Mont-sur-Marchienne",
+        addressCountry: "BE",
+      },
+      areaServed: { "@type": "Place", name: nom },
+      aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "190" },
+    }
+  : null;
+
+/* ItemList : mêmes données que les cartes affichées (6 premières, total réel).
+   Location : Offer + UnitPriceSpecification mensuelle, surface et chambres. */
+const schemaType = (b: Bien) => (b.data.type === "appartement" ? "Apartment" : "SingleFamilyResidence");
+const itemListLd = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: h1,
+  numberOfItems: nbTotal,
+  itemListElement: biensListe.slice(0, PER_PAGE).map((b, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    item: {
+      "@type": schemaType(b),
+      name: b.data.titre,
+      ...(transaction === "location" && b.data.chambres != null
+        ? { numberOfRooms: b.data.chambres }
+        : {}),
+      ...(transaction === "location" && b.data.surface != null
+        ? { floorSize: { "@type": "QuantitativeValue", value: b.data.surface, unitCode: "MTK" } }
+        : {}),
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: localiteDe(b),
+        addressRegion: commune.data.province ?? nom,
+        addressCountry: "BE",
+      },
+      offers: {
+        "@type": "Offer",
+        price: b.data.prix,
+        priceCurrency: "EUR",
+        availability: "https://schema.org/InStock",
+        ...(transaction === "location"
+          ? {
+              priceSpecification: {
+                "@type": "UnitPriceSpecification",
+                price: b.data.prix,
+                priceCurrency: "EUR",
+                unitCode: "MON",
+              },
+            }
+          : {}),
+      },
+    },
+  })),
+};
+const faqLd = faqPage(faqEntries.map((f) => ({ question: f.question, reponse: f.reponse })));
+
+/* ── Marché : table des quartiers depuis prixQuartiers (source datée Zod) ── */
+const tableRows = prixRows.map((q2) => ({
+  nom: q2.nom,
+  description: q2.description,
+  valeur: typeof q2.valeur === "number" ? formatPrix(q2.valeur) : `${q2.valeur} €`,
+}));
+const tableHead = {
+  c1: /village/i.test(page.marche.tableTitre) ? "Village" : "Quartier",
+  c2: transaction === "location" ? "Ce qu'on y loue" : "Ce qu'on y trouve",
+  c3: "Médian / m²",
+};
+const sourceMarche = `Source : ${prixRows[0]?.source.libelle ?? commune.data.chiffres[0]?.source.libelle ?? ""}`;
+
+/* Atouts « vivre » : ceux de la page s'ils existent, sinon ceux de la commune. */
+const atoutsVivre = page.vivre.atouts ?? commune.data.atouts;
+
+/* Bande trust (section 10bis) : citation propre à la page, avatars = initiales
+   des signatures abrégées. 4,8/190 = données Google externes, comme l'accueil. */
+const trustReviews = page.trust
+  ? page.trust.noms.map((n, i) => ({ quote: i === 0 ? page.trust!.quote : "", name: n, place: "" }))
+  : null;
+
+/* Config du script de listing (partagé avec /biens) — sérialisée par page. */
+const listingCfg = {
+  perPage: PER_PAGE,
+  catLabels,
+  catParam: "type",
+  selects: [
+    ...(quartierOptions.length > 0 ? [{ id: "selQuartier", data: "q", param: "q" }] : []),
+    { id: "selBudget", data: "price", param: "budget", range: true },
+  ],
+  widenMax: 3,
+  ids: { seg: "segCat" },
+};
 ---
 
-<PageLayout title={titre} description={commune.data.intro}>
-  <h1>{titre}</h1>
-  {/* Stub — page de localité : chiffres datés, biens filtrés, FAQ locale. */}
-  <p>{commune.data.intro}</p>
+<PageLayout
+  title={title}
+  description={page.description}
+  canonical={canonical}
+  active={isQuartier ? "/communes" : "/biens"}
+  organizationLd={!isQuartier}
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" is:inline set:html={jsonLd(breadcrumbLd)} />
+    {placeLd && <script type="application/ld+json" is:inline set:html={jsonLd(placeLd)} />}
+    {agentLd && <script type="application/ld+json" is:inline set:html={jsonLd(agentLd)} />}
+    <script type="application/ld+json" is:inline set:html={jsonLd(itemListLd)} />
+    {faqItems.length > 0 && (
+      <script type="application/ld+json" is:inline set:html={jsonLd(faqLd)} />
+    )}
+  </Fragment>
+
+  {q ? (
+    <Fragment>
+      {/* ════════════ GABARIT 06 · QUARTIER (réf. quartier.html) ════════════ */}
+
+      {/* ── 1 · BANDEAU ENCRE — H1 porteur, bascule vendeur, compte réel ── */}
+      <PageHead variant="band" photoTag={page.photo}>
+        <Fragment slot="breadcrumb">
+          <nav class="breadcrumb" aria-label="Fil d'Ariane">
+            <a href="/">Accueil</a><span class="sep">/</span><a href="/communes">Communes</a><span
+              class="sep">/</span><span class="cur">{nom}</span>
+          </nav>
+        </Fragment>
+        <Fragment slot="aside">
+          <a href={q.bascule.href} class="link-arrow bc-switch">{q.bascule.label} →</a>
+        </Fragment>
+        <div class="section-head" style="margin-top:22px">
+          <Eyebrow>{page.eyebrow}</Eyebrow>
+          <h1 style="font-size:clamp(32px,4.2vw,56px);margin-top:16px;max-width:26ch">{q.h1}</h1>
+          <p style="font-size:18px;margin-top:20px;max-width:56ch" set:html={page.chapo} />
+        </div>
+        <div class="fc-actions" style="justify-content:flex-start;margin-top:30px">
+          <a href="#biens-quartier" class="btn">{ctaVoirQ} <span class="arr">↓</span></a>
+          <a href={page.ctaGhost.href} class="btn btn--ghost">{page.ctaGhost.label}</a>
+        </div>
+      </PageHead>
+
+      {/* ── 2 · LISTING DE L'ENTITÉ (.q-toolbar : portée annoncée, seg
+           Acheter/Louer aux comptes réels, villages, types présents) ── */}
+      <section class="sec--white" id="biens-quartier">
+        <div class="wrap">
+          <div class="props-head reveal">
+            <div class="section-head" style="margin:0">
+              <Eyebrow>Disponibles aujourd'hui</Eyebrow>
+              <h2>{q.biensTitre}</h2>
+            </div>
+            <a href="/biens" class="link-arrow">Tous nos biens →</a>
+          </div>
+          <div class="toolbar q-toolbar reveal">
+            <div class="toolbar-left">
+              <span class="q-scope"><span class="q-scope-dot" aria-hidden="true"></span>{q.portee}</span>
+              <div class="tool-row">
+                <div class="tool-group">
+                  <span class="tool-label" id="qLblCat">Je cherche à</span>
+                  <div class="seg" id="qCat" role="group" aria-labelledby="qLblCat">
+                    <button type="button" class={transaction === "vente" ? "on" : undefined} data-c="vente">
+                      Acheter <span class="n">{nVente}</span>
+                    </button>
+                    <button type="button" class={transaction === "location" ? "on" : undefined} data-c="location">
+                      Louer <span class="n">{nLocation}</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="tool-group">
+                  <span class="tool-label">Village</span>
+                  <div class="tool-select">
+                    <select id="qLoc" aria-label="Village">
+                      <option value="all">Toute l'entité</option>
+                      {villageRows.map((v) => <option value={v.slug}>{v.option}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div class="tool-group">
+                  <span class="tool-label">Type de bien</span>
+                  <div class="tool-select">
+                    <select id="qType" aria-label="Type de bien">
+                      <option value="all">Tous types</option>
+                      {typesQuartier.map((t) => <option value={t.id}>{t.label}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <button class="tool-clear" id="qReset" hidden>×&nbsp; Effacer les filtres</button>
+            </div>
+            <div class="toolbar-right">
+              <span class="tool-count" id="qCount">
+                {nbTotal} bien{nbTotal > 1 ? "s" : ""} affiché{nbTotal > 1 ? "s" : ""}
+              </span>
+            </div>
+          </div>
+          <div class="prop-grid">
+            {biensQuartier.map((b, i) => (
+              <PropertyCard
+                class={`reveal${delay(i)}`}
+                data-cat={b.data.transaction}
+                data-loc={slugCommune(b.data.commune)}
+                data-type={typeSlugQ(b)}
+                price={formatPrix(b.data.prix)}
+                suffix={b.data.transaction === "location" ? "/mois" : undefined}
+                location={localiteDe(b)}
+                title={b.data.titre}
+                specs={specsDe(b)}
+                badge={badgeDe(b)?.label}
+                badgeVariant={badgeDe(b)?.variant}
+                tag={b.data.description}
+                peb={b.data.peb}
+                href={`/biens/${b.id}`}
+              />
+            ))}
+          </div>
+          <div class="q-empty" id="qEmpty" hidden>
+            <p>{q.vide.texte}</p>
+            <div class="fc-actions" style="justify-content:flex-start;margin-top:18px">
+              <a href={q.vide.primaire.href} class="btn">{q.vide.primaire.label} <span class="arr">→</span></a>
+              <a href={q.vide.secondaire.href} class="btn btn--ghost">{q.vide.secondaire.label}</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3 · CARTE DES VILLAGES (vert tendre) — biens d'abord, carte ensuite ── */}
+      <VillageMap
+        eyebrow={q.carte.eyebrow}
+        titre={q.carte.titre}
+        texte={q.carte.texte}
+        villages={villageRows}
+        trajets={commune.data.trajets}
+        mapLabel={`Carte des ${villages.length === 6 ? "six " : ""}villages de l'entité de ${nom}`}
+        trajetsLabel={`Temps de trajet depuis le centre de ${nom}`}
+      />
+
+      {/* ── 4 · MARCHÉ (blanc) — chiffre clé + lignes, source datée ── */}
+      <section class="sec--white">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <Eyebrow>{page.marche.eyebrow}</Eyebrow>
+            <h2 style="max-width:28ch">{page.marche.titre}</h2>
+            <p style="margin-top:16px;max-width:58ch">{page.marche.texte}</p>
+          </div>
+          <MarketStats big={page.marche.big} rows={page.marche.rows} />
+          <p style="font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:12px;letter-spacing:.05em;text-transform:uppercase">
+            {sourceMarche}
+          </p>
+        </div>
+      </section>
+
+      {/* ── 5 · VIVRE ICI (vert tendre) — trois atouts numérotés ── */}
+      <section class="sec--tint">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <Eyebrow>{page.vivre.eyebrow}</Eyebrow>
+            <h2>{page.vivre.titre}</h2>
+          </div>
+          <Atouts atouts={atoutsVivre} numerote={page.vivre.numerote} />
+        </div>
+      </section>
+
+      {/* ── 6 · AVIS SITUÉS (.trust, blanc via local.css) — écrit en classes DS :
+           le port TrustSection ne permet pas l'<em class="t-hl"> d'un titre
+           libre (même précédent que /biens). 4,8/190 + distribution = chiffres
+           Google externes, repris tels quels. ── */}
+      <section class="trust">
+        <div class="wrap">
+          <div class="trust-head reveal">
+            <div style="flex:1 1 420px">
+              <Eyebrow>Ils nous font confiance</Eyebrow>
+              <h2 style="max-width:26ch">{q.avis.titreAvant} <em class="t-hl">{q.avis.titreEm}</em></h2>
+              <p class="trust-intro">{q.avis.intro}</p>
+            </div>
+          </div>
+          <div class="trust-sum reveal">
+            <div class="ts-score">
+              <div class="v">4,8</div>
+              <span class="t-stars" aria-label="4,8 étoiles sur 5">★★★★★</span>
+              <span class="t-src">Avis Google · 190 avis</span>
+            </div>
+            <div class="ts-bars">
+              {distribution.map((d) => (
+                <div class="ts-bar">
+                  <span>{d.stars} ★</span>
+                  <span class="ts-track"><span class="ts-fill" style={`width:${barWidth(d.count)}%`}></span></span>
+                  <span class="n">{d.count}</span>
+                </div>
+              ))}
+            </div>
+            <div class="ts-cta">
+              <a class="btn" href={GOOGLE_URL} target="_blank" rel="noopener">Lire les 190 avis <span class="arr">→</span></a>
+              <a class="t-write" href={GOOGLE_URL} target="_blank" rel="noopener">Laisser un avis</a>
+            </div>
+          </div>
+          <div class="trust-grid">
+            {avisQuartier.map((a, i) => (
+              <article class={`t-card reveal${delay(i)}`}>
+                <div class="t-headrow">
+                  <span class="t-cstars" aria-label={`${a.data.note} étoiles sur 5`}>{"★★★★★".slice(0, a.data.note)}</span>
+                  <span class="t-gtag">Google</span>
+                </div>
+                <p class="t-quote">{a.data.texte}</p>
+                <div class="t-meta">
+                  <span class="t-ava" aria-hidden="true">{initialesDe(a.data.auteur)}</span>
+                  <span>
+                    <span class="t-name">{a.data.auteur}</span>
+                    <br />
+                    <span class="t-place">{(a.body ?? "").trim() || a.data.commune}</span>
+                  </span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 7 · FAQ LOCALE (vert tendre) — réponses dans le HTML, ancres
+           #faq-droits…, JSON-LD côté page (structuredData={false}) ── */}
+      {faqItems.length > 0 && (
+        <section class="faq sec--tint" id="faq">
+          <div class="wrap faq-grid">
+            <div class="reveal">
+              <Eyebrow>{page.faq.eyebrow}</Eyebrow>
+              <h2 class="serif" style="font-size:clamp(28px,3.6vw,44px);margin-top:22px">{page.faq.titre}</h2>
+              <div class="faq-aside" style="margin-top:34px">
+                <h3>{page.faq.asideTitre}</h3>
+                <p>{page.faq.asideTexte}</p>
+                <a href="/contact" class="btn">Poser ma question <span class="arr">→</span></a>
+              </div>
+            </div>
+            <Faq client:visible items={faqItems} structuredData={false} className="reveal d1" />
+          </div>
+        </section>
+      )}
+
+      {/* ── 8 · COMMUNES VOISINES (blanc court) — pilules data-planned ── */}
+      <NeighbourPills eyebrow={q.voisins.eyebrow} titre={q.voisins.titre} liens={q.voisins.liens} />
+
+      {/* ── 9 · CTA FINAL ENCRE — seule zone encre du corps (pas de
+           .contact-band sur cette variante) ; .on-dark pour le bouton ghost ── */}
+      <section class="finalcta sec--ink on-dark">
+        <div class="wrap">
+          <span class="eyebrow center reveal">{q.final.eyebrow}</span>
+          <h2 class="reveal d1" set:html={q.final.titre} />
+          <p class="reveal d2">{q.final.texte}</p>
+          <div class="fc-actions reveal d2">
+            <a href={q.final.primaire.href} class="btn">{q.final.primaire.label} <span class="arr">→</span></a>
+            <a href={q.final.secondaire.href} class="btn btn--ghost">{q.final.secondaire.label}</a>
+          </div>
+        </div>
+      </section>
+    </Fragment>
+  ) : (
+    <Fragment>
+      {/* ════════════ GABARIT 05 · PAGE DE LOCALITÉ ════════════ */}
+
+      {/* ── 1 · BANDEAU ENCRE (fil d'Ariane + bascule + H1 + chapô) ── */}
+      <PageHead variant="band" photoTag={page.photo}>
+        <Fragment slot="breadcrumb">
+          <nav class="breadcrumb" aria-label="Fil d'Ariane">
+            <a href="/">Accueil</a><span class="sep">/</span><a href="/biens">Nos biens</a><span
+              class="sep">/</span><a href="/communes">Communes</a><span class="sep">/</span><span
+              class="cur">{h1}</span>
+          </nav>
+        </Fragment>
+        <Fragment slot="aside">
+          {soeur && <a href={`/${soeur.slug}`} class="link-arrow bc-switch">{switchLabel} →</a>}
+        </Fragment>
+        <div class="section-head" style="margin-top:22px">
+          <Eyebrow>{page.eyebrow}</Eyebrow>
+          <h1 style="font-size:clamp(34px,4.6vw,60px);margin-top:16px;max-width:22ch">{h1}</h1>
+          <p style="font-size:18px;margin-top:20px;max-width:54ch" set:html={page.chapo} />
+        </div>
+        <div class="fc-actions" style="justify-content:flex-start;margin-top:30px">
+          <a href="#resultats" class="btn">{ctaVoir} <span class="arr">↓</span></a>
+          <a href={page.ctaGhost.href} class="btn btn--ghost">{page.ctaGhost.label}</a>
+        </div>
+      </PageHead>
+
+      {/* ── 2 · INTRO LOCALE (texte + image) ── */}
+      <section class="sec--tint">
+        <div class="wrap">
+          <div class="two-col two-col--b" style="align-items:center">
+            <div class="reveal">
+              <Eyebrow>{page.intro.eyebrow}</Eyebrow>
+              <h2 style="margin-top:16px;max-width:26ch">{page.intro.titre}</h2>
+              {page.intro.paragraphes.map((p, i) => (
+                <p
+                  style={
+                    i === 0
+                      ? "color:var(--ink-soft);font-size:17px;margin-top:18px;max-width:46ch"
+                      : "color:var(--ink-soft);margin-top:14px;max-width:46ch"
+                  }
+                >
+                  {p}
+                </p>
+              ))}
+              <p style="margin-top:26px"><a href="#marche" class="link-arrow">{page.intro.lien} →</a></p>
+            </div>
+            <div class="reveal d1">
+              <div class="ph" style="aspect-ratio:4/3.2;border-radius:var(--r)">
+                <span class="ph-tag">{page.intro.photo}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3 · RÉSULTATS (toolbar + 5 états + grille + pagination) ── */}
+      <section class="sec--white" id="resultats">
+        <div class="wrap">
+          <Toolbar
+            segments={{ id: "segCat", label: "Type de bien", options: segOptions }}
+            groups={[
+              ...(quartierOptions.length > 0
+                ? [
+                    {
+                      id: "selQuartier",
+                      label: "Quartier",
+                      ariaLabel: "Quartier",
+                      options: [{ value: "all", label: `Tout ${nom} (${nbTotal})` }, ...quartierOptions],
+                    },
+                  ]
+                : []),
+              {
+                id: "selBudget",
+                label: "Budget",
+                ariaLabel: "Budget",
+                options: [{ value: "all", label: page.budgetTous }, ...page.budgets],
+              },
+            ]}
+            sort={{
+              id: "selSort",
+              label: "Trier par",
+              ariaLabel: "Trier",
+              options: [
+                { value: "recent", label: "Plus récents" },
+                { value: "asc", label: transaction === "location" ? "Loyer croissant" : "Prix croissant" },
+                { value: "desc", label: transaction === "location" ? "Loyer décroissant" : "Prix décroissant" },
+                { value: "surf", label: "Surface décroissante" },
+              ],
+            }}
+            count={`${nbTotal} bien${nbTotal > 1 ? "s" : ""} affiché${nbTotal > 1 ? "s" : ""} · page 1 sur ${pages}`}
+          />
+
+          <LocalityLinks
+            variant="widen"
+            id="widenBand"
+            hidden={nbTotal > 3}
+            label="Peu de biens ici — élargir autour"
+            links={widenLinks}
+            style="margin-top:18px"
+          />
+
+          <SkeletonGrid id="skGrid" count={3} style="margin-top:30px" />
+
+          <EmptyState id="emptyState" title={page.vide.titre} widenLabel="Chercher autour" style="margin-top:30px">
+            {page.vide.texte}
+            <Fragment slot="actions">
+              <button class="btn" type="button" id="emptyReset">Effacer les filtres <span class="arr">→</span></button>
+              <a class="btn btn--ghost" href="/contact">{page.vide.action}</a>
+            </Fragment>
+            <Fragment slot="widen">
+              {widenLinks.map((l) => (
+                <a href={l.href} data-planned={"planned" in l && l.planned ? "" : undefined}>{l.text}</a>
+              ))}
+            </Fragment>
+          </EmptyState>
+
+          <div class="prop-grid" id="propGrid" style="margin-top:30px">
+            {biensListe.map((b, i) => (
+              <PropertyCard
+                class={`reveal${delay(i)}`}
+                data-cat={catDe(b)}
+                data-q={b.data.quartier ? slugCommune(b.data.quartier) : undefined}
+                data-price={b.data.prix}
+                data-surface={b.data.surface ?? 0}
+                data-idx={i + 1}
+                price={formatPrix(b.data.prix)}
+                suffix={transaction === "location" ? "/mois" : undefined}
+                location={localiteDe(b)}
+                title={b.data.titre}
+                specs={specsDe(b)}
+                badge={badgeDe(b)?.label}
+                badgeVariant={badgeDe(b)?.variant}
+                tag={b.data.description}
+                peb={b.data.peb}
+                href={`/biens/${b.id}`}
+              />
+            ))}
+          </div>
+
+          <Pagination pages={pages} current={1} hrefFor={() => "#resultats"} />
+        </div>
+      </section>
+
+      {/* ── 4 · GUIDE LOCAL (colonne sticky + six points filetés) ── */}
+      <section class="sec--tint">
+        <div class="wrap">
+          <div class="two-col two-col--c">
+            <div class="reveal sticky-side">
+              <Eyebrow>{page.guide.eyebrow}</Eyebrow>
+              <h2 style="margin-top:16px;max-width:24ch">{page.guide.titre}</h2>
+              <p style="color:var(--ink-soft);margin-top:16px;max-width:42ch">{page.guide.texte}</p>
+              {/* .enclair repasse en blanc bordé sur .sec--tint (local.css). */}
+              <div class="enclair" style="margin-top:26px">
+                <span class="e-tag">En clair</span>
+                <p set:html={page.guide.enclair} />
+              </div>
+              <div class="fc-actions" style="justify-content:flex-start;margin-top:26px">
+                <a href="/contact" class="btn">Parler à {prenom} <span class="arr">→</span></a>
+              </div>
+            </div>
+            <GuidePoints points={page.guide.points} class="reveal d1" />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 5 · MARCHÉ (chiffre clé + table des quartiers, sourcés) ── */}
+      <section class="sec--white" id="marche">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <Eyebrow>{page.marche.eyebrow}</Eyebrow>
+            <h2 style="max-width:28ch">{page.marche.titre}</h2>
+            <p style="margin-top:16px;max-width:58ch">{page.marche.texte}</p>
+          </div>
+          <MarketStats big={page.marche.big} rows={page.marche.rows} style="margin-top:38px" />
+          <PriceTable title={page.marche.tableTitre} head={tableHead} rows={tableRows} source={sourceMarche} />
+        </div>
+      </section>
+
+      {/* ── 6 · VIVRE ICI (cadre de vie ; numéros seulement si vivre.numerote) ── */}
+      <section class="sec--tint">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <Eyebrow>{page.vivre.eyebrow}</Eyebrow>
+            <h2>{page.vivre.titre}</h2>
+          </div>
+          <Atouts atouts={atoutsVivre} numerote={page.vivre.numerote} />
+          {commune.data.trajets.length > 0 && (
+            <ul class="q-poi" style="max-width:560px">
+              {commune.data.trajets.map((t) => (
+                <li>
+                  <span class="k"><i></i>{t.destination}</span>
+                  <span class="v">{t.minutes} min</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      {/* ── 7 · #vendre — SELLHERE BAND (+ simulateur en continuation, vente) ──
+           Même vert tendre que la section 6 : posé en CONTINUATION (.sec--cont),
+           l'exception d'alternance documentée dans local.css (rythme visuel). */}
+      <SellHere
+        variant="band"
+        id="vendre"
+        class="sec--cont"
+        eyebrow={page.vendre.eyebrow}
+        title={page.vendre.titre}
+        lede={page.vendre.lede}
+        headline={page.vendre.headline}
+        headlineLabel={page.vendre.headlineLabel}
+        rows={page.vendre.rows.map((r) => ({ label: r.label, value: r.valeur }))}
+        source={`Source : ${page.vendre.source}`}
+        primaryLabel={page.vendre.primaire.label}
+        primaryHref={page.vendre.primaire.href}
+        secondaryLabel={page.vendre.secondaire.label}
+        secondaryHref={page.vendre.secondaire.href}
+      />
+      {page.vendre.simulateur && (
+        <section class="sell-band sec--cont">
+          <div class="wrap">
+            <CreditSimulator montant={page.vendre.simulateur.montant} class="mx-auto max-w-[860px]" />
+          </div>
+        </section>
+      )}
+
+      {/* ── 8 · CONTACT (bande encre — la seule du corps) ── */}
+      <ContactForm
+        client:visible
+        tone="ink"
+        eyebrow={page.contact.eyebrow}
+        bandTitle={page.contact.titre}
+        bandIntro={page.contact.lede}
+        subjects={page.contact.sujets}
+        coordinates={page.contact.coordonnees.map((c) => ({ label: c.label, value: c.valeur, href: c.href }))}
+        splitName={false}
+        fineprint="Réponse sous 24 h ouvrées · sans engagement"
+      />
+
+      {/* ── 9 · FAQ LOCALE (réponses dans le HTML, JSON-LD côté page) ── */}
+      {faqItems.length > 0 && (
+        <section class="faq sec--white" id="faq">
+          <div class="wrap faq-grid">
+            <div class="reveal">
+              <Eyebrow>{page.faq.eyebrow}</Eyebrow>
+              <h2 class="serif" style="font-size:clamp(28px,3.6vw,44px);margin-top:22px">{page.faq.titre}</h2>
+              <div class="faq-aside" style="margin-top:34px">
+                <h3>{page.faq.asideTitre}</h3>
+                <p>{page.faq.asideTexte}</p>
+                <a href="/contact" class="btn">Poser ma question <span class="arr">→</span></a>
+              </div>
+            </div>
+            <Faq client:visible items={faqItems} structuredData={false} className="reveal d1" />
+          </div>
+        </section>
+      )}
+
+      {/* ── 10 · AGENCE + CONSEILLER RÉFÉRENT ── */}
+      <section class="sec--tint">
+        <div class="wrap">
+          <div class="props-head reveal">
+            <div class="section-head" style="margin:0">
+              <Eyebrow>Votre interlocuteur</Eyebrow>
+              <h2>{page.agenceTitre}</h2>
+            </div>
+            <a href="/equipe" class="link-arrow">Toute l'équipe →</a>
+          </div>
+          <div
+            class="grid items-start gap-[clamp(26px,4vw,56px)] md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]"
+            style="margin-top:clamp(22px,3vw,32px)"
+          >
+            <AgentCard
+              name={conseiller.data.nom}
+              role={`${conseiller.data.fonction} — ${nom}`}
+              tel={conseiller.data.telephone}
+            >
+              {conseiller.data.points.length > 0 && (
+                <ul class="agent-points" style="margin-top:20px">
+                  {conseiller.data.points.map((p) => (
+                    <li><span class="tick">✓</span> {p}</li>
+                  ))}
+                </ul>
+              )}
+              <div class="fc-actions" style="justify-content:flex-start;margin-top:22px">
+                {conseiller.data.email && (
+                  <a class="btn" href={`mailto:${conseiller.data.email}`}>Écrire à {prenom} <span class="arr">→</span></a>
+                )}
+                <a class="btn btn--ghost" href="/equipe">Toute l'équipe</a>
+              </div>
+            </AgentCard>
+            {commune.data.agence && (
+              <AgencyCard
+                media="map"
+                mediaLabel={commune.data.agence.carte}
+                lat={commune.data.coord?.lat}
+                lng={commune.data.coord?.lng}
+                zoom={12}
+                open={commune.data.agence.ouverture}
+                name={commune.data.agence.nom}
+                address={commune.data.agence.adresse}
+                rows={[
+                  { label: "Téléphone", value: "071 22 11 41" },
+                  ...(commune.data.agence.email ? [{ label: "Email", value: commune.data.agence.email }] : []),
+                  ...(commune.data.agence.rdv ? [{ label: "Rendez-vous", value: commune.data.agence.rdv }] : []),
+                ]}
+                phone="071 22 11 41"
+                directionsHref="/contact"
+                directionsLabel="Prendre rendez-vous"
+                zones={zones}
+                zonesLabel="Autres localités couvertes"
+              />
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 10bis · BANDE TRUST 4,8/5 (continuation du vert tendre) ── */}
+      {trustReviews && (
+        <section class="sec--tint sec--cont">
+          <div class="wrap">
+            <TrustSection variant="band" rating="4,8" count={190} source="Avis Google" reviews={trustReviews} />
+          </div>
+        </section>
+      )}
+
+      {/* ── 11 · MAILLAGE (continuation du vert tendre) ── */}
+      <section class="sec--tint sec--cont">
+        <div class="wrap">
+          <LocalityLinks variant="mesh" class="reveal" title={page.meshTitre} groups={meshGroups} />
+        </div>
+      </section>
+
+      {/* ── 12 · CTA FINAL (.lg-cta, section blanche courte) ── */}
+      <section class="sec--white sec--short">
+        <div class="wrap">
+          <div class="lg-cta" style="margin-top:0">
+            <div>
+              <Eyebrow>{page.final.eyebrow}</Eyebrow>
+              <h2>{page.final.titre}</h2>
+              <p>{page.final.texte}</p>
+            </div>
+            <a href={page.final.cta.href} class="btn">{page.final.cta.label} <span class="arr">→</span></a>
+          </div>
+        </div>
+      </section>
+    </Fragment>
+  )}
+
+  {/* Config sérialisée du filtrage (catégories, selects, seuils) — le script
+     partagé la lit, il est identique pour toutes les pages du gabarit 05 ;
+     absente sur le gabarit quartier (initListingFilter no-op sans #propGrid). */}
+  {!isQuartier && (
+    <script type="application/json" id="listingCfg" is:inline set:html={jsonLd(listingCfg)} />
+  )}
+  <script>
+    import { initListingFilter } from "../scripts/listing-filter";
+    const el = document.getElementById("listingCfg");
+    if (el?.textContent) initListingFilter(JSON.parse(el.textContent));
+  </script>
+  <script>
+    /* Filtre du listing d'entité (gabarit quartier) — logique du script inline
+       de quartier.html portée telle quelle ; no-op hors gabarit quartier.
+       S'exécute APRÈS /ds-script.js (classique en fin de body) dont il
+       resynchronise l'enhanceur de <select> (_ddSync) au reset. */
+    type SyncSelect = HTMLSelectElement & { _ddSync?: () => void };
+    const seg = document.getElementById("qCat");
+    const grid = document.querySelector<HTMLElement>("#biens-quartier .prop-grid");
+    if (seg && grid) {
+      const cards = Array.from(grid.children) as HTMLElement[];
+      const segBtns = Array.from(seg.querySelectorAll("button"));
+      const loc = document.getElementById("qLoc") as SyncSelect;
+      const typeSel = document.getElementById("qType") as SyncSelect;
+      const count = document.getElementById("qCount");
+      const reset = document.getElementById("qReset") as HTMLButtonElement | null;
+      const empty = document.getElementById("qEmpty");
+      const cat0 = seg.querySelector("button.on")?.getAttribute("data-c") ?? "vente";
+      let cat = cat0;
+      const apply = () => {
+        let n = 0;
+        for (const c of cards) {
+          const ok =
+            c.dataset.cat === cat &&
+            (loc.value === "all" || c.dataset.loc === loc.value) &&
+            (typeSel.value === "all" || c.dataset.type === typeSel.value);
+          c.style.display = ok ? "" : "none";
+          if (ok) n++;
+        }
+        if (count) count.textContent = `${n} bien${n > 1 ? "s" : ""} affiché${n > 1 ? "s" : ""}`;
+        grid.hidden = n === 0;
+        if (empty) empty.hidden = n > 0;
+        if (reset) reset.hidden = cat === cat0 && loc.value === "all" && typeSel.value === "all";
+      };
+      segBtns.forEach((b) =>
+        b.addEventListener("click", () => {
+          segBtns.forEach((o) => o.classList.toggle("on", o === b));
+          cat = b.getAttribute("data-c") ?? cat0;
+          apply();
+        }),
+      );
+      loc.addEventListener("change", apply);
+      typeSel.addEventListener("change", apply);
+      reset?.addEventListener("click", () => {
+        cat = cat0;
+        loc.value = "all";
+        typeSel.value = "all";
+        segBtns.forEach((o) => o.classList.toggle("on", o.getAttribute("data-c") === cat0));
+        loc._ddSync?.();
+        typeSel._ddSync?.();
+        apply();
+      });
+      apply();
+    }
+  </script>
 </PageLayout>

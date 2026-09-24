@@ -164,10 +164,225 @@ const equipe = defineCollection({
 });
 
 /* ── Communes (pages de localité — chiffres datés + FAQ locale) ─────────── */
+
+/* Copie éditoriale d'UNE page de localité (gabarit 05) — additif optionnel,
+   une entrée par combinaison type × transaction déclarée. Tout le texte de la
+   page vient d'ici (jamais partagé entre communes) ; les chiffres cités dans
+   ces textes doivent exister dans `chiffres[]` avec leur source datée. */
+const pageLocalite = z.object({
+  type: typeBien,
+  transaction,
+  /** Périmètre du listing : « type » (défaut) ou tout le marché de la
+      transaction (la page appartements-à-louer liste tout le locatif,
+      comme la référence appartement-a-louer-liege.html). */
+  listing: z.enum(["type", "transaction"]).default("type"),
+  /** Meta description (médiane, €/m², délai — chiffres sourcés de chiffres[]). */
+  description: z.string(),
+  /** Eyebrow du bandeau (« Liège & arrondissement · 4000 — 4032 »). */
+  eyebrow: z.string(),
+  /** Légende du placeholder photo du bandeau. */
+  photo: z.string().optional(),
+  /** Chapô du bandeau — HTML léger autorisé (<strong>). */
+  chapo: z.string(),
+  /** Seconde action du bandeau (la première est l'ancre #resultats calculée). */
+  ctaGhost: z.object({ label: z.string(), href: z.string() }),
+  /** Section 2 — texte + image (two-col--b). */
+  intro: z.object({
+    eyebrow: z.string(),
+    titre: z.string(),
+    paragraphes: z.array(z.string()).min(1),
+    /** Libellé du lien fléché vers #marche. */
+    lien: z.string(),
+    photo: z.string().optional(),
+  }),
+  /** Tranches du filtre budget/loyer (« value » = "lo-hi" numérique). */
+  budgets: z.array(z.object({ value: z.string(), label: z.string() })),
+  /** Libellé de la première option du filtre budget. */
+  budgetTous: z.string().default("Tous budgets"),
+  /** État zéro résultat. */
+  vide: z.object({ titre: z.string(), texte: z.string(), action: z.string() }),
+  /** Section 4 — guide six points (colonne sticky + .guide-pts). */
+  guide: z.object({
+    eyebrow: z.string(),
+    titre: z.string(),
+    texte: z.string(),
+    /** Encadré « En clair » — HTML léger autorisé. */
+    enclair: z.string(),
+    points: z.array(z.object({ titre: z.string(), texte: z.string() })).min(1),
+  }),
+  /** Section 5 — marché : chiffre clé + lignes + table quartiers. */
+  marche: z.object({
+    eyebrow: z.string(),
+    titre: z.string(),
+    texte: z.string(),
+    big: z.object({ valeur: z.string(), texte: z.string() }),
+    rows: z.array(
+      z.object({
+        label: z.string(),
+        detail: z.string().optional(),
+        valeur: z.string(),
+        /** Valeur accentuée en vert (<em>), ex. « +2,4 % ». */
+        accent: z.boolean().default(false),
+      }),
+    ),
+    tableTitre: z.string(),
+  }),
+  /** Section 6 — cadre de vie ; `atouts` prime sur ceux de la commune. */
+  vivre: z.object({
+    eyebrow: z.string(),
+    titre: z.string(),
+    atouts: z.array(z.object({ titre: z.string(), texte: z.string() })).optional(),
+    /* Numéros 01-0n sur les cartes (la référence location les a, pas la vente —
+       la numérotation reste sinon réservée au guide six points). */
+    numerote: z.boolean().default(false),
+  }),
+  /** Section 7 — SellHere band (+ simulateur de crédit si `simulateur`). */
+  vendre: z.object({
+    eyebrow: z.string(),
+    titre: z.string(),
+    lede: z.string(),
+    headline: z.string(),
+    headlineLabel: z.string(),
+    rows: z.array(z.object({ label: z.string(), valeur: z.string() })),
+    source: z.string(),
+    primaire: z.object({ label: z.string(), href: z.string() }),
+    secondaire: z.object({ label: z.string(), href: z.string() }),
+    /** Montant pré-réglé du simulateur (vente uniquement — jamais en location). */
+    simulateur: z.object({ montant: z.number().int().positive() }).optional(),
+  }),
+  /** Section 8 — bande contact encre (ContactForm tone="ink"). */
+  contact: z.object({
+    eyebrow: z.string(),
+    titre: z.string(),
+    lede: z.string(),
+    sujets: z.array(z.string()).optional(),
+    coordonnees: z
+      .array(z.object({ label: z.string(), valeur: z.string(), href: z.string().optional() }))
+      .default([]),
+  }),
+  /** Section 9 — FAQ (questions filtrées par `transaction` dans faq[]). */
+  faq: z.object({
+    eyebrow: z.string(),
+    titre: z.string(),
+    asideTitre: z.string(),
+    asideTexte: z.string(),
+  }),
+  /** Section 10 — titre de la section agence. */
+  agenceTitre: z.string(),
+  /* Bande d'avis 4,8/5 entre agence et maillage (continuation du vert tendre) —
+     citation propre à la page ; `noms` = signatures abrégées des avatars. La
+     note et le volume (190 avis Google) sont des données externes reprises
+     telles quelles, comme sur l'accueil et l'estimation. */
+  trust: z
+    .object({ quote: z.string(), noms: z.array(z.string()).min(1) })
+    .optional(),
+  /** Section 11 — titre du bloc maillage (.ll-mesh). */
+  meshTitre: z.string(),
+  /** Section 12 — CTA final (.lg-cta). */
+  final: z.object({
+    eyebrow: z.string(),
+    titre: z.string(),
+    texte: z.string(),
+    cta: z.object({ label: z.string(), href: z.string() }),
+  }),
+  /* Gabarit « quartier » (06) — blocs PROPRES à la variante entité-et-villages
+     (réf. quartier.html) : listing d'entité, carte des villages, avis situés,
+     communes voisines, CTA final encre. Obligatoire quand la commune déclare
+     `gabarit: quartier` ; ignoré sinon. Additif optionnel. */
+  quartier: z
+    .object({
+      /** <title> de la référence (« Immobilier à Gerpinnes — vendre & acheter · … »). */
+      title: z.string(),
+      /** H1 porteur (« Immobilier à Gerpinnes : maisons et villas à vendre »). */
+      h1: z.string(),
+      /** Bascule vendeur à droite du fil d'Ariane (.bc-switch). */
+      bascule: z.object({ label: z.string(), href: z.string() }),
+      /** H2 du listing (#biens-quartier). */
+      biensTitre: z.string(),
+      /** Pastille .q-scope — portée annoncée de la recherche (entité, n villages). */
+      portee: z.string(),
+      /** État vide du listing (.q-empty). */
+      vide: z.object({
+        texte: z.string(),
+        primaire: z.object({ label: z.string(), href: z.string() }),
+        secondaire: z.object({ label: z.string(), href: z.string() }),
+      }),
+      /** Section carte des villages (.q-map-band). */
+      carte: z.object({ eyebrow: z.string(), titre: z.string(), texte: z.string() }),
+      /** Avis situés (.trust) : titre coupé avant l'em « 4,8/5 », intro, cartes =
+          avis de la collection (vendeurs de l'entité). */
+      avis: z.object({
+        titreAvant: z.string(),
+        titreEm: z.string(),
+        intro: z.string(),
+        cartes: z.array(reference("avis")).min(1),
+      }),
+      /** Communes voisines (.q-others) — data-planned tant que non codées. */
+      voisins: z.object({
+        eyebrow: z.string(),
+        titre: z.string(),
+        liens: z
+          .array(z.object({ label: z.string(), href: z.string(), planned: z.boolean().default(true) }))
+          .min(1),
+      }),
+      /** CTA final encre — seule zone encre du corps de la variante ;
+          `titre` : HTML léger (<em> jaune). */
+      final: z.object({
+        eyebrow: z.string(),
+        titre: z.string(),
+        texte: z.string(),
+        primaire: z.object({ label: z.string(), href: z.string() }),
+        secondaire: z.object({ label: z.string(), href: z.string() }),
+      }),
+    })
+    .optional(),
+  /** Conseiller référent (AgentCard + prénom dans la copie). */
+  conseiller: reference("equipe"),
+});
+
 const communes = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/communes" }),
   schema: z.object({
     nom: z.string(),
+    /** Province (addressRegion du JSON-LD) — additif optionnel. */
+    province: z.string().optional(),
+    /** Code postal principal (PostalAddress du JSON-LD Place) — additif optionnel. */
+    codePostal: z.string().optional(),
+    /** Centre de la carte Leaflet de la section agence — additif optionnel. */
+    coord: z.object({ lat: z.number(), lng: z.number() }).optional(),
+    /* Gabarit de la page de localité : « quartier » = variante entité-et-villages
+       (réf. quartier.html, gabarit 06 — carte Leaflet des villages, listing
+       élargi à l'entité, blocs propres). Absent = gabarit 05. Additif optionnel. */
+    gabarit: z.enum(["quartier"]).optional(),
+    /* Villages de l'entité (gabarit quartier) : lignes €/m² et pastilles de la
+       carte. `nom` = valeur `commune` des biens du village (les COMPTES de biens
+       sont calculés depuis la collection, jamais déclarés) ; `libelle` =
+       affichage s'il diffère (« Gerpinnes (centre) »). Le prix au m² porte sa
+       source datée (règle : un chiffre = une source). Additif optionnel. */
+    villages: z
+      .array(
+        z.object({
+          nom: z.string(),
+          libelle: z.string().optional(),
+          lat: z.number(),
+          lng: z.number(),
+          /** Prix moyen au m² (€). */
+          prixM2: z.number(),
+          source,
+        }),
+      )
+      .default([]),
+    /** Antenne / agence affichée en section 10 — additif optionnel. */
+    agence: z
+      .object({
+        ouverture: z.string().optional(),
+        nom: z.string(),
+        adresse: z.string(),
+        email: z.string().optional(),
+        rdv: z.string().optional(),
+        carte: z.string().optional(),
+      })
+      .optional(),
     /* Combinaisons type × transaction réellement disponibles → routes de
        [type]-a-[transaction]-[commune] et maillage. Un produit cartésien
        types × transactions générerait des pages sans bien (interdit). */
@@ -180,7 +395,22 @@ const communes = defineCollection({
     trajets: z.array(z.object({ destination: z.string(), minutes: z.number() })).default([]),
     /** Cadre de vie / points d'intérêt (écoles, accès, commerces). */
     atouts: z.array(z.object({ titre: z.string(), texte: z.string() })).default([]),
-    faq: z.array(faqItem).default([]),
+    /* `transaction` / `type` (additifs optionnels) : ciblent une question sur
+       certaines pages de localité de la commune ; absents = toutes les pages.
+       Évite de dupliquer une même FAQ (donc un même FAQPage JSON-LD) entre
+       deux pages voisines (ex. appartements et maisons à louer). */
+    faq: z
+      .array(
+        faqItem.extend({
+          /** Ancre stable de la question (#faq-<id>) — défaut : slug de la question. */
+          id: z.string().optional(),
+          transaction: transaction.optional(),
+          type: typeBien.optional(),
+        }),
+      )
+      .default([]),
+    /** Copie des pages de localité (gabarit 05) — additif optionnel. */
+    pages: z.array(pageLocalite).default([]),
   }),
 });
 
