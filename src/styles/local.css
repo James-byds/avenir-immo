@@ -558,6 +558,9 @@ body:has(.finalcta--straddle) .footer { padding-top: calc(clamp(34px, 4vw, 52px)
 .af-body h3 { font-size: clamp(22px, 2.8vw, 29px); margin-top: 10px; line-height: 1.16; }
 .af-body p { font-size: 16px; line-height: 1.65; color: var(--ink-soft); margin-top: 14px; }
 .af-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--green-soft); }
+/* Règle DS n°3 — la méta (11,5 px, --ink-mute) mesure 4,46:1 sur le fond
+   --green-tint de la carte à la une ; --ink-soft (recette F6). À reprendre dans le DS. */
+.art-feature .art-meta { color: var(--ink-soft); }
 .af-body h3 a { color: inherit; }
 .art-feature:hover .af-body h3 a { color: var(--green-d); }
 @media (max-width: 720px) { .art-feature { grid-template-columns: 1fr; } .af-media .ph { aspect-ratio: 16 / 9.6; min-height: 0; } }

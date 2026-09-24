@@ -108,7 +108,14 @@ const articles = defineCollection({
   schema: ({ image }) =>
     z.object({
       titre: z.string(),
+      /** Extrait des cartes (accueil, hub, pages auteur) et chapô de repli. */
       description: z.string(),
+      /** Meta description propre à la page article quand elle diffère de
+          l'extrait (réf. article.html) — repli : `description`. Additif F6. */
+      metaDescription: z.string().optional(),
+      /** Libellé court du fil d'Ariane (« Home-staging ») — le JSON-LD garde
+          le titre complet. Additif F6. */
+      titreCourt: z.string().optional(),
       auteur: reference("auteurs"),
       /** Catégorie éditoriale affichée (« Marché », « Fiscalité »…). */
       categorie: z.string().optional(),

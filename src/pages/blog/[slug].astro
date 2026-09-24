@@ -1,5 +1,10 @@
 ---
-import { getCollection, render } from "astro:content";
+/* Route article /blog/[slug] — gabarit 12. Toute la mise en page est dans
+   layouts/ArticleLayout.astro ; la route résout l'auteur et le bloc « À lire
+   aussi » (3 articles du même thème, les plus récents, jamais l'article
+   courant — complété par les plus récents des autres thèmes si le thème en
+   compte moins de trois). */
+import { getCollection } from "astro:content";
 import ArticleLayout from "../../layouts/ArticleLayout.astro";
 
 export async function getStaticPaths() {
@@ -8,9 +13,24 @@ export async function getStaticPaths() {
 }
 
 const { article } = Astro.props;
-const { Content } = await render(article);
+
+const auteurs = await getCollection("auteurs");
+const auteurParId = new Map(auteurs.map((a) => [a.id, a]));
+const auteur = auteurParId.get(article.data.auteur.id);
+
+const autres = (await getCollection("articles", ({ data }) => data.publie !== false))
+  .filter((a) => a.id !== article.id)
+  .sort(
+    (a, b) =>
+      b.data.datePublication.getTime() - a.data.datePublication.getTime() ||
+      a.id.localeCompare(b.id, "fr"),
+  );
+const memeTheme = autres.filter((a) => a.data.categorie && a.data.categorie === article.data.categorie);
+const complement = autres.filter((a) => !memeTheme.includes(a));
+const related = [...memeTheme, ...complement].slice(0, 3).map((a) => ({
+  article: a,
+  auteur: auteurParId.get(a.data.auteur.id),
+}));
 ---
 
-<ArticleLayout title={article.data.titre} description={article.data.description}>
-  <Content />
-</ArticleLayout>
+<ArticleLayout article={article} auteur={auteur} related={related} />

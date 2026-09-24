@@ -11,6 +11,11 @@ export default defineConfig({
 
   integrations: [react()],
 
+  // Corps Markdown rendus tels qu'écrits (vague D) : la recette compare les
+  // articles à leur référence par points de code — pas de guillemets ni
+  // d'apostrophes « intelligents » substitués à la copie validée.
+  markdown: { smartypants: false },
+
   vite: {
     plugins: [tailwindcss()],
   },
