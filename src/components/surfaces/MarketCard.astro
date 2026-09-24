@@ -10,7 +10,8 @@
  * Cette carte porte PLUSIEURS liens (conseiller + maillage) : pas de lien
  * étendu à la carte — la règle « un seul lien, étendu » ne vaut que pour les
  * cartes à lien unique. Aucun compteur affiché : ancres descriptives.
- * Les styles inline (taille du nom, corps 15 px) sont ceux de la référence.
+ * Les tailles (nom 22 px, corps 15 px) sont celles de la référence — classes
+ * scoped .mk-name / .mk-text, à reprendre dans le DS.
  */
 interface Fig {
   /** Valeur affichée (« 385 000 € », « +4,2 % ») — sourcée côté page. */
@@ -20,7 +21,8 @@ interface Fig {
 interface Lien {
   text: string;
   href: string;
-  /** Page prévue mais non codée — rend data-planned (jamais href="#" nu). */
+  /** Page prévue mais non codée — rend data-planned SANS href (jamais de lien
+      vers une 404) ; l'URL prévue passe en data-href. */
   planned?: boolean;
 }
 interface Props {
@@ -57,9 +59,9 @@ const initiales = conseiller.nom
     <div class="ph"><span class="ph-tag">{photoTag}</span></div>
   </div>
   <div class="card-body">
-    <div class="card-row"><span class="card-price" style="font-size:22px">{nom}</span></div>
+    <div class="card-row"><span class="card-price mk-name">{nom}</span></div>
     <h3>{titre}</h3>
-    <p style="color:var(--ink-soft);font-size:15px;margin-top:10px">{texte}</p>
+    <p class="mk-text text-ink-soft mt-2.5">{texte}</p>
     <div class="loc-figs">
       {figs.map((f) => (
         <div class="lf"><span class="lf-v">{f.valeur}</span><span class="lf-k">{f.label}</span></div>
@@ -76,8 +78,16 @@ const initiales = conseiller.nom
     </a>
     <div class="ll-pills">
       {liens.map((l) => (
-        <a href={l.href} data-planned={l.planned ? "" : undefined}>{l.text}</a>
+        <a href={l.planned ? undefined : l.href} data-href={l.planned ? l.href : undefined} data-planned={l.planned ? "" : undefined}>{l.text}</a>
       ))}
     </div>
   </div>
 </article>
+
+<style>
+@layer ds {
+  /* à reprendre dans le DS — localites.html : taille du nom de marché et du corps de carte (styles inline de la maquette). */
+  .mk-name { font-size: 22px; }
+  .mk-text { font-size: 15px; }
+}
+</style>

@@ -29,6 +29,7 @@ const { items, class: className = "" } = Astro.props;
 </dl>
 
 <style>
+@layer ds {
   .about-dl { margin: 0; display: grid; counter-reset: engagement; }
   .about-dl > div {
     counter-increment: engagement;
@@ -55,4 +56,5 @@ const { items, class: className = "" } = Astro.props;
   @media (max-width: 640px) {
     .about-dl > div { grid-template-columns: 40px minmax(0, 1fr); }
   }
+}
 </style>

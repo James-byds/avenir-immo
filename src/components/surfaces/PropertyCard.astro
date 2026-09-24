@@ -84,7 +84,7 @@ const isHorizontal = variant === "horizontal";
         <h3>{title}</h3>
         <span class="card-price">
           {price}
-          {suffix && <span style="font-size:14px;color:var(--ink-mute)"> {suffix}</span>}
+          {suffix && <span class="card-suffix"> {suffix}</span>}
         </span>
         {specs.length > 0 && (
           <div class="card-specs">
@@ -120,12 +120,12 @@ const isHorizontal = variant === "horizontal";
         <div class="card-row">
           <span class="card-price">
             {price}
-            {suffix && <span style="font-size:14px;color:var(--ink-mute)"> {suffix}</span>}
+            {suffix && <span class="card-suffix"> {suffix}</span>}
           </span>
           {!isHorizontal && <span class="card-loc">{location}</span>}
         </div>
         <h3>{title}</h3>
-        {isHorizontal && <span class="card-loc" style="margin-top:8px">{location}</span>}
+        {isHorizontal && <span class="card-loc mt-2">{location}</span>}
         {specs.length > 0 && (
           <div class="card-specs">
             {specs.map((s) => (
@@ -146,3 +146,10 @@ const isHorizontal = variant === "horizontal";
     </article>
   )
 }
+
+<style>
+@layer ds {
+  /* à reprendre dans le DS — suffixe du prix (« /mois ») en 14 px atténué — style inline de la maquette. */
+  .card-suffix { font-size: 14px; color: var(--ink-mute); }
+}
+</style>

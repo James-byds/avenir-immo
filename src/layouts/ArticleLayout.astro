@@ -162,7 +162,7 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
   </section>
 
   {/* ── 2 · PARTAGE + CORPS — blanc, respiration courte ── */}
-  <section class="sec--white art-sec">
+  <section class="sec--white sec--short-top art-sec">
     <div class="wrap wrap--art art-layout">
       <div>
         <ShareBar client:visible variant="sticky" url={pageUrl} title={titre} />
@@ -205,7 +205,7 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
     related.length > 0 && (
       <section class="sec--tint">
         <div class="wrap wrap--art">
-          <Eyebrow>À lire aussi</Eyebrow>
+          <h2 class="eyebrow art-related-title">À lire aussi</h2>
           <div class="art-related grid gap-4.5 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
             {related.map((r, i) => (
               <ArticleCard article={r.article} auteur={r.auteur} variant="compact" class={`reveal${delay(i)}`} />
@@ -233,6 +233,10 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
 </PageLayout>
 
 <style is:global>
+@layer ds {
+  /* « À lire aussi » en h2 (les articles courts n'ont pas de h2 : les h3 des
+     cartes suivaient le h1) — l'eyebrow garde son rendu de <span>. */
+  .art-related-title { line-height: 1.6; font-stretch: normal; } /* pas l'axe wdth des titres (local.css l. 1) */
   /* ── à reprendre dans le DS — gabarit 12 : styles inline de article.html,
      valeurs inchangées, portés en classes (préfixe body.blog-article). ── */
   .blog-article .wrap.wrap--art { max-width: 1040px; }
@@ -257,7 +261,7 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
   /* ── Corrections de recette F6 (valeurs de la référence) ── */
   /* Padding haut court SEULEMENT (article.html : padding-top:clamp(28px,3.4vw,44px)) ;
      .sec--short raccourcissait aussi le bas. */
-  .blog-article .art-sec { padding-top: clamp(28px, 3.4vw, 44px); }
   /* « À lire aussi » : 20 px sous l'eyebrow (mt-* Tailwind inerte, cf. hub). */
   .blog-article .art-related { margin-top: 20px; }
+}
 </style>

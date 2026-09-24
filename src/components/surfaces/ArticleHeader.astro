@@ -77,6 +77,7 @@ const cls = ["art-head", isCompact && "art-head--sm", className].filter(Boolean)
 </header>
 
 <style>
+@layer ds {
   /* Photo réelle : mêmes métriques que le placeholder .ah-media .ph du DS
      (16/6.2, 16/9 en compact, rayon --r) — remplace le style inline du port. */
   .ah-media .ah-img {
@@ -89,4 +90,5 @@ const cls = ["art-head", isCompact && "art-head--sm", className].filter(Boolean)
   .art-head--sm .ah-media .ah-img {
     aspect-ratio: 16 / 9;
   }
+}
 </style>

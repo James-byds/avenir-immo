@@ -81,10 +81,10 @@ const subDe = (v: VillageRow) =>
   <div class="wrap q-map-band">
     <div>
       <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 style="margin-top:14px">{titre}</h2>
-      <p style="color:var(--ink-soft);margin-top:14px;max-width:44ch">{texte}</p>
+      <h2 class="mt-3.5">{titre}</h2>
+      <p class="text-ink-soft mt-3.5 max-w-[44ch]">{texte}</p>
       <div class="vil-head">
-        <span class="eyebrow" style="margin:0">{prixLabel}</span>
+        <span class="eyebrow m-0">{prixLabel}</span>
         <button type="button" class="vil-reset" id="vilReset">{resetLabel}</button>
       </div>
       <div class="vil-rows" id="vilRows" role="list">
@@ -177,7 +177,7 @@ const subDe = (v: VillageRow) =>
         const ring = on
           ? "box-shadow:0 0 0 7px rgba(23,65,59,.2),0 0 0 15px rgba(23,65,59,.08)"
           : "box-shadow:0 0 0 4px rgba(0,166,120,.18)";
-        const bg = on ? "var(--green,#17413B)" : "var(--green-l,#00A678)";
+        const bg = on ? "var(--green)" : "var(--green-l)";
         return L.divIcon({
           className: "",
           html:

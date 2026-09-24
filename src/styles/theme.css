@@ -11,7 +11,7 @@
 
    Conséquence : une mise à jour de charte dans le DS se propage aux
    utilitaires sans rien regénérer. Sans `inline`, Tailwind figerait
-   #17413B dans le CSS compilé et les deux systèmes divergeraient.
+   la valeur hexadécimale dans le CSS compilé et les deux systèmes divergeraient.
 
    NE PAS déclarer ici de valeur littérale : tout doit être var(--…).
    ============================================================ */

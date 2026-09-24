@@ -1,4 +1,81 @@
 ---
-// Stub — page «404 — Page introuvable». À implémenter (voir handoff / DEMARRAGE.md).
+/* Page 404 — hors gabarits (aucune référence maquette) : composée avec les
+   classes et composants existants du DS, rien de nouveau.
+
+   Astro émet cette page en dist/404.html ; l'hébergeur la sert pour toute
+   adresse inconnue (status 404). Elle n'est ni dans le sitemap ni indexable
+   (robots noindex), et ne porte pas de canonical (canonical={false}).
+
+   Rythme : en-tête plain (blanc) → maillage sur vert tendre. Le chrome
+   complet est rendu (ds-script.js exige #header/#drawer). */
+import PageLayout from "../layouts/PageLayout.astro";
+import PageHead from "../components/chrome/PageHead.astro";
+import Breadcrumb from "../components/core/Breadcrumb.astro";
+import Eyebrow from "../components/core/Eyebrow.astro";
+import LocalityLinks from "../components/core/LocalityLinks.astro";
+
+const title = "Page introuvable — Avenir Immobilier";
+const description =
+  "Cette adresse ne mène nulle part : le bien a peut-être été vendu ou la page déplacée. Retrouvez nos biens, l'estimation gratuite et nos conseillers.";
+
+/* Entrées principales du site — ancres descriptives (règle DS), aucune
+   combinaison commune × type : seules les pages fixes, toujours présentes. */
+const groups = [
+  {
+    label: "Acheter ou louer",
+    links: [
+      { text: "Tous nos biens à vendre et à louer", href: "/biens" },
+      { text: "Nos communes et leurs prix", href: "/communes" },
+      { text: "Les avis de nos clients", href: "/avis" },
+    ],
+  },
+  {
+    label: "Vendre",
+    links: [
+      { text: "Estimer mon bien gratuitement", href: "/estimation" },
+      { text: "Rencontrer l'équipe", href: "/equipe" },
+      { text: "Écrire à l'agence", href: "/contact" },
+    ],
+  },
+  {
+    label: "Comprendre",
+    links: [
+      { text: "Le blog : vendre, acheter, louer", href: "/blog" },
+      { text: "L'agence depuis 1992", href: "/a-propos" },
+    ],
+  },
+];
 ---
-<p>Stub : 404 — Page introuvable</p>
+
+<PageLayout title={title} description={description} canonical={false}>
+  <Fragment slot="head">
+    <meta name="robots" content="noindex, follow" />
+  </Fragment>
+
+  <PageHead>
+    <Breadcrumb slot="breadcrumb" items={[{ label: "Accueil", href: "/" }, { label: "Page introuvable" }]} />
+    <div class="section-head">
+      <Eyebrow>Erreur 404</Eyebrow>
+      <h1>Cette page n'existe pas, ou plus.</h1>
+      <p>
+        L'adresse a peut-être changé, ou le bien qu'elle présentait est vendu. Rien n'est perdu&nbsp;:
+        tout le site est à un clic, et un conseiller vous répond sous 24&nbsp;h ouvrées.
+      </p>
+    </div>
+    <div class="fc-actions justify-start mt-7">
+      <a href="/" class="btn">Retour à l'accueil <span class="arr">→</span></a>
+      <a href="/biens" class="btn btn--ghost">Voir les biens disponibles</a>
+    </div>
+  </PageHead>
+
+  <section class="sec--tint">
+    <div class="wrap">
+      <LocalityLinks
+        variant="mesh"
+        eyebrow="Où vouliez-vous aller ?"
+        title="Les entrées principales du site"
+        groups={groups}
+      />
+    </div>
+  </section>
+</PageLayout>

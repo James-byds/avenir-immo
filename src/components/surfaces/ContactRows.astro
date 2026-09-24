@@ -55,6 +55,7 @@ const { rows = [], points = [] } = Astro.props;
 }
 
 <style is:global>
+@layer ds {
   /* à reprendre dans le DS — gabarit 08 : classes .c-* recopiées du <style>
      de page de la référence contact.html, valeurs inchangées (.choice-row--4
      non reprise : le formulaire est l'île ContactForm, choice-row à 2 colonnes). */
@@ -74,4 +75,5 @@ const { rows = [], points = [] } = Astro.props;
   .c-visit { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(24px, 3.4vw, 52px); align-items: start; margin-top: clamp(26px, 3.2vw, 40px); }
   .c-faq-lead { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-mute); margin-bottom: 16px; }
   @media (max-width: 900px){ .c-grid, .c-after, .c-visit { grid-template-columns: 1fr; } }
+}
 </style>

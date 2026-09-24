@@ -40,9 +40,11 @@ const cls = ["byline", small && "byline--sm", className].filter(Boolean).join(" 
 </Tag>
 
 <style>
+@layer ds {
   /* Le port React posait display:block en style inline sur la méta ; la
      règle du DS (.byline .b-meta, margin-top 3px) suppose un bloc. */
   .byline .b-meta {
     display: block;
   }
+}
 </style>

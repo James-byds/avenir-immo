@@ -13,7 +13,7 @@ export const GET: APIRoute = async () => {
 
   // Pages fixes
   for (const p of [
-    "", "contact", "estimation", "avis", "biens", "equipe", "blog", "auteurs",
+    "", "a-propos", "contact", "estimation", "avis", "biens", "communes", "equipe", "blog", "auteurs",
     "legal/mentions", "legal/confidentialite", "legal/cookies", "legal/honoraires",
   ]) {
     urls.add(`${SITE}/${p}`.replace(/\/$/, p === "" ? "/" : ""));

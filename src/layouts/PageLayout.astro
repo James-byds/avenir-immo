@@ -20,7 +20,8 @@ import SiteFooter from "../components/chrome/SiteFooter.astro";
 interface Props {
   title: string;
   description?: string;
-  canonical?: string;
+  /** `false` = aucune balise canonical (page 404). */
+  canonical?: string | false;
   bodyClass?: string;
   /** Header verre blanc (défaut) — false pour le header transparent sur héros. */
   solid?: boolean;

@@ -203,6 +203,7 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
 </script>
 
 <style is:global>
+@layer ds {
   /* ── à reprendre dans le DS — gabarit 09 : <style> de page de avis.html
      (mur), valeurs inchangées. local.css porte déjà les fonds (#mur, cartes
      blanches, .t-chip, --hl) — rien de redoublé ici. ── */
@@ -228,4 +229,5 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
      en --ink-soft (6,31:1) ; le lien .wall-note a reste --green. */
   #mur .tool-label { color: var(--ink-soft); }
   #mur .wall-note { color: var(--ink-soft); }
+}
 </style>

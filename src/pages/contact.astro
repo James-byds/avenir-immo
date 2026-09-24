@@ -135,12 +135,12 @@ const faqLd = faqPage(faqItems.map((f) => ({ question: f.q, reponse: f.a })));
   {/* ── 1 · EN-TÊTE PLAIN — fil d'Ariane, H1, chapô ── */}
   <PageHead>
     <Breadcrumb slot="breadcrumb" items={[{ label: "Accueil", href: "/" }, { label: "Contact" }]} />
-    <div style="margin-top:22px">
+    <div class="mt-5.5">
       <Eyebrow>Parlons de votre projet</Eyebrow>
-      <h1 style="font-size:clamp(36px,4.8vw,60px);margin-top:16px">
-        Et si on commençait par <em style="font-style:normal;color:var(--green)">un café</em>&nbsp;?
+      <h1 class="ct-title mt-4">
+        Et si on commençait par <em class="ct-hl">un café</em>&nbsp;?
       </h1>
-      <p style="color:var(--ink-soft);font-size:17px;margin-top:18px;max-width:50ch">
+      <p class="ct-lede text-ink-soft mt-4.5 max-w-[50ch]">
         Vente, achat ou simple curiosité sur la valeur de votre bien : le premier échange est
         toujours offert, et sans engagement.
       </p>
@@ -155,6 +155,7 @@ const faqLd = faqPage(faqItems.map((f) => ({ question: f.q, reponse: f.a })));
         <ContactForm
           client:visible
           tone="light"
+          headingLevel={2}
           step="Formulaire de contact"
           title="Dites-nous tout."
           intro=""
@@ -167,8 +168,8 @@ const faqLd = faqPage(faqItems.map((f) => ({ question: f.q, reponse: f.a })));
         />
         <div class="reveal d1">
           <Eyebrow>Après votre message</Eyebrow>
-          <h2 style="margin-top:16px;max-width:24ch">
-            Vous saurez toujours <em style="font-style:normal;color:var(--green)">où en est votre demande</em>.
+          <h2 class="mt-4 max-w-[24ch]">
+            Vous saurez toujours <em class="ct-hl">où en est votre demande</em>.
           </h2>
           <ContactRows rows={coordonnees} points={points} />
         </div>
@@ -179,10 +180,10 @@ const faqLd = faqPage(faqItems.map((f) => ({ question: f.q, reponse: f.a })));
   {/* ── 3 · VISITE À L'AGENCE (blanc) — carte agence, FAQ courte, avis ── */}
   <section class="sec--white">
     <div class="wrap">
-      <div class="section-head reveal" style="text-align:left;max-width:none">
+      <div class="section-head reveal text-left max-w-none">
         <Eyebrow>Venir nous voir</Eyebrow>
-        <h2 style="margin-top:16px">
-          Boulevard Tirou, <em style="font-style:normal;color:var(--green)">sans rendez-vous</em> si vous passez.
+        <h2 class="mt-4">
+          Boulevard Tirou, <em class="ct-hl">sans rendez-vous</em> si vous passez.
         </h2>
       </div>
       <div class="c-visit">
@@ -237,3 +238,12 @@ const faqLd = faqPage(faqItems.map((f) => ({ question: f.q, reponse: f.a })));
     </div>
   </FinalCta>
 </PageLayout>
+
+<style>
+@layer ds {
+  /* à reprendre dans le DS — contact.html : taille du H1, surlignage <em> vert des titres, chapô 17 px (styles inline de la maquette). */
+  .ct-title { font-size: clamp(36px, 4.8vw, 60px); }
+  .ct-hl { font-style: normal; color: var(--green); }
+  .ct-lede { font-size: 17px; }
+}
+</style>

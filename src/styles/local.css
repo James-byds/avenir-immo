@@ -309,7 +309,7 @@ h1, h2, h3, h4.mn, .card-price, .hero h1, .finalcta h2, .ts-score .v, .t-score,
 /* Le panneau chevauche le footer : peu de blanc autour, incrusté entre les deux */
 .finalcta--photo { position: relative; z-index: 2; padding-bottom: 0; margin-bottom: calc(-1 * clamp(70px, 9vw, 128px)); }
 .finalcta--photo .wrap { text-align: left; padding-block: clamp(12px, 1.6vw, 24px) 0; }
-/* Pied de page : vert profond #17413B de la prémaquette (et non --ink-bg #0E2B27) */
+/* Pied de page : vert profond --green de la prémaquette (et non --ink-bg) */
 .footer { background: var(--green); padding-top: clamp(34px, 4vw, 52px); }
 /* Le panneau CTA chevauche le pied (margin-bottom négatif de .finalcta--photo) :
    sur ces pages seulement, le pied réserve la hauteur du chevauchement en plus
@@ -446,7 +446,7 @@ body:has(.finalcta--straddle) .footer { padding-top: calc(clamp(34px, 4vw, 52px)
 
 .cform { background: var(--bg); color: var(--ink); border-radius: var(--r); padding: clamp(26px, 3.5vw, 40px); box-shadow: var(--sh-lg); }
 .cform-step { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); }
-.cform h3 { font-size: 24px; font-weight: 600; margin-top: 14px; }
+.cform h3, .cform h2 { font-size: 24px; font-weight: 600; margin-top: 14px; }
 .cform .cf-sub { font-size: 13.5px; color: var(--ink-soft); margin-top: 8px; line-height: 1.55; max-width: 46ch; }
 .cf-consent { display: flex; gap: 11px; align-items: flex-start; margin-top: 18px; cursor: pointer; }
 .cf-consent i { flex: none; width: 17px; height: 17px; margin-top: 1px; border: 1px solid var(--line); border-radius: 5px; background: var(--bg); transition: background .2s, border-color .2s; }
@@ -1251,7 +1251,7 @@ body:has(.finalcta--straddle) .footer { padding-top: calc(clamp(34px, 4vw, 52px)
 .guide-pt { padding: 24px 0 26px; border-top: 1px solid var(--line); }
 .guide-pt .a-num {
   display: block; font-family: var(--mono); font-size: 11.5px; letter-spacing: .14em;
-  color: var(--green-l); margin-bottom: 12px;
+  color: var(--green); margin-bottom: 12px; /* --green-l sur blanc = 3,0:1 (recette globale : DS ≻ maquette) */
 }
 .guide-pt h3 {
   font-family: var(--serif); font-stretch: var(--wide); font-weight: 700;
@@ -1492,6 +1492,10 @@ a[data-planned]:hover { border-style: dashed; }
      localités (CTA final après le maillage) se lit d'un bloc — reprise en
      classe des style="padding-top:clamp(…)" que la référence posait en
      attribut sur ses deux dernières sections ;
+   · .sec--short-top  variante « haut seulement » (recette globale, vigilance
+     17) : blog.html et article.html ne raccourcissent que le padding haut —
+     employée par le corps de l'article de blog ; le hub blog garde sa valeur
+     propre (34/4vw/56) en scoped ;
    · .sec--tint .ll-mesh  le bloc maillage garde son fond --bg-soft, qui se
      fond dans le vert tendre : blanc bordé --line, comme toute surface
      interne posée sur une section teintée (règle d'adhérence nº 4) ;
@@ -1500,6 +1504,7 @@ a[data-planned]:hover { border-style: dashed; }
      la référence maison-a-vendre-liege.html (valeur inchangée).
    ============================================================ */
 .sec--short { padding-block: clamp(28px, 3.5vw, 44px); }
+.sec--short-top { padding-top: clamp(28px, 3.5vw, 44px); }
 .sec--tint .ll-mesh { background: #fff; border: 1px solid var(--line); }
 .page-head--band .section-head p strong { color: #fff; }
 
@@ -1561,3 +1566,71 @@ a[data-planned]:hover { border-style: dashed; }
    consentement (référence : <a style="color:inherit;text-decoration:
    underline"> dans .cf-consent / .est-fineprint — valeurs inchangées). */
 .cf-consent span a { color: inherit; text-decoration: underline; }
+
+/* ============================================================
+   Ligne de preuve sous les points de l'estimateur (index.html et
+   estimation.html : <p style="font-family:var(--mono);font-size:11.5px;
+   letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.55)">
+   inline dans la maquette, valeurs inchangées) — à reprendre dans le DS
+   (.est-proof, à côté de .est-points).
+   ============================================================ */
+.est-proof { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+
+/* ============================================================
+   Recette globale (24 sept. 2026) — contrastes, focus visible, cibles
+   tactiles, toolbar mobile. Règle DS ≻ maquette (précédent F5/F6).
+   À reprendre dans le DS, bloc par bloc.
+   ============================================================ */
+/* Contrastes (axe, sérieux) — texte courant ≥ 4,5:1 */
+.footer-bottom { color: rgba(255,255,255,.66); }                 /* 13 px sur encre : .5 → 4,2:1, .66 → 6,0:1 */
+.proc-panel .tl-end span { color: var(--green-soft); }           /* --green-l sur encre : 4,3:1 */
+.seg button:not(.on) .n { opacity: 1; color: var(--ink-soft); }  /* 10,5 px : opacité .65 ≈ 2,9:1 */
+
+/* Focus visible — anneau vert profond + halo --green-soft (lisible sur blanc,
+   vert tendre et encre). Cibles sans règle :focus-visible dans le DS. */
+.btn:focus-visible, .hs-field input:focus-visible, .hs-field select:focus-visible,
+.member--contact .m-photo:focus-visible, .lg-switch a:focus-visible, .lg-toc a:focus-visible,
+.writer:focus-visible, .q-pill:focus-visible, .ll-pills a:focus-visible, .seg button:focus-visible,
+.card-fav:focus-visible, .footer a:focus-visible, .nav a:focus-visible, .breadcrumb a:focus-visible,
+.link-arrow:focus-visible, .burger:focus-visible, .drawer a:focus-visible, .drawer button:focus-visible {
+  outline: 2px solid var(--green); outline-offset: 3px; box-shadow: 0 0 0 3px var(--green-soft);
+}
+.sec--ink .btn:focus-visible, .on-dark .btn:focus-visible, .footer a:focus-visible, .estimate .btn:focus-visible,
+.contact-band .btn:focus-visible, .finalcta--deep .btn:focus-visible, .process--light .btn:focus-visible {
+  outline-color: var(--green-l);
+}
+
+/* Cibles tactiles ≥ 44 px (WCAG 2.5.5) SANS changer la mise en page : la zone
+   cliquable est étendue par un pseudo-élément absolu (ou un padding sur les
+   éléments inline, sans effet sur la ligne). Mesuré à 375 px en recette. */
+.header .burger, .footer .f-social a, .footer .f-hq-link, .seg button, .sh-btns a, .sh-btns button,
+.ll-pills a, .link-arrow, .agent-tel, .hs-dd-btn, .hs-locate, .vil-pick, .vil-reset,
+.breadcrumb a, .ts-cta .t-write { position: relative; }
+.header .burger::after { content: ""; position: absolute; inset: -6px -3px; }             /* 38 × 32 */
+.card-fav::after, .footer .f-social a::after, .seg button::after, .sh-btns a::after,
+.sh-btns button::after, .ll-pills a::after, .hs-tab::after { content: ""; position: absolute; inset: -4px; } /* 38-40 → 46 */
+.footer .f-hq-link::after, .link-arrow::after, .agent-tel::after, .hs-locate::after,
+.hs-dd-btn::after, .vil-pick::after { content: ""; position: absolute; inset: -12px 0; }   /* 18-27 */
+.vil-reset::after { content: ""; position: absolute; inset: -14px 0; }                    /* 17 */
+.prop-grid .card-body .ll-pills a::after { position: static; inset: auto; }               /* MarketCard : ::after = flèche (l. ~1428), pas de zone étendue */
+.breadcrumb a::after, .ts-cta .t-write::after { content: ""; position: absolute; inset: -13px 0; } /* 18-21 (items flex : pas de padding) */
+.footer-top ul:not(.f-hq) a { padding-block: 11px; }                                       /* liens inline 23 px des colonnes : le padding vertical n'affecte pas la ligne */
+.footer ul.f-hq a, .footer .f-zones-list a { position: relative; }                        /* items de grille : pseudo-élément, pas de padding */
+.footer ul.f-hq a::after { content: ""; position: absolute; inset: -11px 0; }
+.footer .f-zones-list a::after { content: ""; position: absolute; inset: -6px 0; }         /* pilules 34 px */
+
+/* Toolbar : le menu du tri (.dd--inline, min-width 220 px ancré à gauche)
+   débordait le viewport à droite — 1 457 px à 1 440, 444 px à 375 sur les
+   localités, même défaut sur la référence : ancré à droite (motif du hub
+   blog généralisé). À 375 px, le seg passe à la ligne au lieu de déborder
+   (avis, biens, localités) et tout menu prend la largeur de son select. */
+.toolbar-right .dd-menu { left: auto; right: 0; }
+@media (max-width: 640px) {
+  .tool-group { min-width: 0; max-width: 100%; }
+  .seg { flex-wrap: wrap; }
+  .dd--inline .dd-menu { min-width: 0; left: 0; right: 0; }
+}
+
+/* Leaflet (CSS tiers, hors couche) : liens d'attribution soulignés — axe
+   link-in-text-block. !important car leaflet.css n'est pas dans la couche ds. */
+.leaflet-container .leaflet-control-attribution a { text-decoration: underline !important; }
