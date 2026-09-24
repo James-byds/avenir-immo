@@ -1231,10 +1231,12 @@ const listingCfg = {
 </PageLayout>
 
 <style>
+@layer ds {
   /* à reprendre dans le DS — maison-a-vendre-liege.html / quartier.html : tailles des H1 et du H2 de la FAQ, chapô 18 px, ligne de source du marché (styles inline de la maquette). */
   .q-title { font-size: clamp(32px, 4.2vw, 56px); }
   .lo-title { font-size: clamp(34px, 4.6vw, 60px); }
   .lo-chapo { font-size: 18px; }
   .lo-faq-title { font-size: clamp(28px, 3.6vw, 44px); }
   .lo-src { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: .05em; text-transform: uppercase; }
+}
 </style>

@@ -22,6 +22,8 @@ export interface ContactFormProps {
   tone?: "light" | "ink";
   step?: string;
   title?: string;
+  /** Niveau du titre de carte — 2 quand aucun h2 ne précède le formulaire (page contact). */
+  headingLevel?: 2 | 3;
   intro?: string;
   subjects?: string[];
   subject?: string;
@@ -48,6 +50,7 @@ export default function ContactForm(props: ContactFormProps) {
     tone = "light",
     step: stepProp,
     title: titleProp,
+    headingLevel = 3,
     intro: introProp,
     subjects = DEFAULT_SUBJECTS,
     subject: subjectProp,
@@ -70,6 +73,7 @@ export default function ContactForm(props: ContactFormProps) {
      bandes des pages de localité n'en ont pas, cf. maison-a-vendre-liege). */
   const step = stepProp ?? "Écrivez-nous";
   const title = titleProp ?? "Parlons de votre projet";
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   const intro = introProp ?? "Réponse sous 24 h ouvrées, par un conseiller de votre commune.";
 
   const [subject, setSubject] = useState(subjectProp ?? subjects[0]);
@@ -205,14 +209,14 @@ export default function ContactForm(props: ContactFormProps) {
       {!sent && tone === "light" && (
         <>
           <span className="cform-step">{step}</span>
-          <h3>{title}</h3>
+          <Heading>{title}</Heading>
           {intro && <p className="cf-sub">{intro}</p>}
         </>
       )}
       {!sent && tone === "ink" && (stepProp || titleProp || introProp) && (
         <>
           {stepProp && <span className="cform-step">{stepProp}</span>}
-          {titleProp && <h3>{titleProp}</h3>}
+          {titleProp && <Heading>{titleProp}</Heading>}
           {introProp && <p className="cf-sub">{introProp}</p>}
         </>
       )}

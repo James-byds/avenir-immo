@@ -81,6 +81,7 @@ const initiales = name
 }
 
 <style>
+@layer ds {
   /* .au-quote : PAS de recopie ici — local.css (.author-hero .au-quote,
      l. 93-107) porte déjà la version finale de la maquette ; une règle scoped
      de même spécificité, inlinée après le bundle, l'écraserait (recette F6). */
@@ -89,4 +90,5 @@ const initiales = name
      tous les rédacteurs ont un portrait). Même traitement que .byline .b-av
      (site.css), à l'échelle du disque de 120-168 px. À reprendre dans le DS. */
   .author-hero .ah-aside .b-av.b-av--init { display: grid; place-items: center; color: var(--green); font-weight: 700; font-size: clamp(32px, 4vw, 44px); letter-spacing: .02em; }
+}
 </style>

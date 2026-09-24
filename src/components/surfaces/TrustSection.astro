@@ -228,6 +228,7 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
 }
 
 <style>
+@layer ds {
   /* Dénominateur « /5 » du score (style inline de la maquette) — à reprendre dans le DS. */
   .t-den { font-size: 60%; color: var(--ink-mute); }
   /* Référence (maison-a-vendre-liege.html : <a style="color:inherit"> dans le
@@ -235,4 +236,5 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
   .t-count a {
     color: inherit;
   }
+}
 </style>

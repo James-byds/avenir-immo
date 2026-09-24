@@ -155,6 +155,7 @@ const faqLd = faqPage(faqItems.map((f) => ({ question: f.q, reponse: f.a })));
         <ContactForm
           client:visible
           tone="light"
+          headingLevel={2}
           step="Formulaire de contact"
           title="Dites-nous tout."
           intro=""
@@ -239,8 +240,10 @@ const faqLd = faqPage(faqItems.map((f) => ({ question: f.q, reponse: f.a })));
 </PageLayout>
 
 <style>
+@layer ds {
   /* à reprendre dans le DS — contact.html : taille du H1, surlignage <em> vert des titres, chapô 17 px (styles inline de la maquette). */
   .ct-title { font-size: clamp(36px, 4.8vw, 60px); }
   .ct-hl { font-style: normal; color: var(--green); }
   .ct-lede { font-size: 17px; }
+}
 </style>

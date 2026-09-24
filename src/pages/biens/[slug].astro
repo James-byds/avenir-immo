@@ -416,7 +416,8 @@ const msgSucces = `${conseiller.prenom} vous recontacte sous 24 h ouvrées pour 
       if (!okN || !okE) return;
       /* Marquage de la confirmation repris de la référence — ses styles inline
          passés en classes globales .ok-title / .ok-text (le HTML est injecté,
-         un <style> scoped ne le couvrirait pas) ; à reprendre dans le DS (.agent-ok). */
+         un bloc de styles scoped ne le couvrirait pas) ; à reprendre dans le
+         DS (.agent-ok). */
       form.innerHTML =
         '<div class="agent-ok"><div class="ed-ic">✓</div>' +
         '<h3 class="serif ok-title">Demande envoyée</h3>' +
@@ -431,6 +432,7 @@ const msgSucces = `${conseiller.prenom} vous recontacte sous 24 h ouvrées pour 
 </script>
 
 <style>
+@layer ds {
   /* Écarts recopiés de la référence, valeurs inchangées — à reprendre dans le DS :
      · .listing-loc .u-dot : la puce n'est dimensionnée que dans .utility
        (site.css:158) ; sans cette règle elle est invisible (0 × 0).
@@ -448,11 +450,14 @@ const msgSucces = `${conseiller.prenom} vous recontacte sous 24 h ouvrées pour 
     font-size: 60%;
     color: var(--ink-mute);
   }
+}
 </style>
 
 <style is:global>
+@layer ds {
   /* à reprendre dans le DS — bien.html : confirmation « Demande envoyée » injectée
      par script (styles inline de la maquette, valeurs inchangées). */
   .agent-ok .ok-title { font-size: 22px; }
   .agent-ok .ok-text { color: var(--ink-soft); font-size: 14.5px; margin-top: 10px; }
+}
 </style>

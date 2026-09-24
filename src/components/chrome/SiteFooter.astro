@@ -47,12 +47,12 @@ const zones = [
 ---
 
 <footer class="footer">
-  <img class="f-mark" src="/assets/signe-v-blanc.png" alt="" aria-hidden="true" />
+  <img class="f-mark" src="/assets/signe-v-blanc.png" alt="" aria-hidden="true" width="1222" height="1359" />
   <div class="wrap">
     <div class="footer-top">
       <div class="f-brand">
         <a href="/" class="brand" aria-label="Avenir Immobilier, accueil">
-          <img src="/assets/logo-lavenir-immobilier-blanc.png" alt="L'aVenir immobilier" class="brand-logo" />
+          <img src="/assets/logo-lavenir-immobilier-blanc.png" alt="L'aVenir immobilier" class="brand-logo" width="806" height="735" />
         </a>
         <p class="f-about">
           Agence immobilière de prestige à Charleroi. Vente, achat, estimation
@@ -62,7 +62,7 @@ const zones = [
       </div>
 
       <div>
-        <h4>Agence</h4>
+        <h2 class="f-title">Agence</h2>
         <ul>
           <li><a href="/biens">Nos biens</a></li>
           <li><a href="/equipe">Notre équipe</a></li>
@@ -73,7 +73,7 @@ const zones = [
       </div>
 
       <div>
-        <h4>Quartiers</h4>
+        <h2 class="f-title">Quartiers</h2>
         <ul>
           {quartiers.map((q) => (
             <li><a href={`/${q.slug}`}>{q.ancre}</a></li>
@@ -83,7 +83,7 @@ const zones = [
       </div>
 
       <div>
-        <h4>Notre siège social</h4>
+        <h2 class="f-title">Notre siège social</h2>
         <ul class="f-hq">
           <li>
             <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 3.5h3l1.4 3.5-1.9 1.4a12 12 0 0 0 5.9 5.9l1.4-1.9 3.5 1.4v3c0 1-.8 1.8-1.8 1.7C10.6 18.1 5.9 13.4 4.5 5.3c-.1-1 .7-1.8 1.7-1.8z"/></svg>
@@ -103,7 +103,7 @@ const zones = [
     </div>
 
     <div class="f-zones">
-      <h4 class="eyebrow">Nos zones d'intervention</h4>
+      <h2 class="eyebrow f-zones-title">Nos zones d'intervention</h2>
       <ul class="f-zones-list">
         {zones.map((z) => (
           <li><a href="/biens">{z}</a></li>
@@ -139,6 +139,12 @@ const zones = [
 </footer>
 
 <style>
+@layer ds {
+  /* Titres de colonnes en <h2> (hiérarchie sans trou : après les h2 du corps,
+     un h4 sautait un niveau — axe heading-order sur toutes les pages). Le DS
+     les style en `.footer h4` : mêmes valeurs recopiées. À reprendre dans le DS. */
+  .footer .f-title { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow); margin-bottom: 20px; line-height: 1.06; }
+  .footer .f-zones-title { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; margin-bottom: 20px; line-height: 1.06; }
   /* Lien avis Google : la référence pose color:inherit et l'étoile ambre
      #E9A93B en styles inline — recopiés ici en scoped, valeurs inchangées.
      À reprendre dans le DS (l'ambre des étoiles n'est pas tokenisé). */
@@ -148,4 +154,5 @@ const zones = [
   .fb-star {
     color: #e9a93b;
   }
+}
 </style>

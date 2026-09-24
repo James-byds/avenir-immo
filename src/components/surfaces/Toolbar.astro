@@ -130,6 +130,7 @@ const segActive = segments?.value ?? segments?.options[0]?.id;
 </div>
 
 <style>
+@layer ds {
   /* Styles inline de la référence (biens.html), valeurs inchangées —
      à reprendre dans le DS (mêmes valeurs que .q-toolbar de local.css).
      Préfixés .toolbar : le scope Astro passe par :where() (spécificité
@@ -152,4 +153,5 @@ const segActive = segments?.value ?? segments?.options[0]?.id;
   .toolbar .tool-count {
     padding-bottom: 13px;
   }
+}
 </style>

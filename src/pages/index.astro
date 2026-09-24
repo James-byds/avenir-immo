@@ -338,7 +338,7 @@ const SOURCE_MAQUETTE = "À sourcer — valeurs maquette · 23 septembre 2026";
       <div class="props-head reveal">
         <SectionHead eyebrow="Sélection du moment" title="Nos biens d'exception" />
         <div class="props-tools">
-          <div class="filters" id="filters" role="tablist" aria-label="Filtrer les biens">
+          <div class="filters" id="filters" role="group" aria-label="Filtrer les biens">
             <button class="on" data-f="all">Tous</button>
             <button data-f="vente">À vendre</button>
             <button data-f="location">À louer</button>
@@ -571,9 +571,9 @@ const SOURCE_MAQUETTE = "À sourcer — valeurs maquette · 23 septembre 2026";
         <h2>Le sur-mesure, pas la série.</h2>
         <p class="lede">Nous prenons peu de mandats, pour les mener pleinement. Chaque bien reçoit une stratégie qui lui est propre — du choix des mots à l'heure de la première visite.</p>
         <div class="checks">
-          <div class="check"><span class="ck">01</span><div><h4>Un seul interlocuteur</h4><p>Le conseiller qui estime votre bien est celui qui fait visiter et négocie. Aucune perte d'information.</p></div></div>
-          <div class="check"><span class="ck">02</span><div><h4>Une mise en valeur signée</h4><p>Home-staging, photographie, plans 3D et reportage vidéo réalisés par nos partenaires de métier.</p></div></div>
-          <div class="check"><span class="ck">03</span><div><h4>Un réseau d'acquéreurs réels</h4><p>Un fichier qualifié d'acheteurs et d'investisseurs prêts à se positionner, en Belgique et à l'international.</p></div></div>
+          <div class="check"><span class="ck">01</span><div><h3>Un seul interlocuteur</h3><p>Le conseiller qui estime votre bien est celui qui fait visiter et négocie. Aucune perte d'information.</p></div></div>
+          <div class="check"><span class="ck">02</span><div><h3>Une mise en valeur signée</h3><p>Home-staging, photographie, plans 3D et reportage vidéo réalisés par nos partenaires de métier.</p></div></div>
+          <div class="check"><span class="ck">03</span><div><h3>Un réseau d'acquéreurs réels</h3><p>Un fichier qualifié d'acheteurs et d'investisseurs prêts à se positionner, en Belgique et à l'international.</p></div></div>
         </div>
       </div>
     </div>
@@ -769,6 +769,10 @@ const SOURCE_MAQUETTE = "À sourcer — valeurs maquette · 23 septembre 2026";
 </PageLayout>
 
 <style>
+@layer ds {
   /* à reprendre dans le DS — index.html : taille du H2 de la FAQ (style inline de la maquette). */
   .hp-faq-title { font-size: clamp(32px, 4.4vw, 52px); }
+  /* .check en h3 (h2 → h4 sautait un niveau) — valeurs de `.check h4` du DS. */
+  .check h3 { font-family: var(--sans); font-size: 16.5px; font-weight: 700; letter-spacing: 0; }
+}
 </style>

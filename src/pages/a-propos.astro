@@ -276,7 +276,7 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
         </div>
       </div>
       <figure class="reveal d2 about-photo">
-        <img src="/assets/equipe-avenir.png" alt="L'équipe Avenir Immobilier au complet, réunie dans le parc de Loverval" />
+        <img src="/assets/equipe-avenir.png" alt="L'équipe Avenir Immobilier au complet, réunie dans le parc de Loverval" width="1600" height="1209" />
         <figcaption>L'équipe au complet · été 2026</figcaption>
       </figure>
     </div>
@@ -412,6 +412,7 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
 </PageLayout>
 
 <style is:global>
+@layer ds {
   /* ── À propos — recopies de la référence a-propos.html (styles inline de la
      page), valeurs inchangées. local.css ne porte que les surcharges mobiles
      de .about-hero/.about-dl/.about-photo : la base manque — à reprendre dans
@@ -447,4 +448,5 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
   /* Encart recrutement sur section teintée : teinté sur teinté = invisible —
      blanc bordé --line (règle DS n° 4, même motif que .page-head--tint). */
   .sec--tint .enclair { background: #fff; border-color: var(--line); }
+}
 </style>

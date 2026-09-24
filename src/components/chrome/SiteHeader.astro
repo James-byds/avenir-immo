@@ -41,8 +41,8 @@ const nav: NavItem[] = [
 <header id="header" class={`header${solid ? " header--solid" : ""}`}>
   <div class="wrap nav">
     <a href="/" class="brand" aria-label="Avenir Immobilier, accueil">
-      <img src="/assets/logo-lavenir-immobilier.png" alt="L'aVenir immobilier" class="brand-logo brand-logo--ink" />
-      <img src="/assets/logo-lavenir-immobilier-blanc.png" alt="" aria-hidden="true" class="brand-logo brand-logo--rev" />
+      <img src="/assets/logo-lavenir-immobilier.png" alt="L'aVenir immobilier" class="brand-logo brand-logo--ink" width="695" height="652" />
+      <img src="/assets/logo-lavenir-immobilier-blanc.png" alt="" aria-hidden="true" class="brand-logo brand-logo--rev" width="806" height="735" />
     </a>
     <nav class="nav-links" aria-label="Navigation principale">
       {nav.map((n) => <a href={n.href} class={active === n.href ? "on" : undefined} data-planned={n.planned ? "" : undefined}>{n.label}</a>)}
@@ -69,7 +69,7 @@ const nav: NavItem[] = [
      en recette comme valeur d'exécution. -->
 <div class="drawer" id="drawer" aria-hidden="true" style="transform:translateX(100%);visibility:hidden">
   <div class="drawer-top">
-    <img src="/assets/logo-lavenir-immobilier.png" alt="L'aVenir immobilier" class="brand-logo" />
+    <img src="/assets/logo-lavenir-immobilier.png" alt="L'aVenir immobilier" class="brand-logo" width="695" height="652" />
     <button id="drawerClose" class="drawer-close" type="button" aria-label="Fermer">×</button>
   </div>
   <nav aria-label="Navigation mobile">
@@ -79,6 +79,7 @@ const nav: NavItem[] = [
 </div>
 
 <style>
+@layer ds {
   /* Point vert du téléphone : la référence le pose en style inline
      (background:var(--green)) — défaut de maquette recopié ici en scoped,
      valeur inchangée. À reprendre dans le DS (.nav-phone .u-dot). */
@@ -89,4 +90,22 @@ const nav: NavItem[] = [
     background: var(--green);
     display: inline-block;
   }
+}
 </style>
+
+<script>
+  /* Complément clavier du tiroir — ds-script.js ouvre/ferme mais ne
+     synchronise pas aria-expanded, ne déplace pas le focus et ignore Échap
+     (vigilance 20 du handoff). À reprendre dans le DS. */
+  const burger = document.getElementById("burger");
+  const drawer = document.getElementById("drawer");
+  const closeBtn = document.getElementById("drawerClose");
+  const sync = () =>
+    burger?.setAttribute("aria-expanded", drawer?.classList.contains("open") ? "true" : "false");
+  burger?.addEventListener("click", () => setTimeout(() => { sync(); closeBtn?.focus(); }, 60));
+  closeBtn?.addEventListener("click", () => setTimeout(() => { sync(); burger?.focus(); }, 0));
+  drawer?.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setTimeout(sync, 0)));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && drawer?.classList.contains("open")) closeBtn?.click();
+  });
+</script>

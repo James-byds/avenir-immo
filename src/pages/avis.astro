@@ -206,6 +206,7 @@ const agentLd = {
 </PageLayout>
 
 <style is:global>
+@layer ds {
   /* ── à reprendre dans le DS — héros de avis.html : styles inline du H1
      (taille), du surlignage <em> et du chapô (17 px), passés en classes. ── */
   .av-hero .av-title { font-size: clamp(36px, 4.8vw, 64px); }
@@ -222,4 +223,5 @@ const agentLd = {
      sont blancs — prévus pour la synthèse sombre .trust-sum — et
      disparaissent sur le panneau blanc .sc-body. Règle DS n°3 : encre. */
   .sc-body .ts-bar { color: var(--ink-soft); }
+}
 </style>

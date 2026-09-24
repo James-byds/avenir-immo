@@ -243,6 +243,7 @@ const itemListLd = {
         class="mt-6.5"
       />
 
+      <h2 class="sr-only">Les biens disponibles</h2>
       <SkeletonGrid id="skGrid" count={6} class="mt-10" />
 
       <EmptyState
@@ -394,6 +395,8 @@ const itemListLd = {
 </PageLayout>
 
 <style>
+@layer ds {
   /* à reprendre dans le DS — biens.html : taille du H2 « off-market » (style inline de la maquette). */
   .bl-offmarket { font-size: clamp(32px, 4.6vw, 60px); }
+}
 </style>

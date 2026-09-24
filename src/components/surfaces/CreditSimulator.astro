@@ -94,6 +94,7 @@ const tauxLabel = taux.toFixed(2).replace(".", ",").replace(/,00$/, "") + " %";
 </div>
 
 <style>
+@layer ds {
   /* Bloc résultat : styles inline de la référence, valeurs inchangées —
      à reprendre dans le DS. */
   .sim-out {
@@ -137,6 +138,7 @@ const tauxLabel = taux.toFixed(2).replace(".", ",").replace(/,00$/, "") + " %";
   .sim-legal strong {
     color: var(--ink);
   }
+}
 </style>
 
 <script>

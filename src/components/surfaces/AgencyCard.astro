@@ -158,6 +158,7 @@ const telAttr = phone ? `tel:${phone.replace(/[^+0-9]/g, "")}` : undefined;
 </article>
 
 <style>
+@layer ds {
   /* Photo cliente dans le cadre média (ratio de la référence) — à reprendre dans le DS. */
   .agc-img { display: block; width: 100%; aspect-ratio: 16 / 8.2; object-fit: cover; }
   /* Référence (a-propos.html : liens tel/mail des ag-rows en color:inherit
@@ -165,4 +166,5 @@ const telAttr = phone ? `tel:${phone.replace(/[^+0-9]/g, "")}` : undefined;
   .ag-rows dd a {
     color: inherit;
   }
+}
 </style>
