@@ -1,4 +1,113 @@
 ---
-// Stub — page «Mentions légales». À implémenter (voir handoff / DEMARRAGE.md).
+/* Mentions légales — gabarit 14. Aucune référence maquette pour ce document :
+   structure du modèle legale.html (confidentialité), textes rédigés de
+   manière factuelle et prudente, chaque bloc marqué « À valider par le
+   client ». Identité = ce que le chrome affiche (SiteFooter / TopBar /
+   lib/seo) ; BCE, assurance et hébergeur jamais inventés : « [à compléter] ».
+   Version 1.0 datée du jour de rédaction (24 septembre 2026). */
+import LegalLayout from "../../layouts/LegalLayout.astro";
+import EnClair from "../../components/surfaces/EnClair.astro";
+
+const toc = [
+  { id: "s1", label: "Éditeur du site" },
+  { id: "s2", label: "Hébergement" },
+  { id: "s3", label: "Propriété intellectuelle" },
+  { id: "s4", label: "Contenu & responsabilité" },
+  { id: "s5", label: "Médiation & réclamation" },
+  { id: "s6", label: "Crédits" },
+];
 ---
-<p>Stub : Mentions légales</p>
+
+<!-- À valider par le client : version et date d'entrée en vigueur -->
+<LegalLayout
+  doc="mentions"
+  titre="Mentions légales"
+  description="Éditeur, hébergeur, agrément IPI, propriété intellectuelle et médiation : les mentions légales du site d'Avenir Immobilier, agence immobilière à Charleroi."
+  version="1.0"
+  date="2026-09-24"
+  toc={toc}
+  cta={{
+    eyebrow: "Réponse sous 24 h ouvrées · sans engagement",
+    titre: "Une question sur ces mentions ?",
+    texte: "Écrivez-nous : un membre de l'agence vous répond, pas un robot.",
+    label: "Nous écrire",
+    href: "/contact",
+  }}
+>
+  <section id="s1">
+    <h2><span class="n">01</span>Éditeur du site</h2>
+    <EnClair>Ce site est édité par Avenir Immobilier, agence immobilière agréée IPI à Charleroi. Voici qui nous sommes et comment nous joindre.</EnClair>
+    <!-- À valider par le client : forme juridique (SRL, cf. politique de confidentialité), adresse du siège (la maquette affiche aussi Place Roger Desaise 5, 6032 Mont-sur-Marchienne au pied de page), numéro de téléphone (071 22 11 41 au pied de page, +32 71 32 14 70 dans l'en-tête), BCE/TVA, assurance RC. -->
+    <dl class="lg-rows">
+      <div class="legal"><dt>Dénomination</dt><dd>Avenir Immobilier SRL</dd></div>
+      <div class="legal"><dt>Siège social</dt><dd>Boulevard Tirou 102, 6000 Charleroi</dd></div>
+      <div class="legal"><dt>Téléphone</dt><dd><a href="tel:+3271221141">071 22 11 41</a></dd></div>
+      <div class="legal"><dt>E-mail</dt><dd><a href="mailto:info@avenir-immobilier.be">info@avenir-immobilier.be</a></dd></div>
+      <div class="legal"><dt>BCE / TVA</dt><dd>[numéro d'entreprise à compléter]</dd></div>
+      <div class="legal"><dt>Agrément IPI</dt><dd>Agent immobilier agréé n° 509 217 — Institut professionnel des agents immobiliers</dd></div>
+      <div class="legal"><dt>Assurance RC professionnelle</dt><dd>[compagnie et numéro de police à compléter]</dd></div>
+      <div class="legal"><dt>Référent vie privée</dt><dd><a href="mailto:privacy@avenir-immobilier.be">privacy@avenir-immobilier.be</a></dd></div>
+    </dl>
+    <p>L'activité d'agent immobilier est une profession réglementée en Belgique. Avenir Immobilier est soumise au code de déontologie de l'Institut professionnel des agents immobiliers (IPI) et couverte par une assurance de responsabilité civile professionnelle et un cautionnement, comme l'exige l'agrément.</p>
+  </section>
+
+  <section id="s2">
+    <h2><span class="n">02</span>Hébergement</h2>
+    <!-- À valider par le client : identité et adresse de l'hébergeur -->
+    <dl class="lg-rows">
+      <div class="legal"><dt>Hébergeur</dt><dd>[nom de l'hébergeur à compléter]</dd></div>
+      <div class="legal"><dt>Adresse</dt><dd>[adresse de l'hébergeur à compléter]</dd></div>
+      <div class="legal"><dt>Localisation des serveurs</dt><dd>Union européenne</dd></div>
+    </dl>
+    <p>Le site est un site statique : il ne comporte ni espace client ni base de données accessible en ligne. Les données que vous nous transmettez par formulaire sont traitées dans les conditions décrites par notre <a href="/legal/confidentialite">politique de confidentialité</a>.</p>
+  </section>
+
+  <section id="s3">
+    <h2><span class="n">03</span>Propriété intellectuelle</h2>
+    <EnClair>Textes, photos, logo et signe V appartiennent à Avenir Immobilier ou à leurs auteurs. Vous pouvez les consulter, pas les réutiliser sans accord écrit.</EnClair>
+    <!-- À valider par le client -->
+    <p>L'ensemble des éléments du site — textes, descriptifs de biens, photographies, plans, illustrations, logo, signe V, charte graphique et structure — est protégé par le droit d'auteur et le droit des marques. Il est la propriété d'Avenir Immobilier ou fait l'objet d'une autorisation d'utilisation.</p>
+    <ul>
+      <li><strong>Usage autorisé :</strong> consultation privée et impression pour votre propre projet immobilier.</li>
+      <li><strong>Usage interdit sans accord écrit préalable :</strong> reproduction, diffusion, extraction systématique des annonces, réutilisation des photographies, y compris sur les réseaux sociaux ou d'autres portails.</li>
+      <li><strong>Marque :</strong> le nom « Avenir Immobilier » et le signe V ne peuvent être reproduits ni imités.</li>
+    </ul>
+  </section>
+
+  <section id="s4">
+    <h2><span class="n">04</span>Contenu du site et responsabilité</h2>
+    <EnClair>Les annonces sont données à titre indicatif : seul le compromis ou le bail signé fait foi. Nous corrigeons toute erreur signalée dans les meilleurs délais.</EnClair>
+    <!-- À valider par le client -->
+    <ul>
+      <li><strong>Annonces :</strong> les descriptifs, surfaces, prix et disponibilités sont communiqués sous réserve d'erreur, de modification ou de retrait, et ne constituent pas une offre contractuelle. Les prix s'entendent hors frais d'acte et droits d'enregistrement.</li>
+      <li><strong>Performance énergétique :</strong> l'indice PEB affiché reprend le certificat établi pour le bien ; il est indicatif et n'engage que le certificateur agréé.</li>
+      <li><strong>Estimations et simulations :</strong> les fourchettes et outils proposés sur le site sont des aides à la décision, non des expertises au sens juridique ni des offres de crédit.</li>
+      <li><strong>Liens externes :</strong> les sites tiers vers lesquels nous renvoyons relèvent de la responsabilité de leurs éditeurs.</li>
+      <li><strong>Disponibilité :</strong> nous nous efforçons de maintenir le site accessible en permanence, sans pouvoir garantir l'absence d'interruption liée à la maintenance ou à l'hébergeur.</li>
+    </ul>
+  </section>
+
+  <section id="s5">
+    <h2><span class="n">05</span>Médiation et réclamation</h2>
+    <EnClair>Une difficulté ? Parlez-en d'abord à votre conseiller. Si le désaccord persiste, deux voies existent : l'IPI pour la déontologie, le Service de Médiation pour le Consommateur pour un litige commercial.</EnClair>
+    <!-- À valider par le client -->
+    <ul>
+      <li><strong>À l'agence :</strong> toute réclamation peut être adressée par e-mail à <a href="mailto:info@avenir-immobilier.be">info@avenir-immobilier.be</a> ou par courrier au siège. Nous en accusons réception et y répondons par écrit.</li>
+      <li><strong>Déontologie :</strong> l'Institut professionnel des agents immobiliers (IPI) veille au respect des règles de la profession — <a href="https://www.ipi.be">ipi.be</a>.</li>
+      <li><strong>Litige de consommation :</strong> le Service de Médiation pour le Consommateur peut être saisi gratuitement — <a href="https://mediationconsommateur.be">mediationconsommateur.be</a>. La plateforme européenne de règlement en ligne des litiges est accessible sur <a href="https://ec.europa.eu/consumers/odr">ec.europa.eu/consumers/odr</a>.</li>
+      <li><strong>Données personnelles :</strong> l'Autorité de protection des données reste compétente pour toute plainte relative à vos données (voir la <a href="/legal/confidentialite#s8">politique de confidentialité</a>).</li>
+    </ul>
+  </section>
+
+  <section id="s6">
+    <h2><span class="n">06</span>Crédits</h2>
+    <!-- À valider par le client : conception, licence de la fonte, crédits photo -->
+    <dl class="lg-rows">
+      <div class="legal"><dt>Conception et développement</dt><dd>[prestataire à compléter]</dd></div>
+      <div class="legal"><dt>Typographie</dt><dd>Acumin Variable — [licence à compléter]</dd></div>
+      <div class="legal"><dt>Photographies</dt><dd>© Avenir Immobilier, sauf mention contraire</dd></div>
+      <div class="legal"><dt>Cartographie</dt><dd>© contributeurs OpenStreetMap</dd></div>
+      <div class="legal"><dt>Icônes de partage</dt><dd>Font Awesome Free</dd></div>
+    </dl>
+  </section>
+</LegalLayout>

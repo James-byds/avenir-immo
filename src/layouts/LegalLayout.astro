@@ -1,23 +1,196 @@
 ---
-/* Pages légales : PageLayout + switcher inter-pages + sommaire sticky + prose.
-   Stub de structure — le switcher et le sommaire seront branchés à
-   l'implémentation. */
+/**
+ * LegalLayout — gabarit 14, pages légales /legal/{mentions,confidentialite,
+ * cookies,honoraires}. Réf. : docs/handoff/reference/legale.html (modèle =
+ * politique de confidentialité).
+ *
+ * Structure (alternance) :
+ *   1 PageHead --tint : fil d'Ariane, .lg-head (H1 + .lg-meta « version ·
+ *     date · lecture »), .lg-switch (4 pilules, la courante .on).
+ *   2 .sec--white.sec--cont (padding haut nul — la référence l'écrivait en
+ *     attribut style inline padding-top 0) : .lg-layout = <aside class="lg-toc"> sticky
+ *     (sommaire #toc, scroll-spy de ds-script.js : il lit « #toc a » et
+ *     observe les cibles des ancres — les pages posent donc <section id="s1">…
+ *     avec H2 <span class="n">01</span>Titre) + .toc-action (slot
+ *     « toc-action », défaut = « Estimer mon bien ») ; colonne .lg-article =
+ *     corps de la page, puis l'UNIQUE .lg-cta (bandeau sombre, dans la colonne
+ *     comme la référence).
+ *
+ * Temps de lecture : passé en prop quand la référence l'impose
+ * (confidentialité : « 6 min »), sinon CALCULÉ sur le corps rendu à 200
+ * mots/min — jamais un chiffre posé à la main.
+ *
+ * Head : <title> « {titre} · Avenir Immobilier », canonical /legal/{doc},
+ * JSON-LD WebPage (isPartOf WebSite + publisher = organization() de lib/seo)
+ * et BreadcrumbList, émis depuis les mêmes données que le HTML.
+ */
 import PageLayout from "./PageLayout.astro";
+import PageHead from "../components/chrome/PageHead.astro";
+import Breadcrumb from "../components/core/Breadcrumb.astro";
+import Eyebrow from "../components/core/Eyebrow.astro";
+import Button from "../components/actions/Button.astro";
+import { jsonLd, organization } from "../lib/seo";
+import { formatDate } from "../lib/format";
 
+type Doc = "mentions" | "confidentialite" | "cookies" | "honoraires";
+
+interface TocItem {
+  /** id de la <section> cible (s1, s2…) */
+  id: string;
+  label: string;
+}
+interface Cta {
+  eyebrow: string;
+  titre: string;
+  texte: string;
+  label: string;
+  href: string;
+}
 interface Props {
-  title: string;
-  description?: string;
+  doc: Doc;
+  titre: string;
+  description: string;
+  version: string;
+  /** Date d'entrée en vigueur, ISO AAAA-MM-JJ — affichée en clair, émise en dateModified. */
+  date: string;
+  /** « 6 min » — calculé depuis le corps rendu si absent. */
+  lecture?: string;
+  toc: TocItem[];
+  cta: Cta;
 }
 
-const { title, description } = Astro.props;
+/* Les 4 documents, dans l'ordre du switcher de la référence. */
+const DOCS: Record<Doc, string> = {
+  mentions: "Mentions légales",
+  confidentialite: "Confidentialité",
+  cookies: "Cookies",
+  honoraires: "Honoraires",
+};
+
+const { doc, titre, description, version, date, lecture, toc, cta } = Astro.props;
+
+const canonical = new URL(`/legal/${doc}`, Astro.site).href;
+const title = `${titre} · Avenir Immobilier`;
+
+/* Corps rendu une seule fois : compte des mots, puis injecté tel quel. */
+const html = (await Astro.slots.render("default")) ?? "";
+const mots = html.replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
+const tempsLecture = lecture ?? `${Math.max(1, Math.ceil(mots / 200))} min`;
+
+const num = (i: number) => String(i + 1).padStart(2, "0");
+
+/* ── JSON-LD : mêmes données que l'en-tête affiché ── */
+const org = organization();
+const webPage = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: titre,
+  description,
+  url: canonical,
+  inLanguage: "fr-BE",
+  dateModified: date,
+  isPartOf: { "@type": "WebSite", name: org.name, url: org.url },
+  publisher: { "@type": org["@type"], name: org.name, url: org.url },
+};
+const breadcrumb = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Accueil", item: new URL("/", Astro.site).href },
+    { "@type": "ListItem", position: 2, name: titre, item: canonical },
+  ],
+};
 ---
 
-<PageLayout title={title} description={description}>
-  <div class="legal">
-    {/* TODO: switcher mentions/confidentialité/cookies/honoraires */}
-    <aside>{/* TODO: sommaire sticky */}</aside>
-    <div class="prose">
-      <slot />
+<PageLayout title={title} description={description} canonical={canonical}>
+  <Fragment slot="head">
+    <script is:inline type="application/ld+json" set:html={jsonLd(webPage)} />
+    <script is:inline type="application/ld+json" set:html={jsonLd(breadcrumb)} />
+  </Fragment>
+
+  <!-- ============ 1 · EN-TÊTE (vert tendre) ============ -->
+  <PageHead variant="tint">
+    <Fragment slot="breadcrumb">
+      <Breadcrumb items={[{ label: "Accueil", href: "/" }, { label: titre }]} />
+    </Fragment>
+    <div class="lg-head">
+      <div>
+        <h1>{titre}</h1>
+        <div class="lg-meta">
+          <span>Version {version}</span><span class="dot">·</span>
+          <span>En vigueur le {formatDate(date)}</span><span class="dot">·</span>
+          <span>Lecture {tempsLecture}</span>
+        </div>
+      </div>
+      <nav class="lg-switch" aria-label="Documents légaux">
+        {
+          (Object.keys(DOCS) as Doc[]).map((d) => (
+            <a
+              href={`/legal/${d}`}
+              class={d === doc ? "on" : undefined}
+              aria-current={d === doc ? "page" : undefined}
+            >
+              {DOCS[d]}
+            </a>
+          ))
+        }
+      </nav>
     </div>
-  </div>
+  </PageHead>
+
+  <!-- ============ 2 · SOMMAIRE + CORPS (blanc, continuation) ============ -->
+  <section class="sec--white sec--cont">
+    <div class="wrap">
+      <div class="lg-layout">
+        <aside class="lg-toc" aria-label="Sommaire">
+          <span class="t-label">Sommaire</span>
+          <ol id="toc">
+            {
+              toc.map((t, i) => (
+                <li>
+                  <a href={`#${t.id}`} class={i === 0 ? "on" : undefined}>
+                    <span class="n">{num(i)}</span>{t.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+          <div class="toc-action">
+            <slot name="toc-action">
+              <p>Vous vérifiez avant de nous confier un projet ? Bonne idée. L'étape suivante prend 2 minutes.</p>
+              <a href="/estimation">Estimer mon bien <span class="arr">→</span></a>
+            </slot>
+          </div>
+        </aside>
+
+        <article class="lg-article">
+          <Fragment set:html={html} />
+
+          <div class="lg-cta">
+            <div>
+              <Eyebrow>{cta.eyebrow}</Eyebrow>
+              <h2>{cta.titre}</h2>
+              <p>{cta.texte}</p>
+            </div>
+            <Button href={cta.href}>{cta.label}</Button>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
 </PageLayout>
+
+<style>
+  /* Recopié de la référence legale.html (attributs style inline), valeurs
+     inchangées — à reprendre dans le DS (local.css .lg-head h1 ne fixe pas
+     la taille ; les liens du corps n'ont pas de règle) :
+     · attribut style inline font-size:clamp(28px,3.2vw,42px) sur le H1 de l'en-tête ;
+     · attribut style inline color:var(--green-d);font-weight:600 sur les liens du texte. */
+  .lg-head h1 {
+    font-size: clamp(28px, 3.2vw, 42px);
+  }
+  .lg-article :global(:is(p, li, dd) a) {
+    color: var(--green-d);
+    font-weight: 600;
+  }
+</style>

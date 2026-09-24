@@ -1,4 +1,100 @@
 ---
-// Stub — page «Honoraires». À implémenter (voir handoff / DEMARRAGE.md).
+/* Honoraires et conditions générales — gabarit 14. Aucune référence
+   maquette ni AUCUN barème sourcé (arbitrage orchestrateur) : la .lg-table
+   liste les prestations avec « Sur devis » / « À communiquer », sans
+   montant ni pourcentage. Seule valeur affichée : l'estimation gratuite et
+   sans engagement, telle que le site l'annonce déjà (pied de page
+   « Estimation gratuite », page contact « C'est offert et sans
+   engagement »). Aucune mensualité de crédit citée. Principes de mandat
+   rédigés de manière prudente, chaque bloc marqué « À valider par le
+   client ». Version 1.0 datée du jour de rédaction (24 septembre 2026). */
+import LegalLayout from "../../layouts/LegalLayout.astro";
+import EnClair from "../../components/surfaces/EnClair.astro";
+import LegalTable from "../../components/surfaces/LegalTable.astro";
+
+const toc = [
+  { id: "s1", label: "Nos principes" },
+  { id: "s2", label: "Barème des prestations" },
+  { id: "s3", label: "Le mandat" },
+  { id: "s4", label: "Exigibilité & paiement" },
+  { id: "s5", label: "Réclamation & médiation" },
+];
+
+/* Aucun barème sourcé : valeurs « Sur devis » / « À communiquer » uniquement. */
+const prestations = [
+  { c1: "Vente", c2: "Estimation, dossier, photos, diffusion, visites, négociation, suivi jusqu'à l'acte", c3: "Sur devis" },
+  { c1: "Location", c2: "Mise en location, sélection des candidats, bail, état des lieux d'entrée", c3: "Sur devis" },
+  { c1: "Gestion locative", c2: "Encaissement des loyers, suivi technique, indexation, relation locataire", c3: "Sur devis" },
+  { c1: "Recherche d'un bien", c2: "Mandat de recherche, présélection, accompagnement aux visites et à l'offre", c3: "Sur devis" },
+  { c1: "Vente off-market", c2: "Présentation confidentielle à des acquéreurs qualifiés, sans diffusion publique", c3: "Sur devis" },
+  { c1: "Estimation", c2: "Visite du bien, analyse comparative, fourchette argumentée", c3: "Gratuite" },
+];
 ---
-<p>Stub : Honoraires</p>
+
+<!-- À valider par le client : version et date d'entrée en vigueur -->
+<LegalLayout
+  doc="honoraires"
+  titre="Honoraires et conditions générales"
+  description="Honoraires d'Avenir Immobilier pour la vente, la location, la gestion locative et l'estimation, et conditions générales du mandat. Proposition écrite avant tout engagement."
+  version="1.0"
+  date="2026-09-24"
+  toc={toc}
+  cta={{
+    eyebrow: "Estimation gratuite · sans engagement",
+    titre: "Un projet de vente ou de location ?",
+    texte: "Un conseiller vous remet une proposition d'honoraires écrite avant tout engagement — le tarif, les prestations comprises, rien de caché.",
+    label: "Estimer mon bien",
+    href: "/estimation",
+  }}
+>
+  <section id="s1">
+    <h2><span class="n">01</span>Nos principes</h2>
+    <EnClair>Pas de grille cachée : chaque mission fait l'objet d'une proposition écrite, chiffrée et détaillée, que vous acceptez avant que nous commencions.</EnClair>
+    <!-- À valider par le client -->
+    <ul>
+      <li><strong>Une proposition écrite avant tout :</strong> les honoraires sont fixés librement, par convention, en fonction du bien, du marché et de l'étendue de la mission. Ils vous sont communiqués par écrit avant la signature du mandat.</li>
+      <li><strong>TVA comprise :</strong> les honoraires sont exprimés toutes taxes comprises, au taux légal en vigueur.</li>
+      <li><strong>Pas de frais annexes non annoncés :</strong> les prestations comprises et, le cas échéant, les frais refacturés (certificats obligatoires, publicité spécifique) figurent dans la proposition.</li>
+      <li><strong>Estimation offerte :</strong> l'estimation de votre bien est gratuite et sans engagement.</li>
+    </ul>
+  </section>
+
+  <section id="s2">
+    <h2><span class="n">02</span>Barème des prestations</h2>
+    <EnClair>Le tableau ci-dessous liste nos missions et ce qu'elles comprennent. Les montants sont établis sur devis, bien par bien.</EnClair>
+    <!-- À valider par le client : aucun montant ni pourcentage n'est publié tant que l'agence n'a pas communiqué son barème -->
+    <LegalTable head={["Prestation", "Ce qui est compris", "Honoraires"]} rows={prestations} label="Prestations et honoraires" />
+    <p>Les honoraires de vente et de location sont, sauf convention contraire, à la charge du mandant. Toute prestation hors mission — expertise écrite, gestion d'un sinistre, démarches particulières — fait l'objet d'un devis distinct.</p>
+  </section>
+
+  <section id="s3">
+    <h2><span class="n">03</span>Le mandat</h2>
+    <EnClair>Le mandat est un contrat écrit, signé avant toute démarche. Il précise sa durée, son caractère exclusif ou non, et comment y mettre fin.</EnClair>
+    <!-- À valider par le client : durée type, exclusivité, préavis, tacite reconduction -->
+    <ul>
+      <li><strong>Forme :</strong> aucune mission n'est entamée sans mandat écrit, conforme aux règles applicables aux contrats d'intermédiation immobilière conclus avec des consommateurs.</li>
+      <li><strong>Durée :</strong> le mandat est conclu pour une durée déterminée, indiquée dans le contrat. Les conditions d'un éventuel renouvellement y sont expressément mentionnées.</li>
+      <li><strong>Exclusivité :</strong> le mandat précise s'il est exclusif ou non. En cas d'exclusivité, vous vous engagez à ne pas confier le bien à un autre intermédiaire ni à le vendre par vous-même pendant sa durée.</li>
+      <li><strong>Résiliation :</strong> les conditions de résiliation anticipée et le délai légal de rétractation, lorsque le mandat est conclu hors de l'agence, figurent dans le contrat.</li>
+      <li><strong>Après le mandat :</strong> la période durant laquelle des honoraires restent dus si le bien est vendu à un acquéreur présenté par l'agence est indiquée dans le contrat.</li>
+    </ul>
+  </section>
+
+  <section id="s4">
+    <h2><span class="n">04</span>Exigibilité et paiement</h2>
+    <EnClair>Les honoraires ne sont dus que si la mission aboutit, aux conditions prévues par le mandat. Vous recevez une facture, jamais une surprise.</EnClair>
+    <!-- À valider par le client : moment d'exigibilité, délai de paiement, intérêts de retard -->
+    <ul>
+      <li><strong>Vente :</strong> les honoraires sont exigibles lorsque la vente est conclue aux conditions du mandat, selon les modalités précisées dans celui-ci.</li>
+      <li><strong>Location :</strong> les honoraires sont exigibles à la signature du bail.</li>
+      <li><strong>Gestion locative :</strong> les honoraires sont prélevés sur les loyers encaissés, selon la périodicité prévue au contrat de gestion, avec un décompte à chaque versement.</li>
+      <li><strong>Facturation :</strong> chaque prestation fait l'objet d'une facture mentionnant la TVA. Le délai de paiement et les conséquences d'un retard figurent dans le mandat.</li>
+    </ul>
+  </section>
+
+  <section id="s5">
+    <h2><span class="n">05</span>Réclamation et médiation</h2>
+    <!-- À valider par le client -->
+    <p>Pour toute question sur une facture ou une mission, adressez-vous d'abord à votre conseiller ou écrivez-nous à <strong>info@avenir-immobilier.be</strong>. Si le désaccord persiste, l'Institut professionnel des agents immobiliers (<a href="https://www.ipi.be">ipi.be</a>) est compétent pour les questions de déontologie et le Service de Médiation pour le Consommateur (<a href="https://mediationconsommateur.be">mediationconsommateur.be</a>) pour un litige de consommation. Les voies de recours sont détaillées dans nos <a href="/legal/mentions#s5">mentions légales</a>.</p>
+  </section>
+</LegalLayout>

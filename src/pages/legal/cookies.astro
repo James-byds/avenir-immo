@@ -1,4 +1,114 @@
 ---
-// Stub — page «Cookies». À implémenter (voir handoff / DEMARRAGE.md).
+/* Politique cookies — gabarit 14. Aucune référence maquette pour ce
+   document : structure du modèle legale.html, familles et durées reprises
+   de la section 06 de la politique de confidentialité (cohérence entre les
+   deux documents). État FACTUEL du site tel que codé : aucun cookie ni
+   stockage local posé par le site lui-même, pas de mesure d'audience, pas
+   de bandeau de consentement (l'action « Gérer mes cookies » du sommaire
+   est donc en data-planned et renvoie à la section « Gérer vos
+   préférences ») ; contenus tiers = tuiles OpenStreetMap (carte de l'agence)
+   et icônes Font Awesome servies par jsDelivr (barre de partage des
+   articles). Noms de cookies : « [à compléter] » — jamais inventés.
+   Version 1.0 datée du jour de rédaction (24 septembre 2026). */
+import LegalLayout from "../../layouts/LegalLayout.astro";
+import EnClair from "../../components/surfaces/EnClair.astro";
+import LegalTable from "../../components/surfaces/LegalTable.astro";
+
+const toc = [
+  { id: "s1", label: "Ce qu'est un cookie" },
+  { id: "s2", label: "Les cookies que nous utilisons" },
+  { id: "s3", label: "Gérer vos préférences" },
+  { id: "s4", label: "Contenus tiers" },
+  { id: "s5", label: "Contact & réclamation" },
+];
+
+const head: [string, string, string] = ["Finalité", "Cookie", "Durée"];
+
+/* Durées : celles de la politique de confidentialité, section 06. */
+const essentiels = [
+  { c1: "Mémorisation de votre choix de consentement", c2: "[nom du cookie du bandeau à compléter]", c3: "6 mois" },
+  { c1: "Sécurité et session", c2: "[selon l'hébergeur — à compléter]", c3: "Session" },
+];
+const audience = [
+  { c1: "Statistiques de visite anonymisées", c2: "[outil de mesure à retenir — à compléter]", c3: "13 mois" },
+];
+const preferences = [
+  { c1: "Favoris ♡, derniers biens consultés, langue", c2: "[à compléter]", c3: "6 mois" },
+];
 ---
-<p>Stub : Cookies</p>
+
+<!-- À valider par le client : version et date d'entrée en vigueur -->
+<LegalLayout
+  doc="cookies"
+  titre="Politique cookies"
+  description="Quels cookies le site d'Avenir Immobilier utilise, pourquoi, combien de temps, et comment gérer vos préférences à tout moment."
+  version="1.0"
+  date="2026-09-24"
+  toc={toc}
+  cta={{
+    eyebrow: "Réponse sous 24 h · sans engagement",
+    titre: "Une question sur les cookies ?",
+    texte: "Notre référent vie privée vous répond directement, comme pour toute question sur vos données.",
+    label: "Écrire au référent",
+    href: "mailto:privacy@avenir-immobilier.be",
+  }}
+>
+  <Fragment slot="toc-action">
+    <p>Vous pouvez revenir sur votre choix à tout moment, sans avoir à nous écrire.</p>
+    <a href="/legal/cookies#s3" data-planned>Gérer mes cookies <span class="arr">→</span></a>
+  </Fragment>
+
+  <section id="s1">
+    <h2><span class="n">01</span>Ce qu'est un cookie</h2>
+    <EnClair>Un cookie est un petit fichier déposé par votre navigateur à la demande d'un site. Il sert à se souvenir de vous d'une page à l'autre — pas à vous identifier personnellement.</EnClair>
+    <!-- À valider par le client -->
+    <p>Un cookie est un fichier texte enregistré sur votre appareil lors de la consultation d'un site. Il permet, par exemple, de mémoriser un choix, de maintenir une session ouverte ou de compter les visites. Les technologies équivalentes — stockage local du navigateur, pixels — sont traitées ici de la même manière.</p>
+    <p>Certains cookies sont indispensables au fonctionnement du site ; les autres ne sont déposés qu'avec votre consentement, que vous pouvez retirer à tout moment.</p>
+  </section>
+
+  <section id="s2">
+    <h2><span class="n">02</span>Les cookies que nous utilisons</h2>
+    <EnClair>Trois familles, dont une seule obligatoire. À la date de cette version, le site ne dépose lui-même aucun cookie de mesure d'audience ni de préférence.</EnClair>
+    <!-- À valider par le client : noms des cookies et outils retenus (bandeau de consentement, mesure d'audience) -->
+    <p>Le site est un site statique : les pages sont servies telles quelles, sans compte utilisateur. Les familles ci-dessous décrivent le cadre dans lequel des cookies peuvent être déposés ; celles qui ne sont pas essentielles restent soumises à votre accord préalable.</p>
+
+    <h3>Essentiels — sans consentement</h3>
+    <LegalTable head={head} rows={essentiels} label="Cookies essentiels" />
+
+    <h3>Mesure d'audience — avec votre consentement</h3>
+    <LegalTable head={head} rows={audience} label="Cookies de mesure d'audience" />
+    <p>Les statistiques sont anonymisées : elles servent à savoir quelles pages sont consultées, jamais à suivre une personne.</p>
+
+    <h3>Préférences — avec votre consentement</h3>
+    <LegalTable head={head} rows={preferences} label="Cookies de préférences" />
+    <p>Aucun cookie publicitaire n'est déposé sur ce site, et nous ne partageons pas votre navigation avec des régies.</p>
+  </section>
+
+  <section id="s3">
+    <h2><span class="n">03</span>Gérer vos préférences</h2>
+    <EnClair>Vous choisissez, vous changez d'avis quand vous voulez : depuis le bandeau du site ou depuis les réglages de votre navigateur.</EnClair>
+    <!-- À valider par le client : le bandeau de consentement n'est pas encore en place -->
+    <ul>
+      <li><strong>Sur le site :</strong> le lien « Gérer mes cookies », en bas de page et dans le sommaire de ce document, rouvre le bandeau de consentement pour modifier votre choix. Tant qu'aucun cookie soumis à consentement n'est déployé, ce bandeau n'apparaît pas.</li>
+      <li><strong>Dans votre navigateur :</strong> chaque navigateur permet de refuser, de supprimer ou de consulter les cookies enregistrés, site par site. Reportez-vous à l'aide de Chrome, Firefox, Safari ou Edge.</li>
+      <li><strong>Conséquence d'un refus :</strong> le site reste entièrement consultable ; seules les fonctions de mémorisation (favoris, derniers biens vus) ne sont pas disponibles.</li>
+    </ul>
+  </section>
+
+  <section id="s4">
+    <h2><span class="n">04</span>Contenus tiers</h2>
+    <EnClair>Deux services extérieurs sont appelés par certaines pages : la carte de l'agence et les icônes de partage. Ils reçoivent votre adresse IP pour servir ces fichiers, rien de plus à notre connaissance.</EnClair>
+    <!-- À valider par le client -->
+    <ul>
+      <li><strong>Carte de l'agence (OpenStreetMap) :</strong> les fonds de carte de la page contact sont chargés depuis les serveurs de la fondation OpenStreetMap, qui reçoivent votre adresse IP à cette occasion.</li>
+      <li><strong>Icônes de partage (Font Awesome via jsDelivr) :</strong> les pictogrammes de la barre de partage des articles sont servis par le réseau de distribution jsDelivr.</li>
+      <li><strong>Liens sortants :</strong> les liens vers Google Maps, les réseaux sociaux ou les portails immobiliers vous font quitter le site ; les cookies éventuellement déposés ensuite relèvent de ces services.</li>
+    </ul>
+    <p>Les fontes et les images du site sont hébergées avec lui : aucun appel à un service de fontes externe.</p>
+  </section>
+
+  <section id="s5">
+    <h2><span class="n">05</span>Contact &amp; réclamation</h2>
+    <p>Pour toute question sur les cookies ou vos données, écrivez-nous à <strong>privacy@avenir-immobilier.be</strong> ou par courrier au siège de l'agence. Le détail de vos droits figure dans notre <a href="/legal/confidentialite#s7">politique de confidentialité</a>. Si notre réponse ne vous satisfait pas, vous pouvez saisir l'<strong>Autorité de protection des données</strong> — Rue de la Presse 35, 1000 Bruxelles · <a href="https://www.autoriteprotectiondonnees.be">autoriteprotectiondonnees.be</a>.</p>
+  </section>
+</LegalLayout>

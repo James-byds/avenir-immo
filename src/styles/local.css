@@ -23,6 +23,7 @@ h1, h2, h3, h4.mn, .card-price, .hero h1, .finalcta h2, .ts-score .v, .t-score,
 
    · .lg-head    en-tête de page légale (legale.html)
    · .toc-action encadré CTA du sommaire légal (équiv. DS : .toc-help)
+   · .page-head--tint .breadcrumb a / .lg-meta  contraste sur vert tendre (F6)
    · .ah-stats   chiffres de la page auteur (équiv. DS : .mh-stats, page membre)
    · .writer:hover .b-name  hover byline sur les cartes rédacteurs
    · .f-zones    section « zones d'intervention » du footer global
@@ -64,7 +65,9 @@ h1, h2, h3, h4.mn, .card-price, .hero h1, .finalcta h2, .ts-score .v, .t-score,
 /* Encadré CTA sous le sommaire légal */
 .toc-action { margin-top: 26px; background: var(--green-tint); border: 1px solid var(--green-soft); border-radius: var(--r); padding: 18px 20px; }
 .toc-action p { font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
-.toc-action a { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 13.5px; font-weight: 700; color: var(--green-d); }
+/* min-height 44 px = cible tactile (recette F6) ; margin-top 10 → 6 pour une
+   hauteur d'encadré inchangée — à reprendre dans le DS (.toc-help aussi). */
+.toc-action a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 6px; font-size: 13.5px; font-weight: 700; color: var(--green-d); }
 .toc-action a .arr { transition: transform .25s var(--ease); }
 .toc-action a:hover .arr { transform: translateX(4px); }
 @media (max-width: 960px) { .toc-action { margin-top: 0; } }
@@ -974,6 +977,15 @@ body:has(.finalcta--straddle) .footer { padding-top: calc(clamp(34px, 4vw, 52px)
 .page-head--tint .trust-figs,
 .page-head--tint .proc-panel,
 .page-head--tint .sell-card { background: #fff; border-color: var(--line); }
+/* Règle DS n°3 — petits textes sur fond teinté : le fil d'Ariane (11 px) et la
+   méta légale (12 px) en --ink-mute mesurent 4,46:1 sur --green-tint ;
+   --ink-soft les porte à 6,31:1 (recette F6, précédent F5 sur /avis).
+   À reprendre dans le DS. */
+.page-head--tint .breadcrumb a,
+.page-head--tint .lg-meta { color: var(--ink-soft); }
+/* … sans éteindre le survol du fil d’Ariane (site.css .breadcrumb a:hover,
+   même spécificité) — même schéma que --band/--ink plus bas. */
+.page-head--tint .breadcrumb a:hover { color: var(--green); }
 
 .page-head--band, .page-head--ink {
   position: relative; overflow: hidden;

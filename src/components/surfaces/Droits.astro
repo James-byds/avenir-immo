@@ -1,0 +1,30 @@
+---
+/**
+ * Droits — grille des droits RGPD (classes DS .droits / .droit, .ck) :
+ * deux colonnes de cartes à coche verte, titre + explication courte.
+ * Balisage de la référence legale.html, section « Vos droits ».
+ * Sous 960 px, le DS passe à une colonne.
+ */
+interface Droit {
+  titre: string;
+  texte: string;
+}
+interface Props {
+  items: Droit[];
+}
+const { items } = Astro.props;
+---
+
+<div class="droits">
+  {
+    items.map((d) => (
+      <div class="droit">
+        <span class="ck" aria-hidden="true">✓</span>
+        <span>
+          <strong>{d.titre}</strong>
+          <small>{d.texte}</small>
+        </span>
+      </div>
+    ))
+  }
+</div>

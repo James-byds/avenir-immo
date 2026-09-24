@@ -1,0 +1,19 @@
+---
+/**
+ * EnClair — encadré « En clair » en tête des sections longues des pages
+ * légales (réf. docs/handoff/reference/legale.html — classes DS .enclair /
+ * .e-tag). Règle du DS : obligatoire sur toute section longue, une ou deux
+ * phrases, pas plus. Sur section teintée, local.css le repasse en blanc
+ * bordé (.sec--tint .enclair) — rien à décider ici.
+ */
+interface Props {
+  /** Étiquette mono au-dessus du texte — « En clair » par défaut. */
+  tag?: string;
+}
+const { tag = "En clair" } = Astro.props;
+---
+
+<div class="enclair">
+  <span class="e-tag">{tag}</span>
+  <p><slot /></p>
+</div>
