@@ -13,7 +13,7 @@
 | F4 | Vague B : `05-localite` puis `06-quartier` · `04-localites-hub` | ✅ terminé le 24 sept. 2026 (commits `fde39c7` → `85d9ce3`, recettes conformes) |
 | F5 | Vague C : `11-equipe` · `10-a-propos` · `08-contact` · `09-avis` (3 max puis le 4e) | ✅ terminé le 24 sept. 2026 (commits `62319f9` → `54c2505`, recettes conformes) |
 | F6 | Vague D : `12-blog` · `13-auteurs` · `14-legales` | ✅ terminé le 24 sept. 2026 (commits `d665c62` → `df47775`, recettes conformes) |
-| F7 | `99-recette` globale (+ suppression de `src/pages/test.astro`) | ⬜ |
+| F7 | `99-recette` globale (+ suppression de `src/pages/test.astro`, page 404, vigilances 16-20) | ✅ terminé le 24 sept. 2026 (branche `feat/99-recette` mergée, tag `v0.1.0-maquette`, compte rendu `docs/handoff/recette-globale.md`) |
 
 Protocole d'une fenêtre de vague : coller le prompt du gabarit **en entier** dans un
 sous-agent `gabarit` (périmètre = son bloc « Livrable »), attendre, lancer `recette-ds`
@@ -174,15 +174,25 @@ Trois sous-agents en parallèle maximum.
     (mesuré en F6). Occurrences existantes hors vague D, à traiter en F7 :
     `a-propos.astro:272`, `biens/[slug].astro:284,338`, `equipe/[slug].astro:243`.
     Vague D corrigée en règles scoped (`.blog-lead`, `.art-related`, `.writers`).
-    **Décision à prendre en F7** : importer le DS dans une couche
-    (`@import "./ds/styles.css" layer(ds)` + ordre `@layer` explicite) ou
-    neutraliser le reset universel ; d'ici là, marges en scoped ou suffixe `!`.
+    **Tranché en F7** : `app.css` déclare `@layer theme, base, ds, components,
+    utilities` et importe le DS puis `local.css` dans la couche `ds` ; **tout
+    `<style>` de page ou de composant est enveloppé dans `@layer ds { … }`**
+    (sinon, hors couche, il primerait sur `local.css` quelle que soit sa
+    spécificité — régression constatée sur `.t-card--hl .t-date`). Les
+    utilitaires Tailwind s'appliquent désormais (les `mt-*`/`mb-*`/`mx-auto`
+    déjà écrits ont pris effet, conformes aux références) ; les `style=` de
+    mise en page ont été convertis en utilitaires, la typographie en scoped.
+    Règle pour la suite : marges et largeurs en utilitaires, jamais en `style=`.
 17. **`.sec--short` (local.css) raccourcit le haut ET le bas** ; les références
-    blog/article ne raccourcissent que le haut (`padding-top:clamp(…)` seul) →
-    padding-top scoped par page en F6. Candidat DS : `.sec--short-top`.
+    blog/article ne raccourcissent que le haut. **Tranché en F7** : `.sec--short-top`
+    (padding-top seul, mêmes bornes 28-44 px) livré dans `local.css` et employé
+    par le corps de l'article (`ArticleLayout`) ; le hub blog garde sa valeur
+    propre (34/4vw/56) en scoped. À reprendre dans le DS.
 18. **`markdown.smartypants: false`** dans `astro.config.mjs` (F6) : les corps
     Markdown sont rendus tels qu'écrits — la recette compare les articles à leur
     référence par points de code (satteri substituait 23 apostrophes en U+2019).
+    **Confirmé en F7** : conservé (la copie validée fait foi, guillemets et
+    apostrophes compris).
 19. **Composants disponibles depuis F6** : `surfaces/ArticleCard` (contrat
     `article` + `auteur?` entrées de collection, `variant: feature|post|compact`,
     `tint`/`thumb`, `class`, `data-cat/date/read/idx` sur la racine — racine
@@ -198,7 +208,11 @@ Trois sous-agents en parallèle maximum.
     le corps a un H2, paragraphe « **En clair** — … » = encadré, chaque H2 =
     `<section>`, source des `chiffres[]` rendue sous le corps) ;
     `src/scripts/blog-filter.ts` (filtre/tri/pagination du hub, contrat d'URL
-    `?cat=<slug>&page=N`, `slugCategorie()` partagé). Schémas additifs F6 :
+    `?cat=<slug>&page=N`, `slugCategorie()` partagé). **F7** : `ContactForm`
+    gagne `headingLevel: 2|3` (page contact) ; `BaseLayout`/`PageLayout`
+    acceptent `canonical={false}` (404) ; `LocalityLinks`/`NeighbourPills`/
+    `MarketCard` rendent une cible `planned` **sans `href`** (URL en `data-href`).
+    Schémas additifs F6 :
     `articles.{metaDescription, titreCourt}` ; `auteurs.{roleLong, ipi, citation,
     citationCourte, specialites[], depuis, depuisLabel, externe, langues[], base,
     portrait, ordre, metaDescription}` (citation/spécialités/langues remontées de la
@@ -228,7 +242,18 @@ Trois sous-agents en parallèle maximum.
     « en bas de page » par la confidentialité (s6) ; à câbler sur le bandeau de
     consentement quand il existera. `PropertyCard`/accueil : l'accueil duplique
     encore le balisage `.post` (`ArticleCard variant="post"` à lui faire adopter
-    hors vague, comme `EstimateForm`).
+    hors vague, comme `EstimateForm`). **F7** : l'ensemble de ce relevé (12 + 20)
+    et les corrections d'accessibilité de la recette globale sont consolidés dans
+    `docs/ds/dette-ds.md`, avec la page qui utilise chaque bloc — c'est le
+    handoff retour vers le DS.
+21. **Recette statique reproductible** : `node scripts/recette.mjs` après
+    `npm run build` (sitemap, `href="#"`, `data-planned`, résolution des liens et
+    ancres, ancres imbriquées, cartes, hex de charte) — à relancer avant tout
+    merge. Les contrôles de rendu (axe, focus, 375 px, cibles, rythme des fonds)
+    ont été faits en F7 avec Chrome headless (outillage de session, non versionné).
+22. **Pages planifiées** : une cible `data-planned` dont la page n'existe pas
+    n'a **pas de `href`** (un lien vers une 404 est un lien cassé) — l'URL prévue
+    est en `data-href`, la liste vit dans `docs/pages-planifiees.md`.
 
 ## Arbitrages de contenu (incohérences de la maquette)
 
@@ -306,6 +331,21 @@ Trois sous-agents en parallèle maximum.
   incidence de hauteur) ; `/contact?sujet=article` : paramètre inerte
   (`ContactForm` ne lit pas l'URL). **Non tranché** : les bios portent des
   chiffres non sourcés hérités (« 180 baux », « 42 ventes l'an dernier »).
+- **Recette globale (F7)** : identités de contact **non tranchées, renvoyées au
+  client** (téléphone `071 22 11 41` au pied de page et sur les pages légales vs
+  `+32 71 32 14 70` en en-tête, contact, estimation ; `info@` vs `contact@` ;
+  siège social Place Roger Desaise (pied de page, `gerpinnes.md`) vs Boulevard
+  Tirou (barre utilitaire, pages) ; IPI 509 217 sur trois entités) : la maquette
+  décrit deux implantations, ce n'est pas au portage de choisir ; les valeurs
+  restent celles des références, page par page. `MarketCard` multi-liens assumée
+  (pas de `.card-link`). Contrastes corrigés selon la règle DS ≻ maquette :
+  `.footer-bottom` (.5 → .66), `.tl-end` (`--green-l` → `--green-soft`),
+  `.seg .n` inactif, `.guide-pt .a-num` (`--green-l` → `--green`). Cibles
+  tactiles étendues par pseudo-élément sans changer la mise en page ; résidu
+  assumé : contrôles Leaflet 30 px (tiers), liens inline dans le texte
+  (exception WCAG), champs de la recherche héros enveloppés dans leur `<label>`.
+  Lighthouse mobile < 90 en performance à cause des actifs clients (fonte 443 Ko,
+  images non redimensionnées) — renvoyé au client, détail dans `dette-ds.md` § 6.
 - **Légales** : `honoraires` sans aucun barème (5 × « Sur devis », Estimation
   « Gratuite » — source : le site), aucune mensualité ; `mentions`/`cookies`/
   `honoraires` rédigés prudemment, versions 1.0 datées 2026-09-24, temps de
@@ -432,3 +472,25 @@ Trois sous-agents en parallèle maximum.
   faire calculer. Prochaine étape : **F7 `99-recette` globale** (+ suppression de
   `src/pages/test.astro`, décision vigilance 16 sur le reset/les couches,
   `mt-*` restants, incohérences chrome non tranchées).
+- **24 sept. 2026 — F7 recette globale** (branche `feat/99-recette` mergée, tag
+  `v0.1.0-maquette`, compte rendu détaillé dans `docs/handoff/recette-globale.md`) :
+  orchestrateur seul, sans sous-agent gabarit. Outillage de session : serveur
+  statique gzip, captures pleine page 1440/375 des 104 routes à chaque étape
+  (diff pixel avant/après — 0 régression non voulue), audit rendu (axe, titres,
+  focus clavier, débordement 375, cibles tactiles effectives, tiroir, rythme des
+  fonds), Lighthouse mobile/desktop, `scripts/recette.mjs` versionné. Lots :
+  (1) suppression de `/test` ; (2) DS en couche `ds` + 90 `style=` convertis +
+  pilules planifiées sans `href` + sitemap (`/a-propos`, `/communes` manquaient)
+  + fallbacks hex retirés ; (3) page 404 ; (4) accessibilité — 0 violation axe
+  sur 104 routes (contrastes, titres de colonnes du pied de page en h2, `TopBar`
+  en région, `#filters` en `group`, `ContactForm headingLevel`, « À lire aussi »
+  en h2, h2 masqué sur `/biens`, focus visible, cibles ≥ 44 px, toolbar mobile,
+  tiroir clavier), `@layer ds` sur les 36 blocs `<style>` (régression
+  `.t-card--hl .t-date` corrigée) ; (5) docs (`README`, `dette-ds.md`,
+  `pages-planifiees.md`, `.sec--short-top`). À savoir : envelopper un `<style>`
+  par regex exige une balise en début de ligne (cinq commentaires de frontmatter
+  citaient `<style>`) ; un `padding` sur un item flex change la mise en page
+  (préférer le pseudo-élément) ; les fallbacks `var(--green,#…)` sont inutiles
+  (tokens toujours chargés). Reste hors vague : adoption de
+  `EstimateForm`/`ArticleCard` par l'accueil, identités de contact (client),
+  actifs (client), reprise DS de `dette-ds.md`.

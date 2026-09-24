@@ -21,13 +21,15 @@ npm run dev          # http://localhost:4321
 | `npm run build` | build statique dans `dist/` |
 | `npm run preview` | sert le build |
 | `npx astro check` | typage + validation des pages |
+| `node scripts/recette.mjs` | recette statique du build : sitemap, liens et ancres, `data-planned`, cartes, couleurs en dur (après `npm run build`) |
 | `./sync-ds.sh docs/handoff/reference/ds-export` | resynchronise le design system (sens unique, voir ci-dessous) |
 | `node scripts/favicons.mjs` | régénère favicon.ico / apple-touch / icon-512 depuis l'artwork client |
 | `npx serve docs/handoff/reference` | sert les maquettes HTML de référence sur `:3000` |
 
 **En dev uniquement**, `http://localhost:4321/dev` : hub des 14 gabarits —
 routes cliquables, état dérivé (livré / stub / à créer), instances des
-collections, liens vers les maquettes. Jamais émis au build.
+collections, liens vers les maquettes. Jamais émis au build. La page `/404`
+(`src/pages/404.astro`) est émise en `dist/404.html`, hors sitemap, `noindex`.
 
 ## Architecture
 
@@ -82,20 +84,42 @@ remplacer chaque `.ph` par un `<img>` au même endroit, rien d'autre.
 
 Le motif des pages de localité est **figé** (le changer coûte des redirections).
 
-## Chantier en cours
+## État du chantier
 
-Le site se construit par gabarits depuis les maquettes du projet claude design
-(`docs/handoff/`). **L'état d'avancement vit dans `docs/handoff/ETAT.md`** —
-feuille de route, points de vigilance, arbitrages. Au 24 septembre 2026 :
-preflight, accueil et vagues A/B/C livrés et recettés ; restent la vague D
-(blog, auteurs, légales — encore en stubs) et la recette globale.
+Le site a été construit par gabarits depuis les maquettes du projet claude design
+(`docs/handoff/`). **L'historique et les arbitrages vivent dans
+`docs/handoff/ETAT.md`.** Au 24 septembre 2026, les 14 gabarits sont livrés,
+recettés un à un puis passés par la recette globale
+(`docs/handoff/recette-globale.md`) : 104 pages, build et `astro check` verts,
+0 violation axe, 0 lien interne cassé, tag `v0.1.0-maquette`.
+
+## Dette design system
+
+Ce que le dépôt porte à la place du DS — `src/styles/local.css` (blocs titrés),
+les `<style>` scoped « à reprendre dans le DS », les écarts d'API de composants,
+les corrections d'accessibilité — est inventorié dans **`docs/ds/dette-ds.md`**,
+avec la page qui utilise chaque bloc. C'est le handoff retour vers le design
+system : quand le DS reprend un point, on supprime la copie locale et on
+resynchronise.
+
+Les CSS du DS et `local.css` sont importés dans la couche `ds`
+(`src/styles/app.css`) : les utilitaires Tailwind s'appliquent sur les éléments
+stylés par le DS, et tout `<style>` de page ou de composant est enveloppé dans
+`@layer ds { … }`.
+
+Les pages prévues mais pas encore codées (ancres `data-planned`, sans `href`)
+sont listées dans `docs/pages-planifiees.md`.
 
 ## Avant mise en ligne
 
 - Figer le domaine : `astro.config.mjs`, `src/lib/seo.ts`,
   `src/pages/sitemap.xml.ts` et `public/robots.txt` pointent le placeholder
   `www.lavenir-immobilier.be`.
-- La recette globale (`docs/handoff/prompts/99-recette.md`) supprime
-  `src/pages/test.astro` (banc de comparaison) et vérifie sitemap, maillage,
-  adhérence DS, SEO et accessibilité sur l'ensemble.
+- Trancher les identités de contact incohérentes héritées de la maquette
+  (téléphone `071 22 11 41` au pied de page vs `+32 71 32 14 70` en en-tête,
+  `info@` vs `contact@`, siège Boulevard Tirou vs Place Roger Desaise, IPI
+  509 217 sur trois entités) — relevé dans `docs/handoff/ETAT.md`.
+- Poids des actifs clients (fonte variable 443 Ko, `equipe-avenir.png` 3,5 Mo,
+  portraits ~330 Ko) : Lighthouse mobile reste sous 90 tant qu'ils ne sont pas
+  exportés aux tailles d'affichage (`docs/ds/dette-ds.md`, § 6).
 - Remplacer les placeholders `.ph` quand les photos de l'agence arrivent.
