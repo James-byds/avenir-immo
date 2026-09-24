@@ -1,4 +1,203 @@
 ---
-// Stub — page «Blog — liste». À implémenter (voir handoff / DEMARRAGE.md).
+/* Hub du blog — gabarit 12 (réf. docs/handoff/reference/blog.html).
+
+   Sections : 1 page-head vert tendre (fil d'Ariane, H1, chapô, lien « Nos
+   rédacteurs », toolbar thèmes + tri + compteur) → 2 blanc court : UNE carte
+   à la une (.art-feature) + grille .blog-grid de cartes .post + pagination →
+   3 vert tendre « rédacteurs » : section-head + « Voir le hub des auteurs »
+   + pilules .q-pill « Nom · n articles → » (balisage de la référence, pas de
+   .writers) → 4 aplat vert profond (FinalCta tone="deep", .on-dark sur les
+   actions). Alternance : tendre → blanc → tendre → vert profond.
+
+   Tous les comptes sont CALCULÉS (collection articles/auteurs) — jamais les
+   « 48 » / « 18 articles » de la maquette. Les thèmes du segment sont ceux
+   réellement présents : ordre de la référence (Vendre · Acheter · Marché ·
+   Louer · Quartiers) puis effectif décroissant ; un thème vide n'existe pas.
+   Le tri « Les plus lus » de la maquette est omis (aucune donnée de lecture).
+
+   Toutes les cartes sont dans le HTML (SEO) ; src/scripts/blog-filter.ts
+   filtre/trie/pagine côté client et reflète l'état dans l'URL (?cat=&page=). */
+import { getCollection } from "astro:content";
+import PageLayout from "../../layouts/PageLayout.astro";
+import PageHead from "../../components/chrome/PageHead.astro";
+import Breadcrumb from "../../components/core/Breadcrumb.astro";
+import Eyebrow from "../../components/core/Eyebrow.astro";
+import LinkArrow from "../../components/core/LinkArrow.astro";
+import SectionHead from "../../components/core/SectionHead.astro";
+import Pagination from "../../components/core/Pagination.astro";
+import Toolbar from "../../components/surfaces/Toolbar.astro";
+import ArticleCard from "../../components/surfaces/ArticleCard.astro";
+import FinalCta from "../../components/surfaces/FinalCta.astro";
+import { slugCategorie } from "../../scripts/blog-filter";
+
+/* ── Articles publiés, du plus récent au plus ancien (départage par id) ── */
+const articles = (await getCollection("articles", ({ data }) => data.publie !== false)).sort(
+  (a, b) =>
+    b.data.datePublication.getTime() - a.data.datePublication.getTime() ||
+    a.id.localeCompare(b.id, "fr"),
+);
+type Article = (typeof articles)[number];
+const auteurs = await getCollection("auteurs");
+const auteurParId = new Map(auteurs.map((a) => [a.id, a]));
+const auteurDe = (a: Article) => auteurParId.get(a.data.auteur.id);
+
+/* Une seule carte à la une : le plus récent ; le reste en grille. */
+const [feature, ...grille] = articles;
+
+/* ── Thèmes réels + compteurs ── */
+const compte = new Map<string, number>();
+for (const a of articles) {
+  if (a.data.categorie) compte.set(a.data.categorie, (compte.get(a.data.categorie) ?? 0) + 1);
+}
+const ORDRE_REF = ["Vendre", "Acheter", "Marché", "Louer", "Quartiers"];
+const themes = [
+  ...ORDRE_REF.filter((t) => compte.has(t)),
+  ...[...compte.keys()]
+    .filter((t) => !ORDRE_REF.includes(t))
+    .sort((a, b) => compte.get(b)! - compte.get(a)! || a.localeCompare(b, "fr")),
+].map((label) => ({ id: slugCategorie(label), label, count: compte.get(label)! }));
+
+/* ── Rédacteurs : nombre d'articles réel, ordre décroissant ── */
+const parAuteur = new Map<string, number>();
+for (const a of articles) parAuteur.set(a.data.auteur.id, (parAuteur.get(a.data.auteur.id) ?? 0) + 1);
+const redacteurs = auteurs
+  .map((au) => ({ id: au.id, nom: au.data.nom, n: parAuteur.get(au.id) ?? 0 }))
+  .filter((r) => r.n > 0)
+  .sort((a, b) => b.n - a.n || a.nom.localeCompare(b.nom, "fr"));
+const NOMBRES = ["Aucun", "Un", "Deux", "Trois", "Quatre", "Cinq", "Six", "Sept", "Huit", "Neuf", "Dix"];
+const titreRedacteurs = `${NOMBRES[redacteurs.length] ?? redacteurs.length} rédacteur${redacteurs.length > 1 ? "s" : ""}, tous du métier`;
+
+const PER_PAGE = 6;
+const pages = Math.max(1, Math.ceil(grille.length / PER_PAGE));
+const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
+
+/* ── Head : title/description de la référence, canonical /blog ── */
+const title = "Blog — conseils, marché et quartiers · Avenir Immobilier";
+const description =
+  "Le journal d'Avenir Immobilier : vendre, acheter, louer et comprendre le marché de Charleroi et de Liège. Des articles écrits par les conseillers de l'agence.";
+const canonical = new URL("/blog", Astro.site).href;
 ---
-<p>Stub : Blog — liste</p>
+
+<PageLayout title={title} description={description} canonical={canonical} active="/blog" bodyClass="blog-hub">
+  {/* ── 1 · EN-TÊTE VERT TENDRE — contenu riche (toolbar), donc tint et non band ── */}
+  <PageHead variant="tint">
+    <Breadcrumb slot="breadcrumb" items={[{ label: "Accueil", href: "/" }, { label: "Blog" }]} />
+    {/* .section-head avec H1 : core/SectionHead ne rend que des h2 — motif
+       en classes DS (même précédent que /biens). */}
+    <div class="blog-lead flex flex-wrap items-end justify-between gap-x-12 gap-y-6.5">
+      <div class="section-head">
+        <Eyebrow>Le journal de l'agence</Eyebrow>
+        <h1>Comprendre le marché <em>avant de décider</em>.</h1>
+        <p>Des articles écrits par les conseillers qui font les ventes, avec les chiffres de nos propres dossiers. Pas de contenu recopié d'un portail.</p>
+      </div>
+      <LinkArrow href="/auteurs">Nos rédacteurs</LinkArrow>
+    </div>
+    <Toolbar
+      segments={{
+        id: "blogCats",
+        label: "Thème",
+        options: [{ id: "all", label: "Tout voir", count: articles.length }, ...themes],
+      }}
+      sort={{
+        id: "selSort",
+        label: "Trier par",
+        ariaLabel: "Trier",
+        options: [
+          { value: "recent", label: "Plus récents" },
+          { value: "read", label: "Temps de lecture" },
+        ],
+      }}
+      count={`${articles.length} article${articles.length > 1 ? "s" : ""}${pages > 1 ? ` · page 1 sur ${pages}` : ""}`}
+      clearLabel="Effacer le filtre"
+    />
+  </PageHead>
+
+  {/* ── 2 · À LA UNE + GRILLE + PAGINATION — blanc, respiration courte ── */}
+  <section class="sec--white" id="articles">
+    <div class="wrap">
+      <h2 class="sr-only">Tous les articles</h2>
+      {feature && (
+        <ArticleCard article={feature} auteur={auteurDe(feature)} variant="feature" id="blogFeature" class="reveal" />
+      )}
+      <div class="blog-grid" id="blogGrid">
+        {grille.map((a, i) => (
+          <ArticleCard article={a} auteur={auteurDe(a)} variant="post" idx={i} class={`reveal${delay(i)}`} />
+        ))}
+      </div>
+      <Pagination pages={pages} current={1} hrefFor={(p) => `?page=${p}#articles`} />
+    </div>
+  </section>
+
+  {/* ── 3 · RÉDACTEURS — vert tendre, pilules vers les pages auteur ── */}
+  <section class="sec--tint">
+    <div class="wrap">
+      <div class="props-head reveal">
+        <SectionHead eyebrow="Qui écrit ici" title={titreRedacteurs} />
+        <LinkArrow href="/auteurs">Voir le hub des auteurs</LinkArrow>
+      </div>
+      <div class="q-others">
+        {redacteurs.map((r) => (
+          <a class="q-pill" href={`/auteurs/${r.id}`}>{r.nom} · {r.n} article{r.n > 1 ? "s" : ""} →</a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* ── 4 · CTA FINAL — aplat vert profond (.finalcta--deep, local.css) ;
+       .on-dark sur les actions pour le .btn--ghost (précédent 08/09) ── */}
+  <FinalCta tone="deep">
+    <span class="eyebrow center reveal">Un article ne remplace pas un chiffre</span>
+    <h2 class="reveal d1">Ce que vaut <em>votre</em> bien, précisément.</h2>
+    <p class="reveal d2">Estimation gratuite en 2 minutes, rapport écrit sous 48 h — sans engagement.</p>
+    <div class="fc-actions on-dark reveal d2">
+      <a href="/estimation" class="btn">Estimer mon bien <span class="arr">→</span></a>
+      <a href="/contact" class="btn btn--ghost">Parler à un conseiller</a>
+    </div>
+  </FinalCta>
+
+  {/* Filtre par thème, tri, pagination et contrat d'URL — module traité,
+     exécuté APRÈS /ds-script.js (qui enhance le <select> de tri). */}
+  <script>
+    import { initBlogFilter } from "../../scripts/blog-filter";
+    initBlogFilter({ perPage: 6 });
+  </script>
+</PageLayout>
+
+<style is:global>
+  /* ── à reprendre dans le DS — gabarit 12 : styles inline de blog.html,
+     valeurs inchangées, portés en classes (préfixe body.blog-hub). ── */
+  .blog-hub .section-head h1 em { font-style: normal; color: var(--green); }
+  /* Styles inline de l'en-tête de blog.html (l. 84-85) portés en classes :
+     .section-head du DS plafonne à 720 px et met le H1 sur deux lignes ;
+     la référence le tient sur une ligne (58 px) et cale « Nos rédacteurs »
+     sous le chapô (contre-recette F6). */
+  .blog-hub .page-head .section-head { max-width: none; }
+  .blog-hub .section-head h1 { font-size: clamp(36px, 4.8vw, 58px); margin-top: 16px; }
+  .blog-hub .section-head p { font-size: 17px; margin-top: 18px; max-width: 54ch; }
+  .blog-hub .blog-grid { margin-top: clamp(26px, 3.4vw, 40px); }
+  /* Le DS masque la dernière carte de .blog-grid entre 600 et 920 px (teaser
+     à trois cartes de l'accueil) : un hub affiche toutes ses cartes. */
+  .blog-hub .blog-grid .post:last-child { display: flex; }
+  /* Petits textes sur fond teinté (règle DS n°3, précédent F5 sur /avis) :
+     la maquette laisse fil d'Ariane, libellés et compteur de la toolbar en
+     --ink-mute sur --green-tint. */
+  .blog-hub .page-head--tint .breadcrumb a,
+  .blog-hub .page-head--tint .tool-label,
+  .blog-hub .page-head--tint .tool-count { color: var(--ink-soft); }
+  .blog-hub .page-head--tint .breadcrumb a:hover { color: var(--green); }
+
+  /* ── Corrections de recette F6 (valeurs de la référence) ── */
+  /* Espace fil d'Ariane → en-tête : 18 px (le mt-* Tailwind est inerte, le reset
+     `* { margin: 0 }` de site.css est hors couche et prime sur @layer utilities). */
+  .blog-hub .blog-lead { margin-top: 18px; }
+  /* Padding haut court SEULEMENT (blog.html : padding-top:clamp(34px,4vw,56px)) ;
+     .sec--short raccourcissait aussi le bas et collait la pagination au bandeau. */
+  .blog-hub #articles { padding-top: clamp(34px, 4vw, 56px); }
+  /* 11 thèmes réels (arbitrage F6) : le seg remplit la rangée, compteur + tri
+     passent sous lui — calés à droite comme sur la référence, pas à gauche. */
+  .blog-hub .toolbar-right { margin-left: auto; }
+  /* Menu du select de tri ancré à droite : ancré à gauche (défaut .dd--inline,
+     220 px) il débordait le viewport à 375 px et dézoomait la page — même
+     défaut sur la référence ; à remonter au DS pour .toolbar-right. */
+  .blog-hub .toolbar-right .dd-menu { left: auto; right: 0; }
+</style>

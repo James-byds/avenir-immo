@@ -2,8 +2,12 @@
 /**
  * ArticleHeader — port .astro de components/surfaces/ArticleHeader.jsx
  *
- * En-tête de page article : catégorie, titre, chapô, signature, temps de lecture.
- * `size="compact"` pour colonne latérale / petit écran ; `showMedia={false}` sans visuel.
+ * En-tête de page article (.art-head) : .ah-top (catégorie en aplat vert
+ * clair texte encre + date), H1, chapô .ah-lede, .ah-foot (Byline 44 px
+ * CLIQUABLE vers la page auteur — c'est ici, hors carte, que la signature
+ * est un lien — + pastille .ah-read), emplacement photo .ah-media.
+ * `size="compact"` pour colonne latérale / petit écran ; `showMedia={false}`
+ * sans visuel. Le chapô accepte du HTML léger (<strong>, liens).
  */
 import Byline from "./Byline.astro";
 
@@ -16,11 +20,11 @@ interface Props {
   size?: "large" | "compact";
   category?: string;
   date?: string;
-  title?: string;
+  title: string;
   lede?: string;
   author?: Author;
   readTime?: string;
-  photo?: string;
+  photo?: { src: string; alt: string };
   mediaLabel?: string;
   showMedia?: boolean;
   class?: string;
@@ -39,15 +43,16 @@ const {
   class: className = "",
 } = Astro.props;
 const isCompact = size === "compact";
+const cls = ["art-head", isCompact && "art-head--sm", className].filter(Boolean).join(" ");
 ---
 
-<header class={`art-head${isCompact ? " art-head--sm" : ""} ${className}`.trim()}>
+<header class={cls}>
   <div class="ah-top">
     {category && <span class="art-cat">{category}</span>}
     {date && <span class="art-meta">{date}</span>}
   </div>
-  {title && <h1>{title}</h1>}
-  {lede && <p class="ah-lede">{lede}</p>}
+  <h1>{title}</h1>
+  {lede && <p class="ah-lede" set:html={lede} />}
   {
     (author || readTime) && (
       <div class="ah-foot">
@@ -60,11 +65,7 @@ const isCompact = size === "compact";
     showMedia && (
       <div class="ah-media">
         {photo ? (
-          <img
-            src={photo}
-            alt={mediaLabel}
-            style={`display:block;width:100%;aspect-ratio:${isCompact ? "16 / 9" : "16 / 6.2"};object-fit:cover;border-radius:var(--r)`}
-          />
+          <img class="ah-img" src={photo.src} alt={photo.alt} loading="lazy" />
         ) : (
           <div class="ph">
             <span class="ph-tag">{mediaLabel}</span>
@@ -74,3 +75,18 @@ const isCompact = size === "compact";
     )
   }
 </header>
+
+<style>
+  /* Photo réelle : mêmes métriques que le placeholder .ah-media .ph du DS
+     (16/6.2, 16/9 en compact, rayon --r) — remplace le style inline du port. */
+  .ah-media .ah-img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 6.2;
+    object-fit: cover;
+    border-radius: var(--r);
+  }
+  .art-head--sm .ah-media .ah-img {
+    aspect-ratio: 16 / 9;
+  }
+</style>

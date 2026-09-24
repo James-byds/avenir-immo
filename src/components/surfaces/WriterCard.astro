@@ -1,0 +1,114 @@
+---
+/**
+ * WriterCard — carte rédacteur du journal (gabarit 13).
+ *
+ *   photo   — `.writer.writer--photo` du hub (réf. auteurs.html) : portrait
+ *             rond + identité (.w-top), citation courte (.w-quote), première
+ *             phrase de la bio (.w-bio), pilules de spécialités (.w-specs),
+ *             compteur « n articles · Voir sa page → » (.w-count) ;
+ *   compact — `.writer` des pages auteur (réf. auteur-*.html, « Les autres
+ *             rédacteurs ») : byline à initiales + citation courte + compteur.
+ *
+ * Racine <a> sans AUCUN élément interactif à l'intérieur — c'est déjà « un
+ * seul lien étendu à la carte » (référence). Les rédacteurs sont distincts
+ * des agents : jamais de biens ici.
+ *
+ * `count` = nombre d'articles RÉEL, calculé par l'appelant depuis la
+ * collection `articles` (jamais recopié depuis la maquette).
+ */
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  auteur: CollectionEntry<"auteurs">;
+  count: number;
+  variant?: "photo" | "compact";
+  class?: string;
+}
+const { auteur, count, variant = "photo", class: className = "" } = Astro.props;
+const { nom, role, bio, citationCourte, specialites, portrait } = auteur.data;
+
+const href = `/auteurs/${auteur.id}`;
+const initiales = nom
+  .split(" ")
+  .map((w) => w[0])
+  .slice(0, 2)
+  .join("");
+/* Première phrase de la bio — c'est ce que la référence affiche en .w-bio. */
+const bioCourte = bio.match(/^(.+?\.)(?:\s|$)/)?.[1] ?? bio;
+const countLabel = `${count} article${count > 1 ? "s" : ""} · Voir sa page`;
+
+const cls = ["writer", variant === "photo" && "writer--photo", className].filter(Boolean).join(" ");
+---
+
+{
+  variant === "photo" ? (
+    <a class={cls} href={href}>
+      <div class="w-top">
+        <span class="w-portrait">
+          {portrait ? (
+            <img src={portrait} alt="" loading="lazy" />
+          ) : (
+            <span class="ph">
+              <span class="ph-tag">portrait</span>
+            </span>
+          )}
+        </span>
+        <span class="w-id">
+          <span class="b-name">{nom}</span>
+          {role && <span class="b-role">{role}</span>}
+        </span>
+      </div>
+      {citationCourte && <p class="w-quote">« {citationCourte} »</p>}
+      <p class="w-bio">{bioCourte}</p>
+      {specialites.length > 0 && (
+        <div class="w-specs">
+          {specialites.map((s) => (
+            <span>{s}</span>
+          ))}
+        </div>
+      )}
+      <div class="w-count">{countLabel} <span class="arr">→</span></div>
+    </a>
+  ) : (
+    <a class={cls} href={href}>
+      <div class="byline">
+        <span class="b-av" aria-hidden="true">{initiales}</span>
+        <span>
+          <span class="b-name">{nom}</span>
+          {role && <span class="b-role"> · {role.replace(" · ", " & ")}</span>}
+        </span>
+      </div>
+      {citationCourte && <p class="w-bio">« {citationCourte} »</p>}
+      <div class="w-count">{countLabel} →</div>
+    </a>
+  )
+}
+
+<style>
+  /* ── à reprendre dans le DS — gabarit 13 : <style> de page de auteurs.html
+     (« Cartes rédacteurs — version humaine »), valeurs inchangées. Le DS ne
+     connaît que .writer / .w-bio / .w-count (site.css l. 1363-1367). ── */
+  .writer--photo { padding: 26px 26px 24px; }
+  .writer .w-top { display: flex; align-items: center; gap: 16px; }
+  .writer .w-portrait { flex-shrink: 0; width: 76px; height: 76px; border-radius: 50%; overflow: hidden; background: var(--green-tint); box-shadow: var(--sh-sm); }
+  .writer .w-portrait .ph { width: 100%; height: 100%; border-radius: 0; }
+  .writer .w-portrait .ph-tag { display: none; }
+  .writer .w-id { display: block; }
+  .writer .w-id .b-name { display: block; font-family: var(--serif); font-weight: 600; font-size: 20px; letter-spacing: -0.01em; transition: color .25s; }
+  .writer .w-id .b-role { display: block; font-size: 13.5px; color: var(--green); font-weight: 600; margin-top: 3px; }
+  .writer .w-quote { font-family: var(--serif); font-weight: 500; font-size: 16.5px; line-height: 1.45; letter-spacing: -0.01em; color: var(--ink); margin-top: 18px; }
+  .writer .w-specs { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 16px; }
+  .writer .w-specs span { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); background: var(--bg-soft); border: 1px solid var(--line-2); border-radius: var(--r-pill); padding: 6px 11px; }
+  .writer .w-count { display: flex; align-items: center; gap: 6px; }
+  .writer .w-count .arr { transition: transform .25s var(--ease); }
+  .writer:hover .w-count { color: var(--green-d); }
+  .writer:hover .w-count .arr { transform: translateX(4px); }
+
+  /* Additifs (à reprendre aussi) :
+     · portrait client dans le disque — mêmes valeurs que .author-hero .b-av img
+       de local.css (la référence hub n'avait qu'un placeholder .ph) ;
+     · focus visible de la racine <a> : même halo que les cartes d'article
+       (local.css .post h3 a:focus-visible). */
+  .writer .w-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; display: block; }
+  .writer:focus-visible { outline: 3px solid var(--green-soft); outline-offset: 3px; }
+</style>

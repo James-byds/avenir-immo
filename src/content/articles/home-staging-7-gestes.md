@@ -1,10 +1,53 @@
 ---
 titre: "Home-staging : 7 gestes qui font monter le prix de vente"
 description: "Des ajustements simples et peu coûteux qui transforment la perception d'un bien dès la première visite."
+# Meta description de la page article (réf. article.html) — l'extrait ci-dessus
+# reste celui des cartes (index.html, page auteur).
+metaDescription: "Les sept gestes de préparation qui ont réellement pesé sur le prix final de nos 42 dernières ventes : budget médian 680 €, +3,2 % sur le prix, onze jours de moins avant compromis."
+titreCourt: "Home-staging"
 auteur: camille-renard
 categorie: "Vendre"
 tempsLecture: 5
 datePublication: 2026-05-12
+# Chiffres cités dans le corps (règle : un chiffre affiché = une source datée).
+# Source donnée par la référence article.html (« 42 ventes Avenir Immobilier ·
+# 2025 — 1er semestre 2026 ») ; date = fin du 1er semestre 2026.
+chiffres:
+  - label: "Ventes analysées"
+    valeur: 42
+    unite: "ventes"
+    source:
+      libelle: "Données internes Avenir Immobilier · 42 ventes, 2025 — 1er semestre 2026"
+      date: 2026-06-30
+  - label: "Budget de préparation constaté"
+    valeur: "500 à 900"
+    unite: "€"
+    source:
+      libelle: "Données internes Avenir Immobilier · 42 ventes, 2025 — 1er semestre 2026"
+      date: 2026-06-30
+  - label: "Budget médian de préparation"
+    valeur: 680
+    unite: "€"
+    source:
+      libelle: "Données internes Avenir Immobilier · 42 ventes, 2025 — 1er semestre 2026"
+      date: 2026-06-30
+  - label: "Écart de prix final constaté"
+    valeur: "+3,2"
+    unite: "%"
+    source:
+      libelle: "Données internes Avenir Immobilier · 42 ventes, 2025 — 1er semestre 2026"
+      date: 2026-06-30
+  - label: "Gain sur le délai avant compromis"
+    valeur: "−11"
+    unite: "jours"
+    source:
+      libelle: "Données internes Avenir Immobilier · 42 ventes, 2025 — 1er semestre 2026"
+      date: 2026-06-30
+  - label: "Visites nécessaires avant offre"
+    valeur: "4,1"
+    source:
+      libelle: "Données internes Avenir Immobilier · 42 ventes, 2025 — 1er semestre 2026"
+      date: 2026-06-30
 ---
 
 Nous avons repris nos 42 dernières ventes de maisons pour isoler ce qui a réellement joué sur le prix final. Voici les sept gestes qui reviennent — et ceux qui ne servent à rien.
@@ -31,18 +74,18 @@ C'est pour cette raison que le home-staging n'est pas de la décoration. Il ne s
 
 Les chiffres ci-dessous sont ceux de nos dossiers, pas une moyenne de marché : maisons de 150 à 320 m² vendues entre 2025 et 2026 dans le Grand Charleroi, comparées à des biens équivalents vendus sans préparation.
 
-- Budget médian de préparation (peinture, petites réparations, location de quelques meubles) : **680 €**
-- Écart de prix final constaté : **+3,2 %**
-- Gain sur le délai avant compromis : **−11 jours**
-- Visites nécessaires avant offre : **4,1**
-
-SOURCE : 42 VENTES AVENIR IMMOBILIER · 2025 — 1ER SEMESTRE 2026
+<div class="q-stat-rows">
+  <div class="s-row"><span class="k">Budget médian de préparation<small>Peinture, petites réparations, location de quelques meubles</small></span><span class="v">680 €</span></div>
+  <div class="s-row"><span class="k">Écart de prix final constaté</span><span class="v"><em>+3,2 %</em></span></div>
+  <div class="s-row"><span class="k">Gain sur le délai avant compromis</span><span class="v">−11 jours</span></div>
+  <div class="s-row"><span class="k">Visites nécessaires avant offre</span><span class="v">4,1</span></div>
+</div>
 
 ## Trois dépenses à éviter
 
 - **La cuisine neuve avant vente.** Rarement rentabilisée : l'acquéreur refera la sienne. Nettoyer, remplacer les façades abîmées, au maximum.
 - **Le mobilier de style acheté pour l'occasion.** Le sur-décor se voit sur les photos et met en doute le reste du dossier.
-- **La grosse rénovation énergétique improvisée.** Utile si elle change la lettre du PEB, coûteuse si elle ne la change pas — nous y avons consacré un article.
+- **La grosse rénovation énergétique improvisée.** Utile si elle change la lettre du PEB, coûteuse si elle ne la change pas — [nous y avons consacré un article](/blog/peb-travaux-monter-note).
 
 ## Quand faire appel à nous
 

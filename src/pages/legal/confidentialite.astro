@@ -1,4 +1,133 @@
 ---
-// Stub — page «Confidentialité». À implémenter (voir handoff / DEMARRAGE.md).
+/* Politique de confidentialité — gabarit 14, document modèle.
+   Réf. : docs/handoff/reference/legale.html — les 8 sections, texte
+   intégral mot pour mot (insécables U+00A0 comprises), <title> et
+   description de la référence. Les liens que la maquette laissait en
+   ancre vide (#) pointent vers /legal/cookies ; la lecture « 6 min » est celle
+   de la référence. */
+import LegalLayout from "../../layouts/LegalLayout.astro";
+import EnClair from "../../components/surfaces/EnClair.astro";
+import LegalTable from "../../components/surfaces/LegalTable.astro";
+import Droits from "../../components/surfaces/Droits.astro";
+
+const toc = [
+  { id: "s1", label: "Responsable du traitement" },
+  { id: "s2", label: "Données collectées" },
+  { id: "s3", label: "Finalités & bases légales" },
+  { id: "s4", label: "Durées de conservation" },
+  { id: "s5", label: "Destinataires" },
+  { id: "s6", label: "Cookies" },
+  { id: "s7", label: "Vos droits" },
+  { id: "s8", label: "Contact & réclamation" },
+];
+
+const finalites = [
+  { c1: "Réponse à vos demandes", c2: "Estimation, demande de visite, formulaire de contact", c3: "Mesures précontractuelles" },
+  { c1: "Gestion de votre dossier", c2: "Mandat de vente, compromis, suivi acquéreur", c3: "Contrat" },
+  { c1: "Obligations légales", c2: "Anti-blanchiment, déontologie IPI, comptabilité", c3: "Obligation légale" },
+  { c1: "Lettre mensuelle", c2: "Off-market et analyse du marché, 1×/mois", c3: "Consentement" },
+  { c1: "Mesure d'audience", c2: "Statistiques anonymisées du site", c3: "Intérêt légitime" },
+];
+
+const cookies = [
+  { c1: "Essentiels", c2: "Sécurité, session, mémorisation de votre consentement", c3: "Session – 6 mois" },
+  { c1: "Mesure d'audience", c2: "Statistiques de visite anonymisées", c3: "13 mois" },
+  { c1: "Préférences", c2: "Favoris ♡, derniers biens consultés, langue", c3: "6 mois" },
+];
+
+const droits = [
+  { titre: "Accès", texte: "Obtenir la copie des données que nous détenons" },
+  { titre: "Rectification", texte: "Corriger une donnée inexacte ou incomplète" },
+  { titre: "Effacement", texte: "Supprimer vos données, hors obligations légales" },
+  { titre: "Opposition", texte: "Refuser un traitement, dont la lettre mensuelle" },
+  { titre: "Limitation", texte: "Geler temporairement l'usage de vos données" },
+  { titre: "Portabilité", texte: "Récupérer vos données dans un format lisible" },
+];
 ---
-<p>Stub : Confidentialité</p>
+
+<LegalLayout
+  doc="confidentialite"
+  titre="Politique de confidentialité"
+  description="Comment Avenir Immobilier collecte, utilise et protège vos données personnelles. Politique conforme au RGPD, mise à jour le 14 septembre 2026."
+  version="2.1"
+  date="2026-09-14"
+  lecture="6 min"
+  toc={toc}
+  cta={{
+    eyebrow: "Réponse sous 24 h · sans engagement",
+    titre: "Une question sur vos données ?",
+    texte: "Notre référent vie privée vous répond directement — pas de formulaire labyrinthe, pas de robot.",
+    label: "Écrire au référent",
+    href: "mailto:privacy@avenir-immobilier.be",
+  }}
+>
+  <section id="s1">
+    <h2><span class="n">01</span>Responsable du traitement</h2>
+    <EnClair>Vos données sont traitées par Avenir Immobilier, agence agréée IPI à Charleroi. Un seul interlocuteur, joignable directement.</EnClair>
+    <dl class="lg-rows">
+      <div class="legal"><dt>Dénomination</dt><dd>Avenir Immobilier SRL</dd></div>
+      <div class="legal"><dt>Siège social</dt><dd>Boulevard Tirou 102, 6000 Charleroi</dd></div>
+      <div class="legal"><dt>BCE / TVA</dt><dd>BE 0712.xxx.xxx</dd></div>
+      <div class="legal"><dt>Agrément IPI</dt><dd>509 217 — Institut professionnel des agents immobiliers</dd></div>
+      <div class="legal"><dt>Référent vie privée</dt><dd>privacy@avenir-immobilier.be</dd></div>
+    </dl>
+  </section>
+
+  <section id="s2">
+    <h2><span class="n">02</span>Les données que nous collectons</h2>
+    <p>Nous ne collectons que ce qui est nécessaire à votre projet immobilier. Selon votre situation — visiteur du site, vendeur, acquéreur ou candidat locataire — il s'agit de :</p>
+    <ul>
+      <li><strong>Identification :</strong> nom, prénom, adresse email, téléphone, adresse postale.</li>
+      <li><strong>Projet immobilier :</strong> caractéristiques du bien à vendre ou recherché, budget, critères, situation de financement.</li>
+      <li><strong>Obligations légales :</strong> pièce d'identité et données requises par la législation anti-blanchiment lors d'un compromis.</li>
+      <li><strong>Navigation :</strong> pages consultées et mesure d'audience anonymisée (voir <a href="#s6">section 06</a>).</li>
+    </ul>
+  </section>
+
+  <section id="s3">
+    <h2><span class="n">03</span>Pourquoi nous les utilisons</h2>
+    <EnClair>Répondre à vos demandes, gérer votre dossier de vente ou d'achat, respecter nos obligations d'agence agréée. Jamais de revente de données.</EnClair>
+    <LegalTable head={["Finalité", "Exemple", "Base légale"]} rows={finalites} label="Finalités et bases légales" />
+  </section>
+
+  <section id="s4">
+    <h2><span class="n">04</span>Durées de conservation</h2>
+    <p>Nous conservons vos données le temps strictement nécessaire, puis nous les supprimons ou les anonymisons.</p>
+    <dl class="lg-rows">
+      <div class="legal"><dt>Demande sans suite</dt><dd>3 ans après le dernier contact</dd></div>
+      <div class="legal"><dt>Dossier de vente ou d'achat</dt><dd>10 ans (obligations légales)</dd></div>
+      <div class="legal"><dt>Documents anti-blanchiment</dt><dd>10 ans après la fin de la relation</dd></div>
+      <div class="legal"><dt>Lettre mensuelle</dt><dd>Jusqu'à votre désinscription</dd></div>
+      <div class="legal"><dt>Mesure d'audience</dt><dd>13 mois maximum</dd></div>
+    </dl>
+  </section>
+
+  <section id="s5">
+    <h2><span class="n">05</span>Qui peut y accéder</h2>
+    <p>Vos données restent au sein de l'agence. Elles ne sont partagées qu'avec :</p>
+    <ul>
+      <li><strong>Les intervenants de votre transaction :</strong> notaire, certificateur PEB, géomètre — uniquement les données nécessaires à leur mission.</li>
+      <li><strong>Nos prestataires techniques :</strong> hébergement du site et outil de gestion, sous contrat de sous-traitance conforme au RGPD, hébergés dans l'Union européenne.</li>
+      <li><strong>Les autorités</strong>, lorsque la loi nous y oblige.</li>
+    </ul>
+    <p><strong>Nous ne vendons ni ne louons jamais vos données</strong> à des tiers, régies publicitaires comprises.</p>
+  </section>
+
+  <section id="s6">
+    <h2><span class="n">06</span>Cookies</h2>
+    <EnClair>Trois familles de cookies, dont une seule obligatoire. Vous pouvez modifier votre choix à tout moment via « Gérer mes cookies » en bas de page.</EnClair>
+    <LegalTable head={["Catégorie", "Rôle", "Durée"]} rows={cookies} label="Familles de cookies" />
+    <p>Le détail cookie par cookie figure dans notre <a href="/legal/cookies">politique cookies</a>.</p>
+  </section>
+
+  <section id="s7">
+    <h2><span class="n">07</span>Vos droits</h2>
+    <p>Le RGPD vous garantit un contrôle complet sur vos données. Sur simple email à <strong>privacy@avenir-immobilier.be</strong>, nous répondons sous 30 jours — en pratique, sous 72 h.</p>
+    <Droits items={droits} />
+  </section>
+
+  <section id="s8">
+    <h2><span class="n">08</span>Contact &amp; réclamation</h2>
+    <p>Pour toute question, écrivez-nous à <strong>privacy@avenir-immobilier.be</strong> ou par courrier au siège de l'agence. Si notre réponse ne vous satisfait pas, vous pouvez saisir l'<strong>Autorité de protection des données</strong> — Rue de la Presse 35, 1000 Bruxelles · <a href="https://www.autoriteprotectiondonnees.be">autoriteprotectiondonnees.be</a>.</p>
+  </section>
+</LegalLayout>

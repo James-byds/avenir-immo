@@ -1,24 +1,56 @@
 ---
 /**
- * AuthorHero — port .astro de components/surfaces/AuthorBox.jsx (export AuthorHero)
+ * AuthorHero — en-tête de page auteur (rédacteur du journal, réf.
+ * auteur-*.html). Jamais de biens : les auteurs sont distincts des agents.
  *
- * En-tête de page auteur (rédacteur du blog) — jamais de biens.
- * Les actions (boutons) se passent en enfant via <slot />.
+ * Structure de la référence : colonne portrait `.ah-aside` (disque `.b-av`,
+ * image cliente ou initiales sur --green-tint), puis h1, `.ah-role`,
+ * citation `.au-quote`, `.ah-bio`, méta mono `.ah-meta`, actions `.ah-actions`
+ * (slot). `stats` rend la ligne `.ah-stats` (local.css) à la suite du héros,
+ * dans le même `.wrap` — `.page-head:has(.ah-stats)` rétablit le padding bas.
+ *
+ * Tous les chiffres de `stats` et de `meta` sont CALCULÉS par la page depuis
+ * la collection `articles` (jamais recopiés depuis la maquette).
  */
+interface Stat {
+  value: string;
+  label: string;
+}
 interface Props {
   name: string;
   role?: string;
+  /** Citation du rédacteur, sans guillemets (posés ici). */
+  quote?: string;
   bio?: string;
   meta?: string[];
+  /** Portrait client — initiales sur vert tendre sinon. */
+  photo?: { src: string; alt: string };
+  stats?: Stat[];
 }
-const { name, role, bio, meta = [] } = Astro.props;
+const { name, role, quote, bio, meta = [], photo, stats = [] } = Astro.props;
+const initiales = name
+  .split(" ")
+  .map((w) => w[0])
+  .slice(0, 2)
+  .join("");
 ---
 
 <div class="author-hero">
-  <span class="b-av"><span class="ph"><span class="ph-tag">portrait</span></span></span>
+  <div class="ah-aside">
+    {
+      photo ? (
+        <span class="b-av">
+          <img src={photo.src} alt={photo.alt} loading="lazy" />
+        </span>
+      ) : (
+        <span class="b-av b-av--init" aria-hidden="true">{initiales}</span>
+      )
+    }
+  </div>
   <div>
     <h1>{name}</h1>
     {role && <div class="ah-role">{role}</div>}
+    {quote && <p class="au-quote">« {quote} »</p>}
     {bio && <p class="ah-bio">{bio}</p>}
     {
       meta.length > 0 && (
@@ -35,3 +67,26 @@ const { name, role, bio, meta = [] } = Astro.props;
     {Astro.slots.has("default") && <div class="ah-actions"><slot /></div>}
   </div>
 </div>
+{
+  stats.length > 0 && (
+    <div class="ah-stats">
+      {stats.map((s) => (
+        <div class="st">
+          <div class="sv">{s.value}</div>
+          <div class="sl">{s.label}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+<style>
+  /* .au-quote : PAS de recopie ici — local.css (.author-hero .au-quote,
+     l. 93-107) porte déjà la version finale de la maquette ; une règle scoped
+     de même spécificité, inlinée après le bundle, l'écraserait (recette F6). */
+
+  /* Additif : initiales quand le portrait manque (aucun cas en référence —
+     tous les rédacteurs ont un portrait). Même traitement que .byline .b-av
+     (site.css), à l'échelle du disque de 120-168 px. À reprendre dans le DS. */
+  .author-hero .ah-aside .b-av.b-av--init { display: grid; place-items: center; color: var(--green); font-weight: 700; font-size: clamp(32px, 4vw, 44px); letter-spacing: .02em; }
+</style>

@@ -108,7 +108,14 @@ const articles = defineCollection({
   schema: ({ image }) =>
     z.object({
       titre: z.string(),
+      /** Extrait des cartes (accueil, hub, pages auteur) et chapô de repli. */
       description: z.string(),
+      /** Meta description propre à la page article quand elle diffère de
+          l'extrait (réf. article.html) — repli : `description`. Additif F6. */
+      metaDescription: z.string().optional(),
+      /** Libellé court du fil d'Ariane (« Home-staging ») — le JSON-LD garde
+          le titre complet. Additif F6. */
+      titreCourt: z.string().optional(),
       auteur: reference("auteurs"),
       /** Catégorie éditoriale affichée (« Marché », « Fiscalité »…). */
       categorie: z.string().optional(),
@@ -135,6 +142,41 @@ const auteurs = defineCollection({
       liens: z
         .array(z.object({ label: z.string(), url: z.string().url() }))
         .default([]),
+      /* ── Additifs gabarit 13 (hub /auteurs + page auteur) — tous optionnels.
+         Les COMPTES (articles signés, thématiques, lecture moyenne, dernière
+         publication) ne sont jamais déclarés ici : calculés depuis `articles`. ── */
+      /** Rôle développé du héros de la page auteur (« Expert vente — Loverval &
+          Mont-sur-Marchienne ») ; défaut : `role`. */
+      roleLong: z.string().optional(),
+      /** Agrément IPI (« 509 217 ») — suffixe « · Agent IPI … » du rôle du héros. */
+      ipi: z.string().optional(),
+      /** Citation du héros de la page auteur (.au-quote), sans guillemets. */
+      citation: z.string().optional(),
+      /** Citation courte des cartes rédacteur (.w-quote du hub, .w-bio des
+          cartes compactes « Les autres rédacteurs »), sans guillemets. */
+      citationCourte: z.string().optional(),
+      /** Thèmes de prédilection — pilules .w-specs du hub. */
+      specialites: z.array(z.string()).default([]),
+      /** Année de la première signature dans le journal (« Écrit depuis 2018 »). */
+      depuis: z.number().int().optional(),
+      /** Libellé devant l'année — « Écrit depuis » par défaut, « Invitée depuis »
+          pour une signature extérieure. */
+      depuisLabel: z.string().optional(),
+      /** Signature extérieure à l'agence (notaire invitée) : pas de `worksFor`
+          Avenir dans le JSON-LD Person. */
+      externe: z.boolean().default(false),
+      langues: z.array(z.string()).default([]),
+      /** Rattachement affiché tel quel dans la méta du héros (« Basée à
+          Charleroi », « Étude à Charleroi »). */
+      base: z.string().optional(),
+      /** Portrait client servi depuis public/ (« /assets/portrait-02.png ») —
+          initiales sur vert tendre sinon. */
+      portrait: z.string().optional(),
+      /** Ordre d'affichage (hub et cartes « autres rédacteurs »). */
+      ordre: z.number().int().default(0),
+      /** Suite de « Les {n} articles de {Nom}, » dans la meta description :
+          rôle libre + deux-points + spécificités (n est calculé). */
+      metaDescription: z.string().optional(),
     }),
 });
 

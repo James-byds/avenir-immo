@@ -36,6 +36,14 @@ import Faq from "../components/islands/Faq";
 import ShareBar from "../components/islands/ShareBar";
 import ContactForm from "../components/islands/ContactForm";
 import DropdownMenu from "../components/islands/DropdownMenu";
+import { getCollection, getEntry } from "astro:content";
+
+/* Banc ArticleCard (contrat vague D : entrées de collection, plus de props
+   libres) — les 5 articles les plus récents et leurs auteurs. */
+const artBench = (await getCollection("articles"))
+  .sort((a, b) => b.data.datePublication.valueOf() - a.data.datePublication.valueOf())
+  .slice(0, 5);
+const artAuteurs = await Promise.all(artBench.map((a) => getEntry(a.data.auteur)));
 
 const href = (p: number) => `?page=${p}`;
 ---
@@ -261,19 +269,13 @@ const href = (p: number) => `?page=${p}`;
               showMedia={false}
             />
             <span class="lbl">ArticleCard — variant="feature"</span>
-            <ArticleCard
-              category="Marché"
-              meta="14 septembre 2026 · 6 min"
-              title="Prix de l'immobilier à Charleroi : ce que révèle la rentrée 2026"
-              excerpt="Le marché carolo se stabilise après deux années de hausse. Analyse quartier par quartier."
-              author={{ name: "Camille Renard", role: "Responsable ventes" }}
-            />
+            <ArticleCard variant="feature" article={artBench[0]} auteur={artAuteurs[0]} />
             <span class="lbl">ArticleCard — variant="compact" (défaut · tint · thumb)</span>
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%">
-              <ArticleCard variant="compact" category="Fiscalité" meta="4 min" title="Droits d'enregistrement en Wallonie : ce qui change en 2027" author={{ name: "Marc Lambert" }} />
-              <ArticleCard variant="compact" tint category="Conseil" meta="7 min" title="Estimer son bien sans se tromper : la méthode en cinq étapes" author={{ name: "Anne Vandeputte" }} />
-              <ArticleCard variant="compact" thumb category="Quartier" meta="5 min" title="Vivre à Mont-sur-Marchienne : écoles, transports, prix" />
-              <ArticleCard variant="compact" thumb category="Location" meta="3 min" title="Bail wallon : les six clauses à vérifier" />
+              <ArticleCard variant="compact" article={artBench[1]} auteur={artAuteurs[1]} />
+              <ArticleCard variant="compact" tint article={artBench[2]} auteur={artAuteurs[2]} />
+              <ArticleCard variant="compact" thumb article={artBench[3]} />
+              <ArticleCard variant="compact" thumb article={artBench[4]} />
             </div>
           </div>
         </article>

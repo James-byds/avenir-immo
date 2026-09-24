@@ -1,0 +1,73 @@
+---
+/**
+ * EditorialCharter — charte éditoriale du journal (gabarit 13, réf.
+ * auteurs.html « Ce que vous ne lirez jamais ici », `.au-charte`).
+ *
+ * Copie de page reprise mot pour mot (même précédent que les situations
+ * « Qui appeler » du hub équipe) ; `items` permet de la surcharger.
+ * À poser dans une section blanche : les cartes sont blanches bordées --line-2.
+ *
+ * Tête de section en `.section-head` (SectionHead) : la référence posait un
+ * h2 nu, que ni le DS ni la feuille de la maquette ne dimensionnent (taille
+ * navigateur) — défaut de maquette ; blog.html et equipe-*.html utilisent
+ * `.section-head` au même endroit.
+ */
+import SectionHead from "../core/SectionHead.astro";
+
+interface Item {
+  titre: string;
+  texte: string;
+}
+interface Props {
+  eyebrow?: string;
+  title?: string;
+  items?: Item[];
+}
+
+const CHARTE: Item[] = [
+  {
+    titre: "Aucun article sponsorisé",
+    texte:
+      "Nous ne sommes payés par aucun promoteur, courtier ni banque. Quand nous citons un partenaire, nous le disons dans l'article.",
+  },
+  {
+    titre: "Des chiffres sourcés",
+    texte:
+      "Chaque prix au m² provient de nos ventes actées ou des statistiques notariales, avec la période et le périmètre précisés.",
+  },
+  {
+    titre: "Des corrections visibles",
+    texte: "Un article corrigé porte la date de mise à jour et la nature du changement en bas de page.",
+  },
+];
+
+const { eyebrow = "Notre charte", title = "Ce que vous ne lirez jamais ici", items = CHARTE } = Astro.props;
+const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
+const num = (i: number) => String(i + 1).padStart(2, "0");
+---
+
+<div class="reveal">
+  <SectionHead eyebrow={eyebrow} title={title} />
+</div>
+<ul class="au-charte">
+  {
+    items.map((it, i) => (
+      <li class={`reveal${delay(i)}`}>
+        <span class="n">{num(i)}</span>
+        <h3>{it.titre}</h3>
+        <p>{it.texte}</p>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  /* ── à reprendre dans le DS — gabarit 13 : <style> de page de auteurs.html
+     (.au-charte), valeurs inchangées. ── */
+  .au-charte { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: clamp(24px, 3vw, 34px); }
+  .au-charte li { list-style: none; background: var(--bg); border: 1px solid var(--line-2); border-radius: var(--r); padding: 22px 24px; }
+  .au-charte .n { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--green); }
+  .au-charte h3 { font-family: var(--serif); font-weight: 600; font-size: 17.5px; margin-top: 12px; letter-spacing: -0.01em; }
+  .au-charte p { font-size: 14px; color: var(--ink-soft); margin-top: 8px; }
+  @media (max-width: 980px){ .au-charte { grid-template-columns: 1fr; } }
+</style>

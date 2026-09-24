@@ -1,102 +1,168 @@
 ---
 /**
- * ArticleCard — port .astro de components/surfaces/ArticleCard.jsx
+ * ArticleCard — carte d'article (hub /blog, pages auteur, « à lire aussi »).
  *
- * "feature" = carte horizontale teintée (tête de hub) — une seule par écran.
- * "compact" = carte resserrée (« à lire aussi », colonne, mobile), option `thumb`.
+ * Contrat (vague D, arbitré) — consommé par les gabarits 12 et 13 :
+ *   article : CollectionEntry<"articles"> (requis)
+ *   auteur  : CollectionEntry<"auteurs"> — résolu par l'appelant (getEntry) ;
+ *             absent = pas de byline
+ *   variant : "feature" | "post" | "compact" (défaut "post")
+ *             feature = .art-feature horizontale teintée — UNE SEULE par écran
+ *             post    = .post de la grille .blog-grid (réf. blog.html, accueil)
+ *             compact = .art-mini (« à lire aussi », colonnes), options
+ *                       `tint` (fond vert tendre — jamais dans une .sec--tint :
+ *                       teinté sur teinté) et `thumb` (vignette carrée)
+ *   class   : passe-through (ex. « reveal d1 »)
+ *
+ * Rendu : racine <article>, JAMAIS <a>. UN seul lien par carte = le titre
+ * (<h3><a href="/blog/{id}">), étendu à toute la carte par la règle ::after de
+ * local.css (.post h3 a::after, .af-body h3 a::after, .art-mini h3 a::after,
+ * z-index 4 au-dessus des pastilles). Photo, byline et « Lire l'article » ne
+ * sont pas des liens — une ancre dans une ancre est du HTML invalide
+ * (journal « Cartes d'article cassées », 21 sept. 2026).
+ *
+ * Méta = formatDate(datePublication) · {tempsLecture} min ; catégorie =
+ * article.data.categorie ; extrait (feature et post) = article.data.description.
+ * Placeholder .ph étiqueté « Article · {catégorie} » — remplacer par un <img>
+ * au même endroit quand les visuels arriveront.
+ *
+ * Attributs data-cat / data-date / data-read / data-idx sur la racine :
+ * filtre et tri client du hub (src/scripts/blog-filter.ts).
  */
+import type { CollectionEntry } from "astro:content";
 import Byline from "./Byline.astro";
+import { formatDate } from "../../lib/format";
+import { slugCategorie } from "../../scripts/blog-filter";
 
-interface Author {
-  name: string;
-  role?: string;
-  href?: string;
-}
 interface Props {
-  variant?: "feature" | "compact";
+  article: CollectionEntry<"articles">;
+  auteur?: CollectionEntry<"auteurs">;
+  variant?: "feature" | "post" | "compact";
   tint?: boolean;
   thumb?: boolean;
-  category?: string;
-  meta?: string;
-  title?: string;
-  excerpt?: string;
-  author?: Author;
-  href?: string;
-  photo?: string;
-  mediaLabel?: string;
-  ctaLabel?: string;
   class?: string;
+  /** Rang dans la grille (tri « plus récents » du filtre client). */
+  idx?: number;
+  /** id de la racine (crochet du filtre client : #blogFeature). */
+  id?: string;
 }
 const {
-  variant = "feature",
+  article,
+  auteur,
+  variant = "post",
   tint = false,
   thumb = false,
-  category,
-  meta,
-  title,
-  excerpt,
-  author,
-  href = "#",
-  photo,
-  mediaLabel = "Photo d'article",
-  ctaLabel = "Lire",
   class: className = "",
+  idx,
+  id,
 } = Astro.props;
-const isCompact = variant === "compact";
+
+/* Garde d'exécution : sans `article` (ancien appel du banc /test, hors
+   contrat) la carte ne rend rien plutôt que de casser le build. */
+const ok = Boolean(article?.data);
+const { titre, description, categorie, tempsLecture, datePublication } = article?.data ?? {
+  titre: "",
+  description: "",
+  categorie: undefined,
+  tempsLecture: undefined,
+  datePublication: new Date(0),
+};
+const href = `/blog/${article?.id ?? ""}`;
+const date = formatDate(datePublication);
+const meta = tempsLecture ? `${date} · ${tempsLecture} min` : date;
+/* La carte à la une écrit « n min de lecture » (blog.html), les .post « n min ». */
+const metaFeature = tempsLecture ? `${date} · ${tempsLecture} min de lecture` : date;
+const phTag = `Article${variant === "feature" ? " à la une" : ""}${categorie ? ` · ${categorie}` : ""}`;
+
+/* Rôle court sur les bylines de carte (« Fondatrice & conseillère » →
+   « Fondatrice », « Gestion locative & conseil » → « Gestion locative »),
+   comme les cartes de la référence ; le rôle complet reste sur l'en-tête
+   d'article et l'encadré auteur. */
+const roleCourt = auteur?.data.role?.split(/\s[·&]\s/)[0];
+
+const data = {
+  id,
+  "data-cat": categorie ? slugCategorie(categorie) : undefined,
+  "data-date": datePublication.toISOString().slice(0, 10),
+  "data-read": tempsLecture,
+  "data-idx": idx,
+};
+const cls = (base: string) => [base, className].filter(Boolean).join(" ");
 ---
 
 {
-  isCompact ? (
-    <a class={`art-mini${tint ? " art-mini--tint" : ""} ${className}`.trim()} href={href}>
+  !ok ? null : variant === "feature" ? (
+    <article class={cls("art-feature")} {...data}>
+      <div class="af-media">
+        {categorie && <span class="art-cat">{categorie}</span>}
+        <div class="ph">
+          <span class="ph-tag">{phTag}</span>
+        </div>
+      </div>
+      <div class="af-body">
+        <span class="art-meta">Article à la une · {metaFeature}</span>
+        <h3>
+          <a href={href}>{titre}</a>
+        </h3>
+        <p>{description}</p>
+        <div class="af-foot">
+          {auteur && <Byline name={auteur.data.nom} role={roleCourt} small />}
+          <span class="link-arrow">
+            Lire l'article <span class="arr">→</span>
+          </span>
+        </div>
+      </div>
+    </article>
+  ) : variant === "compact" ? (
+    <article class={cls(`art-mini${tint ? " art-mini--tint" : ""}`)} {...data}>
       {thumb ? (
         <div class="am-thumb">
-          {photo ? (
-            <img src={photo} alt={mediaLabel} style="display:block;width:100%;aspect-ratio:1 / 1;object-fit:cover;border-radius:var(--r-sm)" />
-          ) : (
-            <div class="ph" />
-          )}
+          <div class="ph">
+            <span class="ph-tag">{phTag}</span>
+          </div>
           <div>
             <div class="am-row">
-              {category && <span class="art-cat art-cat--soft">{category}</span>}
-              {meta && <span class="art-meta">{meta}</span>}
+              {categorie && <span class="art-cat art-cat--soft">{categorie}</span>}
+              <span class="art-meta">{meta}</span>
             </div>
-            <h3>{title}</h3>
+            <h3>
+              <a href={href}>{titre}</a>
+            </h3>
           </div>
         </div>
       ) : (
         <>
           <div class="am-row">
-            {category && <span class="art-cat art-cat--soft">{category}</span>}
-            {meta && <span class="art-meta">{meta}</span>}
+            {categorie && <span class="art-cat art-cat--soft">{categorie}</span>}
+            <span class="art-meta">{meta}</span>
           </div>
-          <h3>{title}</h3>
+          <h3>
+            <a href={href}>{titre}</a>
+          </h3>
         </>
       )}
-      {author && !thumb && (
-        <Byline name={author.name} role={author.role} meta={meta ? undefined : author.role} small />
-      )}
-    </a>
+      {auteur && <Byline name={auteur.data.nom} role={roleCourt} small />}
+    </article>
   ) : (
-    <a class={`art-feature ${className}`.trim()} href={href}>
-      <div class="af-media">
-        {category && <span class="art-cat">{category}</span>}
-        {photo ? (
-          <img src={photo} alt={mediaLabel} style="display:block;width:100%;height:100%;object-fit:cover" />
-        ) : (
-          <div class="ph">
-            <span class="ph-tag">{mediaLabel}</span>
+    <article class={cls("post")} {...data}>
+      <div class="post-media">
+        {categorie && <span class="post-cat">{categorie}</span>}
+        <div class="ph">
+          <span class="ph-tag">{phTag}</span>
+        </div>
+      </div>
+      <div class="post-body">
+        <div class="post-meta">{meta}</div>
+        <h3>
+          <a href={href}>{titre}</a>
+        </h3>
+        <p>{description}</p>
+        {auteur && (
+          <div class="post-by">
+            <Byline name={auteur.data.nom} role={roleCourt} small />
           </div>
         )}
       </div>
-      <div class="af-body">
-        {meta && <span class="art-meta">{meta}</span>}
-        <h3>{title}</h3>
-        {excerpt && <p>{excerpt}</p>}
-        <div class="af-foot">
-          {author && <Byline name={author.name} role={author.role} small />}
-          <span class="link-arrow">{ctaLabel}<span class="arr">→</span></span>
-        </div>
-      </div>
-    </a>
+    </article>
   )
 }

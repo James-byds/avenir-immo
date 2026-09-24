@@ -1,0 +1,40 @@
+---
+/**
+ * LegalTable — tableau à trois colonnes des pages légales (classes DS
+ * .lg-table / .lg-tr, .c1 / .c2 / .c3) : finalité · exemple · base légale,
+ * catégorie · rôle · durée, prestation · contenu · honoraires…
+ *
+ * Balisage de la référence legale.html (grille de <div> en rôles ARIA
+ * table/row) complété des rôles columnheader/cell — sans effet visuel, mais
+ * indispensable pour qu'un lecteur d'écran lise la grille comme un tableau.
+ * La 3e colonne est en mono, sans retour à la ligne : y mettre des valeurs
+ * courtes. Sous 960 px, le DS empile les colonnes.
+ */
+interface Row {
+  c1: string;
+  c2: string;
+  c3: string;
+}
+interface Props {
+  head: [string, string, string];
+  rows: Row[];
+  /** Nom accessible du tableau (aria-label). */
+  label?: string;
+}
+const { head, rows, label } = Astro.props;
+---
+
+<div class="lg-table" role="table" aria-label={label}>
+  <div class="lg-tr head" role="row">
+    {head.map((h) => <span role="columnheader">{h}</span>)}
+  </div>
+  {
+    rows.map((r) => (
+      <div class="lg-tr" role="row">
+        <span class="c1" role="cell">{r.c1}</span>
+        <span class="c2" role="cell">{r.c2}</span>
+        <span class="c3" role="cell">{r.c3}</span>
+      </div>
+    ))
+  }
+</div>

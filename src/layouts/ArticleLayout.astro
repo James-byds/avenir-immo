@@ -1,21 +1,263 @@
 ---
-/* Page article : PageLayout + en-tête d'article, partage, encart auteur.
-   Stub de structure — les composants surfaces/ et islands/ seront branchés
-   à l'implémentation (ArticleHeader, ShareBar, AuthorBox…). */
+/* Page article — gabarit 12 (réf. docs/handoff/reference/article.html).
+
+   Sections : 1 page-head clair (fil d'Ariane Accueil › Blog › Thème › Titre
+   + ArticleHeader large) → 2 blanc court : .art-layout = ShareBar sticky
+   (île client:visible, colonne 56 px) + corps (encadré « En clair »,
+   .lg-article, ligne de source des chiffres, AuthorBox) → 3 vert tendre
+   « À lire aussi » (3 ArticleCard compact, cartes blanches — jamais
+   art-mini--tint sur .sec--tint) → 4 blanc : panneau .lg-cta (balisage de la
+   référence, seule surface sombre de la page).
+   Alternance : blanc → blanc (prose, une seule surface de lecture — exception
+   admise par handoff-rythme-visuel §5) → tendre → blanc.
+
+   CORPS — conventions du Markdown (article.rendered.html du loader glob,
+   même HTML que <Content />) :
+     · 1er paragraphe = chapô (.ah-lede) SI le corps comporte un H2 — sinon
+       (fiches courtes à un paragraphe) le chapô est `description` et le
+       paragraphe reste dans le corps ;
+     · paragraphe « **En clair** — … » = encadré .enclair, sorti de la prose
+       et placé en tête de colonne (comme la référence) ;
+     · chaque H2 ouvre une <section> de .lg-article (filets entre sections) ;
+       les blocs HTML bruts du Markdown (.q-stat-rows) passent tels quels.
+   Aucun chiffre du corps n'est calculé ici : ils vivent dans `chiffres[]`
+   avec leur source datée, affichée sous le corps (motif .sell-src).
+
+   JSON-LD : Article (headline, description, author → Person /auteurs/[slug],
+   datePublished, dateModified = dateMaj ?? datePublication, publisher =
+   organization()) + BreadcrumbList — mêmes données que le HTML. */
+import type { CollectionEntry } from "astro:content";
 import PageLayout from "./PageLayout.astro";
+import Breadcrumb from "../components/core/Breadcrumb.astro";
+import Eyebrow from "../components/core/Eyebrow.astro";
+import ArticleHeader from "../components/surfaces/ArticleHeader.astro";
+import ArticleCard from "../components/surfaces/ArticleCard.astro";
+import AuthorBox from "../components/surfaces/AuthorBox.astro";
+import EnClair from "../components/surfaces/EnClair.astro";
+import ShareBar from "../components/islands/ShareBar.tsx";
+import { jsonLd, organization } from "../lib/seo";
+import { formatDate } from "../lib/format";
+import { slugCategorie } from "../scripts/blog-filter";
 
-interface Props {
-  title: string;
-  description?: string;
+interface Related {
+  article: CollectionEntry<"articles">;
+  auteur?: CollectionEntry<"auteurs">;
 }
+interface Props {
+  article: CollectionEntry<"articles">;
+  auteur?: CollectionEntry<"auteurs">;
+  /** « À lire aussi » — résolu par la page (même thème, jamais l'article courant). */
+  related?: Related[];
+}
+const { article, auteur, related = [] } = Astro.props;
+const { titre, description, categorie, tempsLecture, datePublication, dateMaj, chiffres } = article.data;
 
-const { title, description } = Astro.props;
+/* ── Corps : chapô, encadré « En clair », sections ── */
+const raw = (article.rendered?.html ?? "").trim();
+let rest = raw;
+let lede: string | undefined;
+const hasH2 = /<h2[\s>]/.test(rest);
+const pM = rest.match(/^<p>([\s\S]*?)<\/p>\s*/);
+if (pM && hasH2) {
+  lede = pM[1];
+  rest = rest.slice(pM[0].length);
+}
+let enclair: string | undefined;
+const eM = rest.match(/^<p><strong>En clair<\/strong>\s*[—–-]\s*([\s\S]*?)<\/p>\s*/);
+if (eM) {
+  enclair = eM[1];
+  rest = rest.slice(eM[0].length);
+}
+const sections = rest
+  .split(/(?=<h2[\s>])/)
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+/* ── Sources des chiffres cités (une ligne par source distincte) ── */
+const sources = [...new Map(chiffres.map((c) => [`${c.source.libelle}|${c.source.date.toISOString()}`, c.source])).values()];
+
+/* ── Fil d'Ariane (HTML et JSON-LD depuis la même liste) ── */
+const site = Astro.site ?? new URL("https://www.lavenir-immobilier.be/");
+const pageUrl = new URL(`/blog/${article.id}`, site).href;
+const crumbs: { label: string; href?: string }[] = [
+  { label: "Accueil", href: "/" },
+  { label: "Blog", href: "/blog" },
+  ...(categorie ? [{ label: categorie, href: `/blog?cat=${slugCategorie(categorie)}` }] : []),
+  /* Libellé court en HTML (« Home-staging », réf. article.html — le titre
+     complet en mono capitales prend 3 lignes à 375 px) ; le BreadcrumbList
+     JSON-LD garde le titre complet. */
+  { label: article.data.titreCourt ?? titre },
+];
+/* Meta description propre à la page (réf. article.html), repli sur l'extrait. */
+const metaDescription = article.data.metaDescription ?? description;
+
+const auteurHref = auteur ? `/auteurs/${auteur.id}` : undefined;
+/* publisher = organization() sans son @context (imbriqué dans Article). */
+const { ["@context"]: _ctx, ...publisher } = organization();
+const articleLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: titre,
+  description: metaDescription,
+  url: pageUrl,
+  mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
+  ...(categorie ? { articleSection: categorie } : {}),
+  inLanguage: "fr-BE",
+  datePublished: datePublication.toISOString().slice(0, 10),
+  dateModified: (dateMaj ?? datePublication).toISOString().slice(0, 10),
+  ...(auteur
+    ? {
+        author: {
+          "@type": "Person",
+          name: auteur.data.nom,
+          ...(auteur.data.role ? { jobTitle: auteur.data.role } : {}),
+          url: new URL(auteurHref!, site).href,
+        },
+      }
+    : {}),
+  publisher,
+};
+const breadcrumbLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: crumbs.map((c, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: i === crumbs.length - 1 ? titre : c.label,
+    item: new URL(c.href ?? `/blog/${article.id}`, site).href,
+  })),
+};
+
+const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
 ---
 
-<PageLayout title={title} description={description}>
-  <article>
-    {/* TODO: ArticleHeader + Byline */}
-    <slot />
-    {/* TODO: ShareBar (island) + AuthorBox */}
-  </article>
+<PageLayout
+  title={`${titre} · Avenir Immobilier`}
+  description={metaDescription}
+  canonical={pageUrl}
+  active="/blog"
+  bodyClass="blog-article"
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" is:inline set:html={jsonLd(articleLd)} />
+    <script type="application/ld+json" is:inline set:html={jsonLd(breadcrumbLd)} />
+  </Fragment>
+
+  {/* ── 1 · EN-TÊTE — page-head clair (padding bas nul : défaut du DS),
+       colonne de lecture 1040 px (.wrap--art, valeur de la référence) ── */}
+  <section class="page-head">
+    <div class="wrap wrap--art">
+      <Breadcrumb items={crumbs} />
+      <ArticleHeader
+        size="large"
+        category={categorie}
+        date={formatDate(datePublication)}
+        title={titre}
+        lede={lede ?? description}
+        author={auteur ? { name: auteur.data.nom, role: auteur.data.role, href: auteurHref } : undefined}
+        readTime={tempsLecture ? `${tempsLecture} min de lecture` : undefined}
+        mediaLabel={`Photo d'article${categorie ? ` · ${categorie}` : ""}`}
+      />
+    </div>
+  </section>
+
+  {/* ── 2 · PARTAGE + CORPS — blanc, respiration courte ── */}
+  <section class="sec--white art-sec">
+    <div class="wrap wrap--art art-layout">
+      <div>
+        <ShareBar client:visible variant="sticky" url={pageUrl} title={titre} />
+      </div>
+      <div class="art-body">
+        {enclair && (
+          <EnClair>
+            <Fragment set:html={enclair} />
+          </EnClair>
+        )}
+
+        {sections.length > 0 && (
+          <article class="lg-article">
+            {sections.map((html) => (
+              <section set:html={html} />
+            ))}
+          </article>
+        )}
+
+        {sources.length > 0 && (
+          <p class="sell-src">
+            Chiffres de l'article : {sources.map((s) => `${s.libelle} · au ${formatDate(s.date)}`).join(" — ")}
+          </p>
+        )}
+
+        {auteur && (
+          <AuthorBox
+            name={auteur.data.nom}
+            role={[auteur.data.role, auteur.data.ipi && `IPI ${auteur.data.ipi}`].filter(Boolean).join(" · ") || undefined}
+            bio={auteur.data.bio}
+            href={auteurHref}
+          />
+        )}
+      </div>
+    </div>
+  </section>
+
+  {/* ── 3 · À LIRE AUSSI — vert tendre, cartes blanches ── */}
+  {
+    related.length > 0 && (
+      <section class="sec--tint">
+        <div class="wrap wrap--art">
+          <Eyebrow>À lire aussi</Eyebrow>
+          <div class="art-related grid gap-4.5 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
+            {related.map((r, i) => (
+              <ArticleCard article={r.article} auteur={r.auteur} variant="compact" class={`reveal${delay(i)}`} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {/* ── 4 · CTA — blanc, panneau .lg-cta (balisage de la référence ; seule
+       surface sombre de la page, pas d'aplat de section) ── */}
+  <section class="sec--white art-final">
+    <div class="wrap wrap--art">
+      <div class="lg-cta">
+        <div>
+          <Eyebrow>Avant les travaux, le chiffre</Eyebrow>
+          <h2>Combien vaut votre bien aujourd'hui&nbsp;?</h2>
+          <p>Estimation gratuite en 2 minutes, rapport écrit sous 48 h. 98 % de nos biens se vendent au prix estimé.</p>
+        </div>
+        <a href="/estimation" class="btn">Estimer mon bien <span class="arr">→</span></a>
+      </div>
+    </div>
+  </section>
 </PageLayout>
+
+<style is:global>
+  /* ── à reprendre dans le DS — gabarit 12 : styles inline de article.html,
+     valeurs inchangées, portés en classes (préfixe body.blog-article). ── */
+  .blog-article .wrap.wrap--art { max-width: 1040px; }
+  .blog-article .art-layout {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: clamp(20px, 3.5vw, 48px);
+    align-items: start;
+  }
+  /* Sous 960 px le DS repasse .sharebar--sticky en rangée : la colonne de
+     56 px n'a plus de sens — la grille se replie (correction, absente de la
+     référence qui gardait la colonne). */
+  @media (max-width: 960px) {
+    .blog-article .art-layout { grid-template-columns: 1fr; }
+  }
+  .blog-article .art-body > .enclair { margin-top: 0; }
+  .blog-article .art-body .lg-article { margin-top: clamp(26px, 3vw, 36px); }
+  .blog-article .lg-article .q-stat-rows { margin-top: 20px; }
+  .blog-article .art-body .author-box { margin-top: clamp(26px, 3vw, 36px); }
+  .blog-article .art-final .lg-cta { margin-top: 0; }
+
+  /* ── Corrections de recette F6 (valeurs de la référence) ── */
+  /* Padding haut court SEULEMENT (article.html : padding-top:clamp(28px,3.4vw,44px)) ;
+     .sec--short raccourcissait aussi le bas. */
+  .blog-article .art-sec { padding-top: clamp(28px, 3.4vw, 44px); }
+  /* « À lire aussi » : 20 px sous l'eyebrow (mt-* Tailwind inerte, cf. hub). */
+  .blog-article .art-related { margin-top: 20px; }
+</style>

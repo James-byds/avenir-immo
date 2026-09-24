@@ -3,7 +3,12 @@
  * Byline — port .astro de components/surfaces/Byline.jsx
  *
  * Signature d'auteur d'article (distinct des agents et des membres d'équipe).
- * Cliquable si `href`. L'avatar affiche les initiales déduites du nom.
+ * L'avatar affiche les initiales déduites du nom.
+ *
+ * Règle (journal « Cartes d'article cassées ») : la byline n'est un lien
+ * (`href`) QU'EN DEHORS d'une carte — en-tête d'article (ArticleHeader,
+ * 44 px, → /auteurs/[slug]). Dans une carte (.post, .art-feature, .art-mini)
+ * elle est rendue en <span> : le seul lien de la carte est son titre.
  */
 interface Props {
   name: string;
@@ -12,17 +17,32 @@ interface Props {
   initials?: string;
   small?: boolean;
   href?: string;
-  [key: string]: any;
+  class?: string;
 }
-const { name, role, meta, initials, small = false, href, ...rest } = Astro.props;
-const av = initials || (name || "").split(" ").map((w) => w[0]).slice(0, 2).join("");
-const Tag = href ? "a" : "div";
+const { name, role, meta, initials, small = false, href, class: className = "" } = Astro.props;
+const av =
+  initials ||
+  (name || "")
+    .split(/\s+/)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("");
+const Tag = href ? "a" : "span";
+const cls = ["byline", small && "byline--sm", className].filter(Boolean).join(" ");
 ---
 
-<Tag class={`byline${small ? " byline--sm" : ""}`} href={href} {...rest}>
-  <span class="b-av">{av}</span>
+<Tag class={cls} href={href}>
+  <span class="b-av" aria-hidden="true">{av}</span>
   <span>
-    <span class="b-name">{name}</span>{role && <span class="b-role"> · {role}</span>}
-    {meta && <span class="b-meta" style="display:block">{meta}</span>}
+    <span class="b-name">{name}</span>{role && <span class="b-role">{` · ${role}`}</span>}
+    {meta && <span class="b-meta">{meta}</span>}
   </span>
 </Tag>
+
+<style>
+  /* Le port React posait display:block en style inline sur la méta ; la
+     règle du DS (.byline .b-meta, margin-top 3px) suppose un bloc. */
+  .byline .b-meta {
+    display: block;
+  }
+</style>
