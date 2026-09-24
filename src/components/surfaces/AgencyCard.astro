@@ -8,6 +8,8 @@
 interface Row {
   label: string;
   value: string;
+  /** Ligne cliquable (tel:, mailto:) — référence a-propos.html. */
+  href?: string;
 }
 import MapLeaflet from "../islands/MapLeaflet";
 
@@ -27,8 +29,15 @@ interface Props {
   open?: string;
   rows?: Row[];
   phone?: string;
+  /** Libellé du bouton téléphone (défaut : le numéro) — « Appeler l'agence ». */
+  phoneLabel?: string;
   directionsHref?: string;
   directionsLabel?: string;
+  /** Itinéraire en .btn plein et téléphone en ghost (référence contact.html) ;
+      par défaut l'inverse (référence a-propos.html). */
+  directionsPrimary?: boolean;
+  /** Flèche du lien itinéraire : « → » (contact) ou « ↗ » (a-propos). */
+  directionsArrow?: string;
   zones?: Zone[];
   zonesLabel?: string;
   class?: string;
@@ -47,13 +56,25 @@ const {
   open,
   rows = [],
   phone,
+  phoneLabel,
   directionsHref = "#",
   directionsLabel = "Itinéraire",
+  directionsPrimary = false,
+  directionsArrow = "→",
   zones = [],
   zonesLabel = "Zones d'intervention",
   class: className = "",
 } = Astro.props;
 const label = mediaLabel || (media === "map" ? "Plan — " + (name || "") : "Vitrine — " + (name || ""));
+
+/* `tag` ET `open` cumulés quand le tag est passé explicitement (référence
+   contact.html : badge en tête, horaire après l'adresse) ; sinon `open` seul
+   prend la tête (référence a-propos.html) — comportement historique intact. */
+const hasTag = "tag" in Astro.props;
+
+/* Lien itinéraire externe (Google Maps) → nouvel onglet, comme la référence. */
+const directionsExternal = /^https?:/i.test(directionsHref);
+const telAttr = phone ? `tel:${phone.replace(/[^+0-9]/g, "")}` : undefined;
 ---
 
 <article class={`agc ${className}`.trim()}>
@@ -70,16 +91,17 @@ const label = mediaLabel || (media === "map" ? "Plan — " + (name || "") : "Vit
     {media === "map" && !photo && (lat == null || lng == null) && <span class="map-pin" />}
   </div>
   <div class="agc-body">
-    {open ? <span class="ag-open">{open}</span> : tag ? <span class="ag-tag">{tag}</span> : null}
+    {hasTag && open ? <span class="ag-tag">{tag}</span> : open ? <span class="ag-open">{open}</span> : tag ? <span class="ag-tag">{tag}</span> : null}
     {name && <div class="ag-name">{name}</div>}
     {address && <p class="ag-addr">{address}{note ? " · " + note : ""}</p>}
+    {hasTag && open && <span class="ag-open">{open}</span>}
     {
       rows.length > 0 && (
         <dl class="ag-rows">
           {rows.map((r) => (
             <div class="ag-row">
               <dt>{r.label}</dt>
-              <dd>{r.value}</dd>
+              <dd>{r.href ? <a href={r.href}>{r.value}</a> : r.value}</dd>
             </div>
           ))}
         </dl>
@@ -88,9 +110,30 @@ const label = mediaLabel || (media === "map" ? "Plan — " + (name || "") : "Vit
     {
       (phone || directionsHref) && (
         <div class="agc-act">
-          {phone && <a class="btn" href={`tel:${phone.replace(/[^+0-9]/g, "")}`}>{phone}</a>}
-          {directionsHref && (
-            <a class="btn btn--ghost" href={directionsHref}>{directionsLabel}<span class="arr">→</span></a>
+          {directionsPrimary ? (
+            <>
+              {directionsHref && (
+                <a
+                  class="btn"
+                  href={directionsHref}
+                  target={directionsExternal ? "_blank" : undefined}
+                  rel={directionsExternal ? "noopener" : undefined}
+                >{directionsLabel} <span class="arr">{directionsArrow}</span></a>
+              )}
+              {phone && <a class="btn btn--ghost" href={telAttr}>{phoneLabel ?? phone}</a>}
+            </>
+          ) : (
+            <>
+              {phone && <a class="btn" href={telAttr}>{phoneLabel ?? phone}</a>}
+              {directionsHref && (
+                <a
+                  class="btn btn--ghost"
+                  href={directionsHref}
+                  target={directionsExternal ? "_blank" : undefined}
+                  rel={directionsExternal ? "noopener" : undefined}
+                >{directionsLabel} <span class="arr">{directionsArrow}</span></a>
+              )}
+            </>
           )}
         </div>
       )
@@ -113,3 +156,11 @@ const label = mediaLabel || (media === "map" ? "Plan — " + (name || "") : "Vit
     }
   </div>
 </article>
+
+<style>
+  /* Référence (a-propos.html : liens tel/mail des ag-rows en color:inherit
+     inline) — à reprendre dans le DS. */
+  .ag-rows dd a {
+    color: inherit;
+  }
+</style>

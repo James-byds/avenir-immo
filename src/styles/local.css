@@ -1525,3 +1525,24 @@ a[data-planned]:hover { border-style: dashed; }
      mêmes valeurs que .case-who .b-av img du hub équipe, plus haut.
    ============================================================ */
 .loc-who .b-av img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+
+/* ============================================================
+   à reprendre dans le DS — gabarit 08 : .finalcta--deep (aplat vert profond)
+   ------------------------------------------------------------
+   Référence contact.html : <section class="finalcta on-dark"
+   style="background:var(--green)"> + couleurs inline (eyebrow jaune,
+   h2 blanc, em jaune, paragraphe rgba(255,255,255,.72)) — reprises en
+   classe, valeurs inchangées. FinalCta pose .finalcta--deep quand
+   tone="deep" ; .on-dark reste requis autour des actions pour que le
+   .btn--ghost passe en transparent bordé blanc (crochet de site.css).
+   ============================================================ */
+.finalcta--deep { background: var(--green); }
+.finalcta--deep .eyebrow { color: var(--yellow); }
+.finalcta--deep h2 { color: #fff; }
+.finalcta--deep h2 em { font-style: normal; color: var(--yellow); }
+.finalcta--deep p { color: rgba(255,255,255,.72); }
+
+/* à reprendre dans le DS — gabarit 08 : lien « confidentialité » du
+   consentement (référence : <a style="color:inherit;text-decoration:
+   underline"> dans .cf-consent / .est-fineprint — valeurs inchangées). */
+.cf-consent span a { color: inherit; text-decoration: underline; }

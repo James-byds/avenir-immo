@@ -1,0 +1,77 @@
+---
+/**
+ * ContactRows — colonne de coordonnées de la page contact (gabarit 08).
+ *
+ * Points de réassurance cochés (.c-points) puis lignes clé/valeur (.c-rows),
+ * dans l'ordre de la référence contact.html. `plain` sur une ligne reproduit
+ * le style inline de la référence (valeur en sans, pour les horaires).
+ *
+ * Le <style> ci-dessous porte les classes .c-* du <style> de page de la
+ * référence — is:global car .c-grid / .c-visit / .c-google / .c-faq-lead
+ * s'appliquent au balisage de la page qui compose ce composant.
+ */
+interface Row {
+  label: string;
+  value: string;
+  href?: string;
+  /** Valeur en sans (style inline de la référence — ligne « Horaires »). */
+  plain?: boolean;
+}
+interface Props {
+  rows?: Row[];
+  points?: string[];
+}
+const { rows = [], points = [] } = Astro.props;
+---
+
+{
+  points.length > 0 && (
+    <ul class="c-points">
+      {points.map((p) => (
+        <li>
+          <span class="tick">✓</span>
+          {p}
+        </li>
+      ))}
+    </ul>
+  )
+}
+{
+  rows.length > 0 && (
+    <div class="c-rows">
+      {rows.map((r) => (
+        <div class="c-row">
+          <span class="k">{r.label}</span>
+          <span
+            class="v"
+            style={r.plain ? "font-family:var(--sans);font-weight:600;font-size:15px" : undefined}
+          >
+            {r.href ? <a href={r.href}>{r.value}</a> : r.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+<style is:global>
+  /* à reprendre dans le DS — gabarit 08 : classes .c-* recopiées du <style>
+     de page de la référence contact.html, valeurs inchangées (.choice-row--4
+     non reprise : le formulaire est l'île ContactForm, choice-row à 2 colonnes). */
+  .c-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(30px, 5vw, 76px); align-items: start; margin-top: clamp(24px, 3vw, 34px); }
+  .c-rows { margin-top: 30px; display: grid; }
+  .c-row { display: flex; justify-content: space-between; align-items: baseline; gap: 18px; padding: 15px 0; border-bottom: 1px solid var(--line-2); }
+  .c-row .k { font-size: 14.5px; color: var(--ink-soft); }
+  .c-row .v { font-family: var(--serif); font-weight: 700; font-size: 18px; text-align: right; }
+  .c-row .v a { color: var(--ink); }
+  .c-row .v a:hover { color: var(--green-d); }
+  .c-points { margin-top: 28px; display: grid; gap: 13px; }
+  .c-points li { display: flex; gap: 13px; align-items: center; font-size: 15px; color: var(--ink-soft); }
+  .c-points .tick { width: 24px; height: 24px; border-radius: 50%; background: var(--green-soft); color: var(--green-d); display: grid; place-items: center; font-size: 13px; flex-shrink: 0; }
+  .c-google { margin-top: 30px; }
+  .c-after { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); gap: clamp(28px, 4vw, 64px); align-items: start; margin-top: clamp(26px, 3.2vw, 40px); }
+  .c-after .timeline { margin-top: 4px; }
+  .c-visit { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(24px, 3.4vw, 52px); align-items: start; margin-top: clamp(26px, 3.2vw, 40px); }
+  .c-faq-lead { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-mute); margin-bottom: 16px; }
+  @media (max-width: 900px){ .c-grid, .c-after, .c-visit { grid-template-columns: 1fr; } }
+</style>
