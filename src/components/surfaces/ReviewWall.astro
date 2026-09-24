@@ -1,0 +1,231 @@
+---
+/**
+ * ReviewWall — mur d'avis Google de `/avis` (réf. docs/handoff/reference/avis.html).
+ *
+ * `.av-toolhead` (filtres segmentés + compteur) · `.wall` en colonnes de
+ * ReviewCard · `.wall-more` (pagination) · `.wall-note` (renvoi vers la fiche
+ * Google) · visionneuse `.lightbox` des photos d'avis.
+ *
+ * À poser DANS `<section id="mur"><div class="wrap">…</div></section>` : le
+ * fond vert tendre, les cartes blanches et la variante `--hl` sont stylés par
+ * `#mur` dans local.css.
+ *
+ * Les COMPTES (filtres, `.av-count`, note de bas de mur) sont calculés par la
+ * page depuis la collection réellement affichée — jamais recopiés de la
+ * maquette. Le seg est en balisage brut, comme la toolbar de /biens : le port
+ * forms/Seg n'expose ni `id` ni `data-f` (relevé F3).
+ *
+ * Filtres, pagination et visionneuse : VANILLA dans le <script> ci-dessous —
+ * logique reprise du script inline de la référence, adaptée aux comptes réels
+ * (data-page au lieu du PAGE=6 codé en dur, index direct des photos au lieu
+ * du findIndex fragile). Pas de nouvelle île React.
+ */
+import ReviewCard from "./ReviewCard.astro";
+
+interface Filtre {
+  id: string;
+  label: string;
+  count: number;
+}
+interface Carte {
+  id: string;
+  auteur: string;
+  note: number;
+  texte: string;
+  place: string;
+  cat?: string;
+  chip?: string;
+  dateLabel: string;
+  reponse?: string;
+  photos?: string[];
+}
+interface Props {
+  cartes: Carte[];
+  filtres: Filtre[];
+  /** Cartes visibles avant « En voir plus » (défaut : toutes). */
+  visible?: number;
+  /** Total externe Google (190) — repris tel quel, note de bas de mur. */
+  totalGoogle: number;
+  googleUrl: string;
+}
+const { cartes, filtres, visible = cartes.length, totalGoogle, googleUrl } = Astro.props;
+
+const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
+---
+
+<div class="av-toolhead reveal">
+  <div class="tool-group">
+    <span class="tool-label" id="lblProjet">Type de projet</span>
+    <div class="seg" id="filters" role="group" aria-labelledby="lblProjet">
+      {filtres.map((f, i) => (
+        <button type="button" class={i === 0 ? "on" : undefined} data-f={f.id}>{f.label} <span class="n">{f.count}</span></button>
+      ))}
+    </div>
+  </div>
+  <span class="av-count" id="wallCount">{visible} avis affiché{visible > 1 ? "s" : ""} sur {cartes.length} · du plus récent au plus ancien</span>
+</div>
+
+<div class="wall" id="wall" data-page={String(visible)}>
+  {cartes.map((c, i) => (
+    <ReviewCard
+      auteur={c.auteur}
+      note={c.note}
+      texte={c.texte}
+      place={c.place}
+      cat={c.cat}
+      chip={c.chip}
+      dateLabel={c.dateLabel}
+      reponse={c.reponse}
+      photos={c.photos}
+      highlight={i === 0}
+      hidden={i >= visible}
+      class={`reveal${delay(i)}`}
+    />
+  ))}
+</div>
+
+<div class="wall-more" id="wallMore" style={cartes.length > visible ? undefined : "display:none"}>
+  <button class="btn btn--ghost" id="moreBtn" type="button">En voir plus <span class="arr">↓</span></button>
+</div>
+
+<p class="wall-note">Sélection des {visible} avis les plus récents. L'intégralité des {totalGoogle} avis — y compris les moins élogieux — est consultable sur <a href={googleUrl} target="_blank" rel="noopener">notre fiche Google ↗</a>.</p>
+
+<div class="lightbox" id="lb" role="dialog" aria-modal="true" aria-label="Photo de l'avis en plein écran" aria-hidden="true">
+  <div class="lb-top">
+    <span class="lb-count" id="lbCount">1 / 1</span>
+    <button class="lb-close" id="lbClose" type="button" aria-label="Fermer">×</button>
+  </div>
+  <div class="lb-stage">
+    <button class="lb-nav prev" id="lbPrev" type="button" aria-label="Photo précédente">←</button>
+    <div class="lb-media">
+      <div class="ph"><span class="ph-tag" id="lbTag">Photo</span></div>
+      <div class="lb-cap" id="lbCap">Photo de l'avis</div>
+    </div>
+    <button class="lb-nav next" id="lbNext" type="button" aria-label="Photo suivante">→</button>
+  </div>
+</div>
+
+<script>
+  /* Filtres + pagination — logique du script inline de avis.html, PAGE lu
+     depuis data-page (compte réel calculé par la page). */
+  const wall = document.getElementById("wall");
+  if (wall) {
+    const PAGE = Number(wall.dataset.page || "12");
+    const btns = Array.from(document.querySelectorAll<HTMLButtonElement>("#filters button"));
+    const cards = Array.from(wall.querySelectorAll<HTMLElement>(".t-card"));
+    const count = document.getElementById("wallCount");
+    const moreWrap = document.getElementById("wallMore");
+    let cat = "all";
+    let shown = PAGE;
+
+    function apply() {
+      const matched = cards.filter((c) => cat === "all" || c.dataset.cat === cat);
+      let n = 0;
+      cards.forEach((c) => {
+        const m = matched.indexOf(c);
+        c.classList.toggle("hid", m === -1);
+        c.classList.toggle("pg-hid", m >= shown);
+        if (m > -1 && m < shown) n++;
+      });
+      if (moreWrap) moreWrap.style.display = matched.length > shown ? "flex" : "none";
+      if (count)
+        count.textContent =
+          n + " avis affiché" + (n > 1 ? "s" : "") + " sur " + matched.length + " · du plus récent au plus ancien";
+    }
+    document.getElementById("filters")?.addEventListener("click", (e) => {
+      const b = (e.target as HTMLElement).closest("button");
+      if (!b) return;
+      cat = b.dataset.f || "all";
+      shown = PAGE;
+      btns.forEach((x) => x.classList.toggle("on", x === b));
+      apply();
+    });
+    document.getElementById("moreBtn")?.addEventListener("click", () => {
+      shown += PAGE;
+      apply();
+    });
+    apply();
+
+    /* Visionneuse plein écran — photos des avis (index direct par pastille). */
+    const lb = document.getElementById("lb");
+    const lbCount = document.getElementById("lbCount");
+    const lbTag = document.getElementById("lbTag");
+    const lbCap = document.getElementById("lbCap");
+    if (lb && lbCount && lbTag && lbCap) {
+      const photos: { tag: string; who: string }[] = [];
+      let idx = 0;
+      wall.querySelectorAll<HTMLElement>(".t-photos").forEach((g) => {
+        const who = g.closest(".t-card")?.querySelector(".t-name")?.textContent ?? "";
+        g.querySelectorAll<HTMLElement>(".ph").forEach((p) => {
+          const i = photos.length;
+          photos.push({ tag: p.querySelector(".ph-tag")?.textContent ?? "", who });
+          p.addEventListener("click", () => openLb(i));
+        });
+      });
+      function render() {
+        const p = photos[idx];
+        if (!p) return;
+        lbCount!.textContent = idx + 1 + " / " + photos.length;
+        lbTag!.textContent = p.tag;
+        lbCap!.textContent = "Avis de " + p.who + " · " + p.tag;
+      }
+      function openLb(i: number) {
+        idx = i < 0 ? 0 : i;
+        render();
+        lb!.classList.add("open");
+        lb!.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+      }
+      function closeLb() {
+        lb!.classList.remove("open");
+        lb!.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+      }
+      function step(d: number) {
+        idx = (idx + d + photos.length) % photos.length;
+        render();
+      }
+      document.getElementById("lbClose")?.addEventListener("click", closeLb);
+      document.getElementById("lbPrev")?.addEventListener("click", () => step(-1));
+      document.getElementById("lbNext")?.addEventListener("click", () => step(1));
+      lb.addEventListener("click", (e) => {
+        const t = e.target as HTMLElement;
+        if (t === lb || t.classList.contains("lb-stage")) closeLb();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (!lb.classList.contains("open")) return;
+        if (e.key === "Escape") closeLb();
+        if (e.key === "ArrowLeft") step(-1);
+        if (e.key === "ArrowRight") step(1);
+      });
+    }
+  }
+</script>
+
+<style is:global>
+  /* ── à reprendre dans le DS — gabarit 09 : <style> de page de avis.html
+     (mur), valeurs inchangées. local.css porte déjà les fonds (#mur, cartes
+     blanches, .t-chip, --hl) — rien de redoublé ici. ── */
+  .av-toolhead { display: flex; justify-content: space-between; align-items: center; gap: 18px 28px; flex-wrap: wrap; }
+  .av-count { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-mute); }
+  .wall { columns: 3; column-gap: 16px; margin-top: clamp(24px, 3vw, 34px); }
+  .wall .t-card { break-inside: avoid; margin: 0 0 16px; }
+  .wall .t-card.hid, .wall .t-card.pg-hid { display: none; }
+  .wall-more { display: flex; justify-content: center; margin-top: clamp(24px, 3vw, 34px); }
+  .wall-note { text-align: center; font-size: 14px; color: var(--ink-mute); margin-top: clamp(20px, 2.5vw, 30px); }
+  .wall-note a { color: var(--green); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+  .wall-note a:hover { color: var(--green-d); }
+  @media (max-width: 1020px) { .wall { columns: 2; } }
+  @media (max-width: 640px) { .wall { columns: 1; } }
+
+  /* Règle DS n°3 — 11 px sur fond teinté : --ink-soft minimum (la référence
+     laissait .av-count en --ink-mute, 4,06:1 sur --green-tint). */
+  #mur .av-count { color: var(--ink-soft); }
+
+  /* Recette 09 — mêmes contrastes sur le fond teinté de #mur :
+     .tool-label (10 px mono, --ink-mute via site.css) à 4,46:1 et
+     .wall-note (14 px, --ink-mute) à 4,458:1, sous les seuils — passés
+     en --ink-soft (6,31:1) ; le lien .wall-note a reste --green. */
+  #mur .tool-label { color: var(--ink-soft); }
+  #mur .wall-note { color: var(--ink-soft); }
+</style>

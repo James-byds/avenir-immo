@@ -1,4 +1,312 @@
 ---
-// Stub — page «Équipe — liste». À implémenter (voir handoff / DEMARRAGE.md).
+/* Hub équipe — gabarit 11 (réf. docs/handoff/reference/equipe.html).
+   4 sections : héros encre (.hero-ink.on-dark) → #equipe vert tendre
+   (.team-grid--rows des six MemberContactCard) → .cases-band encre
+   (« Qui appeler ») → CTA café à cheval sur le pied (.finalcta--straddle).
+   Alternance : encre → tendre → encre → panneau vert clair sur pied vert.
+
+   JSON-LD : RealEstateAgent complet + employee[] Person (mêmes données que
+   les cartes affichées) → organizationLd={false} coupe le bloc minimal du
+   BaseLayout. */
+import { getCollection } from "astro:content";
+import PageLayout from "../../layouts/PageLayout.astro";
+import Breadcrumb from "../../components/core/Breadcrumb.astro";
+import Eyebrow from "../../components/core/Eyebrow.astro";
+import SectionHead from "../../components/core/SectionHead.astro";
+import CaseCard from "../../components/surfaces/CaseCard.astro";
+import MemberContactCard from "../../components/surfaces/MemberContactCard.astro";
+import { jsonLd } from "../../lib/seo";
+
+const membres = (await getCollection("equipe")).sort((a, b) => a.data.ordre - b.data.ordre);
+const parId = new Map(membres.map((m) => [m.id, m]));
+
+/* Portrait client : les assets sont nommés par prénom (agent-olivier.png…). */
+const photoDe = (id: string) => `/assets/agent-${id.split("-")[0]}.png`;
+
+/* Téléphone affiché « 0475/52.26.31 » → E.164 « +32475522631 » (JSON-LD). */
+const telE164 = (t: string) => `+32${t.replace(/\D/g, "").replace(/^0/, "")}`;
+
+/* ── Situations « Qui appeler » — copie de la référence, mot pour mot.
+   Le récit est de la copie de page ; nom, photo et lien viennent de la
+   collection (le rôle d'accroche est propre à la situation). ── */
+const cases = [
+  {
+    membre: "olivier-monier",
+    role: "Estime et vend, discrètement",
+    tag: "Maison familiale, jardin en automne",
+    titre: "La maison est devenue trop grande",
+    texte:
+      "Les enfants sont partis, le jardin demande trop. Vous voulez savoir ce qu'elle vaut avant d'en parler à la famille — et vendre sans que la rue soit au courant.",
+  },
+  {
+    membre: "annelise-demeuse",
+    role: "Expertise écrite sous 48 h",
+    tag: "Dossier ouvert sur une table de cuisine",
+    titre: "Vous héritez, à trois",
+    texte:
+      "Une succession, trois héritiers, un notaire qui attend une valeur. Il faut un chiffre écrit, argumenté, que tout le monde puisse accepter.",
+  },
+  {
+    membre: "alexandra-di-filippo",
+    role: "Recherche sur mandat d'acquéreur",
+    tag: "Couple devant une façade, clés à la main",
+    titre: "Vous cherchez depuis six mois",
+    texte:
+      "Douze visites, deux offres, deux refus. Vous voulez quelqu'un qui voie les biens avant leur publication et négocie pour vous.",
+  },
+  {
+    membre: "david-marini",
+    role: "Vente rapide, acquéreurs vérifiés",
+    tag: "Cartons de déménagement dans un séjour vide",
+    titre: "Vous vendez pour acheter",
+    texte:
+      "Le compromis d'achat est signé : il faut vendre l'ancienne maison dans les quatre mois, au bon prix, sans crédit-pont.",
+  },
+  {
+    membre: "briyann-rezgui",
+    role: "Location et gestion",
+    tag: "Appartement lumineux, clés sur le comptoir",
+    titre: "Votre appartement est vide depuis deux mois",
+    texte:
+      "Le locataire est parti. Vous n'avez pas envie de refaire vingt visites ni de vérifier des fiches de paie — juste qu'il soit reloué, et bien.",
+  },
+  {
+    membre: "agnes-quispe",
+    role: "Office manager · 071/22.11.41",
+    tag: "Accueil de l'agence, boulevard Tirou",
+    titre: "Vous avez juste une question",
+    texte:
+      "Un document à transmettre, un rendez-vous à déplacer, une attestation à obtenir. Quelqu'un qui décroche et qui sait où en est votre dossier.",
+  },
+].map((c) => {
+  const m = parId.get(c.membre);
+  if (!m) throw new Error(`Hub équipe : membre inconnu « ${c.membre} »`);
+  return { ...c, who: { name: m.data.nom, role: c.role, href: `/equipe/${m.id}`, photo: photoDe(m.id) } };
+});
+
+const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
+
+/* ── JSON-LD — mêmes données que le HTML (cartes + chrome TopBar/footer). ── */
+const site = Astro.site ?? new URL("https://www.lavenir-immobilier.be/");
+const agentLd = {
+  "@context": "https://schema.org",
+  "@type": "RealEstateAgent",
+  name: "Avenir Immobilier",
+  url: site.href,
+  telephone: "+32 71 32 14 70",
+  email: "info@avenir-immobilier.be",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Boulevard Tirou 102",
+    addressLocality: "Charleroi",
+    postalCode: "6000",
+    addressCountry: "BE",
+  },
+  employee: membres.map((m) => ({
+    "@type": "Person",
+    name: m.data.nom,
+    jobTitle: m.data.fonction,
+    ...(m.data.telephone ? { telephone: telE164(m.data.telephone) } : {}),
+    ...(m.data.email ? { email: m.data.email } : {}),
+    image: new URL(photoDe(m.id), site).href,
+    url: new URL(`/equipe/${m.id}`, site).href,
+    worksFor: { "@type": "RealEstateAgent", name: "Avenir Immobilier" },
+  })),
+};
 ---
-<p>Stub : Équipe — liste</p>
+
+<PageLayout
+  title="L'équipe — six conseillers à Charleroi · Avenir Immobilier"
+  description="Les conseillers Avenir Immobilier : vente, chasse immobilière, estimation, gestion locative et off-market. Un seul bureau, boulevard Tirou à Charleroi."
+  organizationLd={false}
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" is:inline set:html={jsonLd(agentLd)} />
+  </Fragment>
+
+  {/* ── 1 · HÉROS ENCRE — .page-head.hero-ink.on-dark de la référence ── */}
+  <section class="page-head hero-ink on-dark eq-hero">
+    <div class="wrap">
+      <Breadcrumb items={[{ label: "Accueil", href: "/" }, { label: "Équipe" }]} />
+      <div class="two-col two-col--hero eq-cols">
+        <div class="reveal">
+          <Eyebrow>Nos conseillers</Eyebrow>
+          <h1>Des visages, <em>pas un standard</em>.</h1>
+          <p class="eq-lede">
+            Cinq agents et une office manager, un seul bureau boulevard Tirou. La personne qui
+            estime votre bien est celle qui fera les visites, la négociation et le suivi chez le
+            notaire.
+          </p>
+          <div class="fc-actions">
+            <a href="#equipe" class="btn">Voir l'équipe <span class="arr">↓</span></a>
+            <a href="/a-propos" class="btn btn--ghost">L'histoire de l'agence</a>
+          </div>
+        </div>
+        <figure class="reveal d1 eq-photo">
+          <div class="ph"><span class="ph-tag">Le bureau, boulevard Tirou — vue de la salle de réunion</span></div>
+          <figcaption>Un seul bureau depuis 1992</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  {/* ── 2 · L'ÉQUIPE — six cartes contact en fiches horizontales ── */}
+  <section id="equipe" class="sec--tint">
+    <div class="wrap">
+      <div class="reveal mb-[clamp(24px,3vw,36px)]">
+        <SectionHead eyebrow="L'équipe" title="Cinq agents, une office manager">
+          Chacun son numéro direct, ses communes et ses dossiers. Cliquez sur un portrait pour sa
+          page.
+        </SectionHead>
+      </div>
+      <div class="team-grid team-grid--contact team-grid--rows">
+        {membres.map((m) => <MemberContactCard membre={m} class="reveal" />)}
+      </div>
+    </div>
+  </section>
+
+  {/* ── 3 · QUI APPELER — bande encre, six situations ── */}
+  <section class="cases-band">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <Eyebrow>Qui appeler</Eyebrow>
+        <h2>Vous vous reconnaissez&nbsp;? <em>Voici qui décroche.</em></h2>
+        <p>
+          Pas de standard : selon votre situation, une personne précise prend l'appel et suit votre
+          dossier jusqu'au bout.
+        </p>
+      </div>
+      <div class="cases-grid">
+        {cases.map((c, i) => (
+          <CaseCard
+            class={`reveal${delay(i)}`}
+            num={String(i + 1).padStart(2, "0")}
+            titre={c.titre}
+            tag={c.tag}
+            who={c.who}
+          >
+            {c.texte}
+          </CaseCard>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* ── 4 · CTA CAFÉ — panneau à cheval sur la bande encre et le pied.
+       FinalCta ne cumule pas photo + straddle (variant unique) : la section
+       est écrite ici avec les classes exactes de la référence. ── */}
+  <section class="finalcta finalcta--photo finalcta--straddle" id="contact">
+    <div class="wrap">
+      <div class="fc-panel">
+        <div class="fc-copy">
+          <span class="eyebrow reveal">Un café, boulevard Tirou</span>
+          <h2 class="reveal d1">Dites-nous votre projet,<br /><em>on vous dit qui s'en occupe</em>.</h2>
+          <p class="reveal d2">Réponse sous 24 h ouvrées — par la personne concernée, jamais par un standard.</p>
+          <div class="fc-actions reveal d2">
+            <a href="/contact" class="btn">Nous écrire <span class="arr">→</span></a>
+            <a href="/estimation" class="btn fc-btn-line">Estimer mon bien</a>
+          </div>
+        </div>
+        <figure class="fc-photo reveal d1">
+          <img
+            src="/assets/conseiller-cta.png"
+            alt="Conseiller Avenir Immobilier vous invitant à prendre contact"
+            width="917"
+            height="1000"
+            loading="lazy"
+          />
+        </figure>
+      </div>
+    </div>
+  </section>
+</PageLayout>
+
+<style>
+  /* Recopié des styles inline de la référence equipe.html — valeurs
+     inchangées ; à reprendre dans le DS (héros encre du hub équipe). */
+  .page-head.eq-hero {
+    padding-bottom: clamp(44px, 5.5vw, 72px);
+  }
+  .eq-hero :global(.breadcrumb) {
+    color: rgba(255, 255, 255, 0.6);
+  }
+  .eq-hero :global(.breadcrumb a) {
+    color: inherit;
+  }
+  .eq-hero :global(.breadcrumb .cur) {
+    color: #fff;
+  }
+  .eq-hero .eq-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(26px, 4vw, 64px);
+    align-items: center;
+    margin-top: clamp(22px, 3vw, 36px);
+  }
+  .eq-hero h1 {
+    font-size: clamp(38px, 5vw, 64px);
+    margin-top: 16px;
+    max-width: 14ch;
+    color: #fff;
+  }
+  .eq-hero h1 em {
+    font-style: normal;
+    color: var(--yellow);
+  }
+  .eq-hero .eq-lede {
+    color: rgba(255, 255, 255, 0.74);
+    font-size: 17px;
+    margin-top: 18px;
+    max-width: 50ch;
+  }
+  /* .fc-actions n'a pas de règle de base hors .finalcta (site.css) : la rangée
+     est posée ici avec les métriques du DS (gap 14px), alignée comme l'inline
+     de la référence (flex-start, 26px). */
+  .eq-hero .fc-actions {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-top: 26px;
+  }
+  .eq-photo {
+    margin: 0;
+    position: relative;
+    border-radius: var(--r);
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    box-shadow: var(--sh);
+  }
+  .eq-photo .ph {
+    width: 100%;
+    height: 100%;
+  }
+  .eq-photo figcaption {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    background: var(--yellow);
+    color: var(--ink);
+    border-radius: 100px;
+    padding: 8px 15px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  /* Tête de section sur la bande encre (couleurs inline de la référence). */
+  .cases-band :global(.eyebrow) {
+    color: var(--yellow);
+  }
+  .cases-band .section-head h2 {
+    color: #fff;
+  }
+  .cases-band .section-head h2 em {
+    font-style: normal;
+    color: var(--yellow);
+  }
+  .cases-band .section-head p {
+    color: rgba(255, 255, 255, 0.72);
+  }
+</style>

@@ -52,6 +52,10 @@ interface Props {
   rating?: string;
   count?: number;
   source?: string;
+  /** Variant band : le t-count devient « Lire les {count} avis → » vers cette
+      cible (référence des localités — maison-a-vendre-liege.html) ; sans href,
+      texte « {count} avis vérifiés » (références estimation.html, bien.html). */
+  countHref?: string;
   /** Affiche le logo Google à côté de la source et sur chaque carte. */
   google?: boolean;
   distribution?: Distribution[];
@@ -82,6 +86,7 @@ const {
   rating = "4,9",
   count = 127,
   source = "Avis Google",
+  countHref,
   google = false,
   distribution,
   ctaHref = "#",
@@ -114,7 +119,9 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
         {reviews.slice(0, 3).map((r) =>
           r.photo ? <img class="t-ava" src={r.photo} alt="" /> : <span class="t-ava" aria-hidden="true">{initials(r.name)}</span>
         )}
-        <span class="t-count">{count} avis vérifiés</span>
+        <span class="t-count">
+          {countHref ? <a href={countHref}>Lire les {count} avis →</a> : `${count} avis vérifiés`}
+        </span>
       </span>
     </div>
   ) : (
@@ -219,3 +226,11 @@ const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
     </section>
   )
 }
+
+<style>
+  /* Référence (maison-a-vendre-liege.html : <a style="color:inherit"> dans le
+     t-count du variant band) — à reprendre dans le DS. */
+  .t-count a {
+    color: inherit;
+  }
+</style>

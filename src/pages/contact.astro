@@ -1,4 +1,239 @@
 ---
-// Stub — page «Contact». À implémenter (voir handoff / DEMARRAGE.md).
+/* Page contact — gabarit 08. Réf. : docs/handoff/reference/contact.html.
+
+   Ordre des sections (prompt de gabarit — la référence imbriquait le
+   formulaire dans le page-head, le gabarit le descend en section teintée) :
+   1 en-tête plain (fil d'Ariane + H1 + chapô) · 2 vert tendre .c-grid
+   (île ContactForm carte blanche + colonne coordonnées/points) · 3 blanc
+   .c-visit (AgencyCard vitrine + FAQ courte + lien avis Google) · 4 CTA
+   final en aplat vert profond (FinalCta tone="deep", .on-dark sur les
+   actions pour le .btn--ghost).
+
+   Alternance des fonds : blanc → tendre → blanc → vert profond (l'un des
+   deux aplats verts autorisés par page).
+
+   JSON-LD : RealEstateAgent complet (adresse, téléphone, horaires — mêmes
+   données que les lignes affichées) → organizationLd={false} ; FAQPage
+   reprenant mot pour mot les questions de la colonne « Avant de nous
+   écrire » (île Faq en structuredData={false}).
+
+   Zones de l'AgencyCard : pilules calculées comme sur les pages de
+   localité (combinaisons déclarées ∩ non vides — jamais de lien vers une
+   combinaison sans bien), ancres descriptives. */
+import { getCollection } from "astro:content";
+import PageLayout from "../layouts/PageLayout.astro";
+import PageHead from "../components/chrome/PageHead.astro";
+import Breadcrumb from "../components/core/Breadcrumb.astro";
+import Eyebrow from "../components/core/Eyebrow.astro";
+import ContactRows from "../components/surfaces/ContactRows.astro";
+import AgencyCard from "../components/surfaces/AgencyCard.astro";
+import FinalCta from "../components/surfaces/FinalCta.astro";
+import ContactForm from "../components/islands/ContactForm.tsx";
+import Faq from "../components/islands/Faq.tsx";
+import { faqPage, jsonLd } from "../lib/seo";
+import { combinaisons, slugCombinaison, slugCommune } from "../lib/maillage";
+
+/* ── Coordonnées affichées (référence contact.html, mot pour mot) ── */
+const coordonnees = [
+  { label: "Par téléphone", value: "+32 71 32 14 70", href: "tel:+3271321470" },
+  { label: "Par email", value: "contact@avenir-immobilier.be", href: "mailto:contact@avenir-immobilier.be" },
+  { label: "À l'agence", value: "Boulevard Tirou 102, 6000 Charleroi" },
+  { label: "Horaires", value: "Lun–Ven 9h–18h30 · Sam 10h–16h", plain: true },
+];
+const points = [
+  "Réponse sous 24 h ouvrées",
+  "Un conseiller dédié — jamais un standard",
+  "Vos coordonnées ne sont jamais partagées",
+];
+
+/* ── FAQ courte « Avant de nous écrire » (référence, ancres identiques) ── */
+const faqItems = [
+  {
+    id: "demarchage",
+    q: "Vais-je être démarché ensuite ?",
+    a: "Non. Un seul conseiller vous répond, et c'est vous qui décidez s'il y a une suite. Pas de newsletter sans votre accord, et vos coordonnées ne sont jamais cédées à un tiers.",
+  },
+  {
+    id: "duree-rdv",
+    q: "Combien de temps dure un premier rendez-vous ?",
+    a: "Une heure environ, chez vous ou à l'agence. Le temps de visiter, de comprendre votre échéance et de vous donner une fourchette argumentée. C'est offert et sans engagement.",
+  },
+  {
+    id: "engagement",
+    q: "Dois-je signer quelque chose pour commencer ?",
+    a: "Rien du tout. Le mandat ne se signe qu'au moment où vous décidez de mettre le bien en vente avec nous — après le rendez-vous, l'estimation écrite et le plan de commercialisation.",
+  },
+  {
+    id: "acheteur",
+    q: "Je cherche à acheter, pas à vendre — même formulaire ?",
+    a: "Oui, cochez simplement « Acheter ». Dites-nous la commune, le type de bien et votre budget : vous serez prévenu·e des biens qui correspondent avant leur publication.",
+  },
+];
+
+/* ── Zones d'intervention : pilules vers les pages de localité réellement
+   générées (déclarées par communes/*.md ∩ non vides via lib/maillage). ── */
+const communes = await getCollection("communes");
+const biens = await getCollection("biens", ({ data }) => data.publie !== false);
+const declarees = new Set(
+  communes.flatMap((c) =>
+    c.data.combinaisons.map(({ type, transaction }) =>
+      slugCombinaison(type, transaction, slugCommune(c.data.nom)),
+    ),
+  ),
+);
+const combos = combinaisons(
+  biens.map(({ data }) => ({ type: data.type, transaction: data.transaction, commune: data.commune })),
+).filter((c) => declarees.has(c.slug));
+const zones = [
+  ...combos.map((c) => ({ label: c.ancre, href: `/${c.slug}` })),
+  { label: "Toutes nos communes", href: "/communes" },
+];
+
+/* ── Head : title/description de la référence, canonical /contact ── */
+const title = "Contact — parlons de votre projet · Avenir Immobilier";
+const description =
+  "Contactez Avenir Immobilier à Charleroi : vente, achat, estimation. Réponse sous 24 h, sans engagement. Boulevard Tirou 102, +32 71 32 14 70.";
+const canonical = new URL("/contact", Astro.site).href;
+
+/* RealEstateAgent complet — mêmes données que les lignes affichées (adresse,
+   téléphone, e-mail, horaires) et que le lien avis Google (4,8/190, chiffres
+   externes Google repris tels quels). PageLayout reçoit organizationLd={false}. */
+const agentLd = {
+  "@context": "https://schema.org",
+  "@type": "RealEstateAgent",
+  name: "Avenir Immobilier",
+  url: new URL("/", Astro.site).href,
+  telephone: "+3271321470",
+  email: "contact@avenir-immobilier.be",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Boulevard Tirou 102",
+    postalCode: "6000",
+    addressLocality: "Charleroi",
+    addressCountry: "BE",
+  },
+  openingHoursSpecification: [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      opens: "09:00",
+      closes: "18:30",
+    },
+    { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "10:00", closes: "16:00" },
+  ],
+  aggregateRating: { "@type": "AggregateRating", ratingValue: "4.8", reviewCount: "190" },
+};
+const faqLd = faqPage(faqItems.map((f) => ({ question: f.q, reponse: f.a })));
 ---
-<p>Stub : Contact</p>
+
+<PageLayout title={title} description={description} canonical={canonical} organizationLd={false}>
+  <Fragment slot="head">
+    <script type="application/ld+json" is:inline set:html={jsonLd(agentLd)} />
+    <script type="application/ld+json" is:inline set:html={jsonLd(faqLd)} />
+  </Fragment>
+
+  {/* ── 1 · EN-TÊTE PLAIN — fil d'Ariane, H1, chapô ── */}
+  <PageHead>
+    <Breadcrumb slot="breadcrumb" items={[{ label: "Accueil", href: "/" }, { label: "Contact" }]} />
+    <div style="margin-top:22px">
+      <Eyebrow>Parlons de votre projet</Eyebrow>
+      <h1 style="font-size:clamp(36px,4.8vw,60px);margin-top:16px">
+        Et si on commençait par <em style="font-style:normal;color:var(--green)">un café</em>&nbsp;?
+      </h1>
+      <p style="color:var(--ink-soft);font-size:17px;margin-top:18px;max-width:50ch">
+        Vente, achat ou simple curiosité sur la valeur de votre bien : le premier échange est
+        toujours offert, et sans engagement.
+      </p>
+    </div>
+  </PageHead>
+
+  {/* ── 2 · FORMULAIRE + COORDONNÉES (vert tendre) — carte blanche .cform
+       sur fond teinté (jamais de teinté sur teinté) ── */}
+  <section class="sec--tint">
+    <div class="wrap">
+      <div class="c-grid">
+        <ContactForm
+          client:visible
+          tone="light"
+          step="Formulaire de contact"
+          title="Dites-nous tout."
+          intro=""
+          subjects={["Vendre", "Acheter", "Estimer", "Louer", "Autre"]}
+          splitName
+          consentText="En envoyant ce formulaire, vous acceptez d'être recontacté·e par Avenir Immobilier au sujet de votre demande. Aucune newsletter sans votre accord"
+          consentHref="/legal/confidentialite"
+          fineprint="Réponse sous 24 h · sans engagement"
+          className="reveal"
+        />
+        <div class="reveal d1">
+          <Eyebrow>Après votre message</Eyebrow>
+          <h2 style="margin-top:16px;max-width:24ch">
+            Vous saurez toujours <em style="font-style:normal;color:var(--green)">où en est votre demande</em>.
+          </h2>
+          <ContactRows rows={coordonnees} points={points} />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ── 3 · VISITE À L'AGENCE (blanc) — carte agence, FAQ courte, avis ── */}
+  <section class="sec--white">
+    <div class="wrap">
+      <div class="section-head reveal" style="text-align:left;max-width:none">
+        <Eyebrow>Venir nous voir</Eyebrow>
+        <h2 style="margin-top:16px">
+          Boulevard Tirou, <em style="font-style:normal;color:var(--green)">sans rendez-vous</em> si vous passez.
+        </h2>
+      </div>
+      <div class="c-visit">
+        <AgencyCard
+          class="reveal"
+          media="photo"
+          mediaLabel="Vitrine — Boulevard Tirou 102"
+          tag="Agence de Charleroi"
+          open="Ouvert aujourd'hui jusqu'à 18h30"
+          name="Boulevard Tirou 102"
+          address="6000 Charleroi — à 400 m de la gare de Charleroi-Central, en face du passage de la Bourse."
+          rows={[
+            { label: "Parking", value: "Rive Gauche · 3 min à pied" },
+            { label: "Accès", value: "Plain-pied, accessible PMR" },
+            { label: "Sans rendez-vous", value: "Lun–Ven 9h–18h30 · Sam 10h–16h" },
+          ]}
+          phone="+32 71 32 14 70"
+          phoneLabel="Appeler l'agence"
+          directionsHref="https://maps.google.com/?q=Boulevard+Tirou+102+6000+Charleroi"
+          directionsLabel="Itinéraire"
+          directionsPrimary
+          zones={zones}
+          zonesLabel="Nous intervenons à"
+        />
+        <div class="reveal d1">
+          <p class="c-faq-lead">Avant de nous écrire</p>
+          <Faq client:visible items={faqItems} structuredData={false} />
+          <div class="c-google">
+            <a class="trust-google" href="/avis">
+              <span class="tg-stars" aria-hidden="true">★★★★★</span>
+              <span class="tg-txt"><strong>4,8/5</strong> · 190 avis Google</span>
+              <span class="tg-arrow" aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ── 4 · CTA FINAL — aplat vert profond (.finalcta--deep, local.css).
+       .on-dark sur les actions : le .btn--ghost passe en transparent bordé
+       blanc ; le .btn par défaut reste vert clair texte encre. ── */}
+  <FinalCta tone="deep">
+    <span class="eyebrow center reveal">Plutôt un chiffre d'abord ?</span>
+    <h2 class="reveal d1">
+      Votre bien vaut peut-être <em>plus que vous ne pensez</em>.
+    </h2>
+    <p class="reveal d2">Estimation gratuite en 2 minutes — 98 % des biens vendus au prix estimé.</p>
+    <div class="fc-actions on-dark reveal d2">
+      <a href="/estimation" class="btn">Estimer mon bien <span class="arr">→</span></a>
+      <a href="/avis" class="btn btn--ghost">Lire les avis clients</a>
+    </div>
+  </FinalCta>
+</PageLayout>

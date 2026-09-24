@@ -1,0 +1,78 @@
+---
+/**
+ * MemberContactCard — carte membre « contact » (.member.member--contact,
+ * classes de local.css, 17 sept. 2026 — à remonter dans le DS).
+ *
+ * Contrat (gabarits 10 + 11) : <MemberContactCard membre={entry} /> avec
+ * `membre: CollectionEntry<"equipe">` + pass-through `class`. La carte est
+ * AUTONOME : photo = lien vers /equipe/[slug] (voile « Profil »),
+ * identité et faits en vrai HTML (.m-id, .m-facts), tél/mail = lignes
+ * tapables ≥ 44 px. Tous les liens sont FRÈRES — jamais d'ancre imbriquée.
+ * Les modificateurs de grille (.team-grid--contact / --rows / --compact)
+ * se posent sur le conteneur de la PAGE, jamais ici.
+ *
+ * .m-facts : dérivés des champs de la collection (depuis, langues, zones).
+ * Les stats chiffrées restent sur la page membre, avec leur source datée —
+ * pas de chiffre sans source dans une ligne de 10 px.
+ *
+ * Photo : convention /assets/agent-<prénom>.png (accueil, hub des localités)
+ * tant que `equipe.photo` n'est pas renseigné.
+ */
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  membre: CollectionEntry<"equipe">;
+  class?: string;
+}
+const { membre, class: className = "" } = Astro.props;
+const { nom, fonction, telephone, email, langues, zones, depuis, ipi } = membre.data;
+
+const href = `/equipe/${membre.id}`;
+const photo = membre.data.photo?.src ?? `/assets/agent-${membre.id.split("-")[0]}.png`;
+
+/** « 0475/52.26.31 » → « tel:+32475522631 » (numéros belges de la maquette). */
+const telHref = telephone
+  ? `tel:+32${telephone.replace(/\D/g, "").replace(/^0/, "")}`
+  : undefined;
+
+/* Ordre de la référence (equipe.html) : Depuis · langues · zones · IPI —
+   les compteurs non sourcés de la maquette (« 320 ventes ») sont omis ;
+   l'IPI est une mention légale, il reste. */
+const facts = [
+  depuis != null ? `Depuis ${depuis}` : null,
+  langues.length > 0 ? langues.join(" / ") : null,
+  zones.length > 0 ? zones.join(", ") : null,
+  ipi ? `IPI ${ipi}` : null,
+].filter((f): f is string => f !== null);
+---
+
+<article class={`member member--contact ${className}`.trim()}>
+  <a class="m-photo" href={href} aria-label={`Voir le profil de ${nom}`}>
+    <div class="ph"><img src={photo} alt={nom} loading="lazy" /></div>
+    <span class="m-veil" aria-hidden="true">
+      <span class="m-go"><span class="ico"></span>Profil</span>
+    </span>
+  </a>
+  <a class="m-id" href={href} tabindex="-1">
+    <span class="m-role">{fonction}</span>
+    <span class="m-name">{nom}</span>
+  </a>
+  {facts.length > 0 && (
+    <p class="m-facts">
+      {facts.map((f, i) => (
+        <>
+          {i > 0 && <span class="dot" aria-hidden="true">·</span>}
+          <span>{f}</span>
+        </>
+      ))}
+    </p>
+  )}
+  <div class="m-rows">
+    {telephone && telHref && (
+      <a class="m-row m-row--tel" href={telHref}><span class="v">{telephone}</span></a>
+    )}
+    {email && (
+      <a class="m-row m-row--mail" href={`mailto:${email}`}><span class="v">{email}</span></a>
+    )}
+  </div>
+</article>

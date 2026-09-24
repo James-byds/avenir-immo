@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
 
 /**
  * ContactForm — île React (client:visible), port de components/forms/ContactForm.jsx
@@ -6,6 +6,12 @@ import React, { useState } from "react";
  * Même formulaire en deux tonalités : "light" (carte blanche) ou "ink" (section
  * encre + coordonnées jaunes). Consentement RGPD obligatoire. Le choix de projet
  * est géré en état interne (l'île est autonome) ; `onSubject` reste notifié.
+ *
+ * Validation à la soumission (gabarit 08) : nom, prénom et e-mail requis —
+ * classe .err du DS sur les champs fautifs ; le consentement passe par le
+ * `required` natif du navigateur. Pas de backend : la demande est journalisée
+ * en console.info (TODO endpoint). État envoyé :
+ * « ✓ Message envoyé — réponse sous 24 h ».
  */
 export interface ContactCoordinate {
   label: string;
@@ -21,6 +27,10 @@ export interface ContactFormProps {
   subject?: string;
   onSubject?: (subject: string) => void;
   consentText?: string;
+  /** Lien « confidentialité » du consentement (référence : legale.html) —
+      appended « — confidentialité. » quand il est fourni. */
+  consentHref?: string;
+  consentLinkLabel?: string;
   ctaLabel?: string;
   fineprint?: string;
   splitName?: boolean;
@@ -36,13 +46,15 @@ const DEFAULT_SUBJECTS = ["Vendre", "Acheter", "Louer", "Estimer"];
 export default function ContactForm(props: ContactFormProps) {
   const {
     tone = "light",
-    step = "Écrivez-nous",
-    title = "Parlons de votre projet",
-    intro = "Réponse sous 24 h ouvrées, par un conseiller de votre commune.",
+    step: stepProp,
+    title: titleProp,
+    intro: introProp,
     subjects = DEFAULT_SUBJECTS,
     subject: subjectProp,
     onSubject,
     consentText = "J'accepte que mes données soient utilisées pour être recontacté. Aucune revente à des tiers.",
+    consentHref,
+    consentLinkLabel = "confidentialité",
     ctaLabel = "Envoyer ma demande",
     fineprint,
     splitName = true,
@@ -53,17 +65,58 @@ export default function ContactForm(props: ContactFormProps) {
     className = "",
   } = props;
 
+  /* Valeurs par défaut de l'en-tête de carte — ton clair uniquement ; en ton
+     encre, l'en-tête ne se rend QUE si la page le demande explicitement (les
+     bandes des pages de localité n'en ont pas, cf. maison-a-vendre-liege). */
+  const step = stepProp ?? "Écrivez-nous";
+  const title = titleProp ?? "Parlons de votre projet";
+  const intro = introProp ?? "Réponse sous 24 h ouvrées, par un conseiller de votre commune.";
+
   const [subject, setSubject] = useState(subjectProp ?? subjects[0]);
+  const [sent, setSent] = useState(false);
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
+  /* Noms accessibles : un id par champ, htmlFor sur chaque label (référence
+     contact.html : for="cName"/id="cName"…). */
+  const uid = useId();
+  const fid = (k: string) => `${uid}${k}`;
   const pickSubject = (s: string) => {
     setSubject(s);
     onSubject && onSubject(s);
   };
 
+  /* Validation à la soumission — mêmes règles que le script inline de la
+     référence contact.html (nom rempli, e-mail contenant « @ »), étendues au
+     prénom quand le champ existe. Le consentement est bloqué en amont par le
+     `required` natif de la case à cocher. */
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    const get = (k: string) => String(data.get(k) ?? "").trim();
+    const bad: Record<string, boolean> = {};
+    if (!get("nom")) bad.nom = true;
+    if (splitName && !get("prenom")) bad.prenom = true;
+    const email = get("email");
+    if (!email || email.indexOf("@") < 0) bad.email = true;
+    setErrors(bad);
+    if (Object.keys(bad).length > 0) return;
+    /* TODO endpoint : brancher ici l'envoi réel de la demande (POST vers
+       l'API à venir) — aucun backend pour l'instant, on journalise seulement. */
+    console.info("[ContactForm] Demande envoyée — aucun backend (TODO endpoint)", {
+      sujet: subject,
+      nom: get("nom"),
+      ...(splitName ? { prenom: get("prenom") } : {}),
+      telephone: get("telephone"),
+      email,
+      message: get("message"),
+    });
+    setSent(true);
+  }
+
   const fields = (
     <>
       <div className="field">
-        <label>Votre projet</label>
-        <div className="choice-row">
+        <label id={fid("sujet-label")}>Votre projet</label>
+        <div className="choice-row" role="group" aria-labelledby={fid("sujet-label")}>
           {subjects.map((s) => (
             <button
               key={s}
@@ -79,65 +132,91 @@ export default function ContactForm(props: ContactFormProps) {
       {splitName ? (
         <div className="field cf-2">
           <div>
-            <label>Nom</label>
-            <input placeholder="Dupont" />
+            <label htmlFor={fid("nom")}>Nom</label>
+            <input id={fid("nom")} name="nom" placeholder="Dupont" autoComplete="family-name" className={errors.nom ? "err" : undefined} />
           </div>
           <div>
-            <label>Prénom</label>
-            <input placeholder="Marie" />
+            <label htmlFor={fid("prenom")}>Prénom</label>
+            <input id={fid("prenom")} name="prenom" placeholder="Marie" autoComplete="given-name" className={errors.prenom ? "err" : undefined} />
           </div>
         </div>
       ) : (
         <div className="field cf-2">
           <div>
-            <label>Nom &amp; prénom</label>
-            <input placeholder="Marie Dupont" />
+            <label htmlFor={fid("nom")}>Nom &amp; prénom</label>
+            <input id={fid("nom")} name="nom" placeholder="Marie Dupont" autoComplete="name" className={errors.nom ? "err" : undefined} />
           </div>
           <div>
-            <label>Téléphone</label>
-            <input placeholder="+32 4 xx xx xx" />
+            <label htmlFor={fid("telephone")}>Téléphone</label>
+            <input id={fid("telephone")} name="telephone" placeholder="+32 4 xx xx xx" autoComplete="tel" />
           </div>
         </div>
       )}
       {splitName && (
         <div className="field">
-          <label>Téléphone</label>
-          <input placeholder="+32 4 xx xx xx xx" />
+          <label htmlFor={fid("telephone")}>Téléphone</label>
+          <input id={fid("telephone")} name="telephone" placeholder="+32 4 xx xx xx xx" autoComplete="tel" />
         </div>
       )}
       <div className="field">
-        <label>E-mail</label>
-        <input placeholder="marie.dupont@email.be" />
+        <label htmlFor={fid("email")}>E-mail</label>
+        <input id={fid("email")} name="email" placeholder="marie.dupont@email.be" autoComplete="email" className={errors.email ? "err" : undefined} />
       </div>
       <div className="field">
-        <label>Message</label>
-        <textarea placeholder="Décrivez votre projet en quelques lignes…" />
+        <label htmlFor={fid("message")}>Message</label>
+        <textarea id={fid("message")} name="message" placeholder="Décrivez votre projet en quelques lignes…" />
       </div>
       <label className="cf-consent">
-        <input type="checkbox" />
+        <input type="checkbox" name="consent" required />
         <i />
-        <span>{consentText}</span>
+        <span>
+          {consentText}
+          {consentHref && (
+            <>
+              {" — "}
+              <a href={consentHref}>{consentLinkLabel}</a>.
+            </>
+          )}
+        </span>
       </label>
-      <button type="button" className="btn btn--block">
+      <button type="submit" className="btn btn--block">
         {ctaLabel} <span className="arr">→</span>
       </button>
       {fineprint && <p className="cf-fine">{fineprint}</p>}
     </>
   );
 
+  /* État envoyé — vocabulaire .est-done du DS, texte du gabarit 08. */
+  const done = (
+    <div className="est-done" role="status" aria-live="polite">
+      <div className="ed-ic" aria-hidden="true">✓</div>
+      <p>{"Message envoyé — réponse sous 24 h"}</p>
+    </div>
+  );
+
   const card = (
     <form
       className={"cform" + (tone === "light" ? " " + className : "")}
-      onSubmit={(e) => e.preventDefault()}
+      onSubmit={handleSubmit}
     >
-      {tone === "light" && (
+      {/* En-tête de carte : toujours en ton clair ; en ton encre, seulement à
+          la demande explicite de la page (référence equipe-*.html : « Message
+          à Olivier Monier » / « Dites-nous l'essentiel. »). */}
+      {!sent && tone === "light" && (
         <>
           <span className="cform-step">{step}</span>
           <h3>{title}</h3>
           {intro && <p className="cf-sub">{intro}</p>}
         </>
       )}
-      {fields}
+      {!sent && tone === "ink" && (stepProp || titleProp || introProp) && (
+        <>
+          {stepProp && <span className="cform-step">{stepProp}</span>}
+          {titleProp && <h3>{titleProp}</h3>}
+          {introProp && <p className="cf-sub">{introProp}</p>}
+        </>
+      )}
+      {sent ? done : fields}
     </form>
   );
 

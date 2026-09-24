@@ -29,6 +29,11 @@ langues: ["FR", "NL"]
 zones: ["Charleroi", "Liège", "Namur"]
 depuis: 2014
 ordre: 5
+specialites: ["Mettre en location", "Gestion locative", "Louer"]
+liens:
+  - { label: "Facebook", url: "https://www.facebook.com/" }
+contactTitre: "Une question sur votre mise en location\_?"
+contactLede: "Briyann vous répond sous 24 h ouvrées. Pas de formulaire labyrinthe, pas de rappel commercial non sollicité."
 ---
 
 Briyann Rezgui est agent immobilier chez Avenir Immobilier, boulevard Tirou à Charleroi. [Bio à rédiger — texte provisoire.]

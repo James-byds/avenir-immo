@@ -4,6 +4,14 @@
  *
  * En-tête de page membre (agent associé aux biens) — distinct des auteurs.
  * Les actions (contact, estimation) se passent en enfant via <slot />.
+ *
+ * `photo` (additif, gabarit 11) : portrait réel /assets/agent-<prenom>.png,
+ * posé dans le cadre 4/4.6 du DS (fond vert tendre, contenu calé en bas —
+ * traitement recopié des styles inline de la référence equipe-*.html).
+ * Sans `photo`, le placeholder .ph d'origine est rendu — rien ne change.
+ *
+ * `source` (additif) : provenance datée des chiffres de `stats` — un chiffre
+ * affiché porte toujours sa source (ligne .sell-src sous .mh-stats).
  */
 interface Stat {
   value: string;
@@ -16,16 +24,40 @@ interface Props {
   meta?: string[];
   points?: string[];
   stats?: Stat[];
+  /** Portrait réel — remplace le placeholder au même endroit. */
+  photo?: { src: string; alt: string };
+  /** Provenance datée des chiffres de `stats`. */
+  source?: string;
 }
-const { name, role, bio, meta = [], points = [], stats = [] } = Astro.props;
+const { name, role, bio, meta = [], points = [], stats = [], photo, source } = Astro.props;
+
+/* Marqueur provisoire « [Bio à rédiger — …] » : la référence le met en
+   retrait (em, encre atténuée) — on l'isole du texte réel de la bio. */
+const bioParts = bio?.match(/^(.*?)\s*(\[[^\]]*\])\s*$/s);
 ---
 
 <div class="member-hero">
-  <div class="mh-photo"><div class="ph"><span class="ph-tag">portrait</span></div></div>
+  <div class={`mh-photo${photo ? " mh-photo--img" : ""}`}>
+    <div class="ph">
+      {photo ? <img src={photo.src} alt={photo.alt} /> : <span class="ph-tag">portrait</span>}
+    </div>
+  </div>
   <div>
     <h1>{name}</h1>
     {role && <div class="mh-role">{role}</div>}
-    {bio && <p class="mh-bio">{bio}</p>}
+    {
+      bio && (
+        <p class="mh-bio">
+          {bioParts ? (
+            <>
+              {bioParts[1]} <em class="mh-bio-note">{bioParts[2]}</em>
+            </>
+          ) : (
+            bio
+          )}
+        </p>
+      )
+    }
     {
       meta.length > 0 && (
         <div class="mh-meta">
@@ -63,5 +95,30 @@ const { name, role, bio, meta = [], points = [], stats = [] } = Astro.props;
         </div>
       )
     }
+    {source && <p class="sell-src">{source}</p>}
   </div>
 </div>
+
+<style>
+  /* Recopié des styles inline de la référence (equipe-olivier-monier.html
+     et suivantes) — valeurs inchangées ; à reprendre dans le DS. */
+  .mh-photo--img {
+    background: var(--green-tint);
+  }
+  .mh-photo--img .ph {
+    background: none;
+    padding: 24px 16px 0;
+    box-sizing: border-box;
+  }
+  .mh-photo--img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: bottom;
+    display: block;
+  }
+  .mh-bio-note {
+    font-style: normal;
+    color: var(--ink-mute);
+  }
+</style>

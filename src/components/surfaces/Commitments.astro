@@ -1,0 +1,58 @@
+---
+/**
+ * Commitments — les engagements écrits de l'agence (.about-dl, page À propos).
+ *
+ * <dl> sémantique : dt = l'engagement, dd = son détail ; le numéro 01…05 est
+ * décoratif (compteur CSS). Visuel repris des lignes de la référence
+ * a-propos.html (« Ce que vous pouvez exiger de nous »), valeurs inchangées —
+ * seul écart : le détail passe de --ink-mute à --ink-soft, la carte vit sur
+ * une section vert tendre (règle de contraste du DS). À reprendre côté DS.
+ */
+interface Item {
+  titre: string;
+  texte: string;
+}
+interface Props {
+  items: Item[];
+  class?: string;
+}
+const { items, class: className = "" } = Astro.props;
+---
+
+<dl class={`about-dl ${className}`.trim()}>
+  {items.map((it) => (
+    <div>
+      <dt>{it.titre}</dt>
+      <dd>{it.texte}</dd>
+    </div>
+  ))}
+</dl>
+
+<style>
+  .about-dl { margin: 0; display: grid; counter-reset: engagement; }
+  .about-dl > div {
+    counter-increment: engagement;
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    column-gap: 18px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--line-2);
+  }
+  .about-dl > div:first-child { padding-top: 0; }
+  /* Numéro décoratif — mêmes valeurs que « .v num » de la référence. */
+  .about-dl > div::before {
+    content: counter(engagement, decimal-leading-zero);
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 21px;
+    white-space: nowrap;
+    color: var(--green);
+  }
+  .about-dl dt { grid-column: 2; font-size: 17px; font-weight: 700; color: var(--ink); }
+  .about-dl dd { grid-column: 2; margin: 2px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+  @media (max-width: 640px) {
+    .about-dl > div { grid-template-columns: 40px minmax(0, 1fr); }
+  }
+</style>
