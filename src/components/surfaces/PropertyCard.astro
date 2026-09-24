@@ -13,6 +13,11 @@
  *
  * `tag` (légende du placeholder) est remplacé par une <img> quand les visuels
  * arrivent : même emplacement, rien d'autre.
+ *
+ * À REPRENDRE DANS LE DS (24 sept. 2026) : passe-through optionnel `class`
+ * + attributs `data-*` posés sur l'<article> — la liste des biens filtre
+ * côté client sur data-cat/loc/type/price/surface/idx et pose .reveal.
+ * Rétro-compatible : sans ces props, le rendu est inchangé.
  */
 import Badge from "./Badge.astro";
 import Placeholder from "../core/Placeholder.astro";
@@ -32,6 +37,10 @@ interface Props {
   /** Indice PEB (A++ … G) — pastille .card-peb de local.css */
   peb?: string;
   href?: string;
+  /** Classes additionnelles de l'<article> (ex. .reveal .d1). */
+  class?: string;
+  /** Attributs data-* de l'<article> (filtrage client de la liste). */
+  [key: `data-${string}`]: string | number | undefined;
 }
 const {
   variant,
@@ -45,7 +54,15 @@ const {
   tag,
   peb,
   href = "#",
+  class: className,
+  ...rest
 } = Astro.props;
+
+/* Seuls les data-* passent — aucun autre attribut libre. */
+const dataAttrs = Object.fromEntries(
+  Object.entries(rest).filter(([k]) => k.startsWith("data-")),
+);
+const extra = className ? ` ${className}` : "";
 
 const isOverlay = variant === "overlay";
 const isHorizontal = variant === "horizontal";
@@ -53,7 +70,7 @@ const isHorizontal = variant === "horizontal";
 
 {
   isOverlay ? (
-    <article class="card card--overlay">
+    <article class={`card card--overlay${extra}`} {...dataAttrs}>
       <a href={href} class="card-link" aria-label={title} />
       {badge && (
         <Badge floating variant={badgeVariant}>
@@ -88,7 +105,7 @@ const isHorizontal = variant === "horizontal";
       </div>
     </article>
   ) : (
-    <article class={`card${isHorizontal ? " card--h" : ""}`}>
+    <article class={`card${isHorizontal ? " card--h" : ""}${extra}`} {...dataAttrs}>
       <a href={href} class="card-link" aria-label={title} />
       <div class="card-media">
         {badge && (

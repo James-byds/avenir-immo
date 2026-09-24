@@ -1,4 +1,641 @@
 ---
-// Stub — page «Biens — liste». À implémenter (voir handoff / DEMARRAGE.md).
+/* Liste des biens — gabarit 02 (réf. docs/handoff/reference/biens.html).
+   4 sections : page-head bandeau encre → continuation (toolbar + 5 états +
+   grille + pagination) → trust acquéreurs (continuation) → CTA final tendre.
+   Alternance : encre (band) → blanc (cont) → blanc (cont, trust) → tendre.
+
+   Contrat d'URL (client, HTML pré-rendu complet, cf. handoff/README) :
+   ?cat=vente|location|vendu&loc=<slug>&type=<slug>&q=<texte> — plus `budget`
+   (transmis par la recherche de l'accueil) et `page`. Les 52 cartes sont dans
+   le HTML ; le <script> de page filtre/trie/pagine sur leurs data-*. */
+import { getCollection } from "astro:content";
+import PageLayout from "../../layouts/PageLayout.astro";
+import PageHead from "../../components/chrome/PageHead.astro";
+import Breadcrumb from "../../components/core/Breadcrumb.astro";
+import Eyebrow from "../../components/core/Eyebrow.astro";
+import LocalityLinks from "../../components/core/LocalityLinks.astro";
+import Pagination from "../../components/core/Pagination.astro";
+import PropertyCard from "../../components/surfaces/PropertyCard.astro";
+import Toolbar from "../../components/surfaces/Toolbar.astro";
+import SkeletonGrid from "../../components/surfaces/SkeletonGrid.astro";
+import EmptyState from "../../components/surfaces/EmptyState.astro";
+import FinalCta from "../../components/surfaces/FinalCta.astro";
+import { jsonLd, realEstateListing } from "../../lib/seo";
+import { formatPrix, formatSurface } from "../../lib/format";
+import { combinaisons, slugCombinaison, slugCommune } from "../../lib/maillage";
+import type { Transaction, TypeBien } from "../../lib/maillage";
+
+/* ── Biens : collection complète, ordre initial « plus récents » (date desc,
+   prix desc en départage — les 52 mocks partagent la même date). ── */
+const biens = (await getCollection("biens", ({ data }) => data.publie !== false)).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime() || b.data.prix - a.data.prix,
+);
+type Bien = (typeof biens)[number];
+
+/* Slug de localité du filtre — « Charleroi centre » et « Charleroi » se
+   regroupent sous `charleroi` (même marché, comme la référence). */
+const locSlugDe = (commune: string) => {
+  const s = slugCommune(commune);
+  return s === "charleroi-centre" ? "charleroi" : s;
+};
+const locLabels = new Map<string, string>();
+for (const b of biens) {
+  const s = locSlugDe(b.data.commune);
+  if (!locLabels.has(s)) locLabels.set(s, s === "charleroi" ? "Charleroi centre" : b.data.commune);
+}
+const locOptions = [...locLabels.entries()]
+  .sort((a, b) => a[1].localeCompare(b[1], "fr"))
+  .map(([value, label]) => ({ value, label }));
+
+/* Catégorie du segment (vendu prime sur la transaction) + compteurs RÉELS. */
+const catDe = (b: Bien) =>
+  b.data.statut === "vendu" ? "vendu" : b.data.transaction === "location" ? "location" : "vente";
+const nb = { all: biens.length, vente: 0, location: 0, vendu: 0 };
+for (const b of biens) nb[catDe(b)]++;
+
+/* Type du filtre : la villa (sous-type d'affichage) est éclatée comme dans la
+   référence — le type reste la clé du maillage, pas du filtre. */
+const typeSlugDe = (b: Bien) => (b.data.sousType === "villa" ? "villa" : b.data.type);
+
+const TYPE_SINGULIER: Record<string, string> = {
+  maison: "Maison",
+  appartement: "Appartement",
+  terrain: "Terrain",
+  commerce: "Commerce",
+  immeuble: "Immeuble",
+};
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const tagDe = (b: Bien) =>
+  `${b.data.sousType ? cap(b.data.sousType) : TYPE_SINGULIER[b.data.type]} — ${b.data.commune}`;
+const badgeDe = (b: Bien) =>
+  b.data.statut === "nouveau"
+    ? { label: "Nouveau", variant: "new" as const }
+    : b.data.statut === "sous-offre"
+      ? { label: "Sous offre", variant: undefined }
+      : b.data.statut === "vendu"
+        ? { label: "Vendu", variant: "sold" as const }
+        : b.data.statut === "off-market"
+          ? { label: "Off-market", variant: undefined }
+          : undefined;
+const specsDe = (b: Bien) =>
+  [
+    b.data.chambres ? `${b.data.chambres} chambre${b.data.chambres > 1 ? "s" : ""}` : null,
+    b.data.surface != null ? formatSurface(b.data.surface) : null,
+    b.data.sdb ? `${b.data.sdb} sdb` : null,
+  ].filter((s): s is string => Boolean(s));
+const delay = (i: number) => (i % 3 === 1 ? " d1" : i % 3 === 2 ? " d2" : "");
+
+const PER_PAGE = 9;
+const pages = Math.max(1, Math.ceil(biens.length / PER_PAGE));
+
+/* ── « Élargir autour » : combinaisons réelles (biens ∩ communes.combinaisons,
+   comme le pied de page) — jamais de lien vers une combinaison vide. ── */
+const communes = await getCollection("communes");
+const generees = new Set(
+  communes.flatMap((c) =>
+    (c.data.combinaisons as { type: TypeBien; transaction: Transaction }[]).map(
+      ({ type, transaction }) => slugCombinaison(type, transaction, slugCommune(c.data.nom)),
+    ),
+  ),
+);
+const widenLinks = [
+  ...combinaisons(
+    biens.map(({ data }) => ({
+      type: data.type,
+      transaction: data.transaction,
+      commune: data.commune,
+    })),
+  )
+    .filter((q) => generees.has(q.slug))
+    .map((q) => ({ text: q.ancre, href: `/${q.slug}` })),
+  /* Hub des localités — gabarit 04, pas encore codé. */
+  { text: "Toutes nos communes", href: "/communes", planned: true },
+];
+
+/* ── Avis acquéreurs (trust) — textes de la collection ; 4,8/190 et la
+   distribution sont des chiffres EXTERNES Google, repris tels quels. ── */
+const GOOGLE_URL = "https://www.google.com/maps/search/Avenir+Immobilier+Charleroi";
+const avis = await getCollection("avis");
+const parIdAvis = new Map(avis.map((a) => [a.id, a]));
+const acheteurs = ["toussaint", "julie-maxime", "m-grandjean"]
+  .map((id) => parIdAvis.get(id))
+  .filter((a): a is NonNullable<typeof a> => Boolean(a));
+const initialesDe = (nom: string) => {
+  const mots = nom.split(/\s+/).filter((m) => /^\p{L}/u.test(m));
+  return ((mots[0]?.[0] ?? "") + (mots.length > 1 ? mots[mots.length - 1][0] : "")).toUpperCase();
+};
+const distribution = [
+  { stars: 5, count: 167 },
+  { stars: 4, count: 16 },
+  { stars: 3, count: 5 },
+  { stars: 2, count: 1 },
+  { stars: 1, count: 1 },
+];
+const maxCount = Math.max(...distribution.map((d) => d.count), 1);
+const barWidth = (count: number) => Math.max(2, Math.round((count / maxCount) * 100));
+
+/* ── JSON-LD ItemList : les biens de la première page, mêmes données que le
+   HTML (realEstateListing de lib/seo). ── */
+const itemListLd = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "Nos biens d'exception",
+  numberOfItems: Math.min(PER_PAGE, biens.length),
+  itemListElement: biens.slice(0, PER_PAGE).map((b, i) => {
+    const { ["@context"]: _ctx, ...listing } = realEstateListing({
+      titre: b.data.titre,
+      description: b.data.description,
+      prix: b.data.prix,
+      url: `/biens/${b.id}`,
+    });
+    return { "@type": "ListItem", position: i + 1, item: listing };
+  }),
+};
 ---
-<p>Stub : Biens — liste</p>
+
+<PageLayout
+  title="Nos biens à vendre & à louer à Charleroi · Avenir Immobilier"
+  description="Villas, maisons de maître et appartements de standing à vendre et à louer à Charleroi, Gerpinnes, Fleurus et alentours. Chaque bien est visité, estimé et mis en valeur par Avenir Immobilier."
+  canonical={new URL("/biens", Astro.site).href}
+  active="/biens"
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" is:inline set:html={jsonLd(itemListLd)} />
+  </Fragment>
+
+  <!-- ===================== 1 · EN-TÊTE (bandeau encre + photo) ===================== -->
+  <PageHead variant="band">
+    <Fragment slot="breadcrumb">
+      <Breadcrumb items={[{ label: "Accueil", href: "/" }, { label: "Nos biens" }]} />
+    </Fragment>
+    {/* .section-head avec H1 : core/SectionHead ne rend que des h2 — motif
+       écrit en classes DS, marge de la référence. */}
+    <div class="section-head" style="margin-top:clamp(22px,3vw,32px)">
+      <Eyebrow>Acheter · Louer</Eyebrow>
+      <h1>Nos biens d'exception</h1>
+      <p>Villas, maisons de maître et appartements de standing à Charleroi et dans sa région — chaque bien est visité, estimé et mis en valeur par nos soins.</p>
+    </div>
+  </PageHead>
+
+  <!-- ===================== 2 · TOOLBAR + 5 ÉTATS + GRILLE (continuation) ===================== -->
+  <section class="sec--cont" id="resultats">
+    <div class="wrap">
+      <Toolbar
+        segments={{
+          label: "Je cherche à",
+          options: [
+            { id: "all", label: "Tout voir", count: nb.all },
+            { id: "vente", label: "Acheter", count: nb.vente },
+            { id: "location", label: "Louer", count: nb.location },
+            { id: "vendu", label: "Déjà vendus", count: nb.vendu },
+          ],
+        }}
+        groups={[
+          {
+            id: "selLoc",
+            label: "Localité",
+            options: [{ value: "all", label: "Toutes localités" }, ...locOptions],
+          },
+          {
+            id: "selType",
+            label: "Type de bien",
+            options: [
+              { value: "all", label: "Tous types" },
+              { value: "maison", label: "Maison" },
+              { value: "appartement", label: "Appartement" },
+              { value: "villa", label: "Villa" },
+            ],
+          },
+          {
+            id: "selBudget",
+            label: "Budget",
+            options: [
+              { value: "all", label: "Tous budgets" },
+              { value: "0-500000", label: "≤ 500 000 €" },
+              { value: "500000-1000000", label: "500 000 – 1 M€" },
+              { value: "1000000-2000000", label: "1 – 2 M€" },
+              { value: "2000000-99999999", label: "2 M€ et +" },
+            ],
+          },
+        ]}
+        search={{ id: "toolQ", label: "Mot-clé", placeholder: "Commune, type, réf.", ariaLabel: "Rechercher un bien" }}
+        sort={{
+          id: "selSort",
+          label: "Trier par",
+          ariaLabel: "Trier",
+          options: [
+            { value: "recent", label: "Plus récents" },
+            { value: "asc", label: "Prix croissant" },
+            { value: "desc", label: "Prix décroissant" },
+            { value: "surf", label: "Surface décroissante" },
+          ],
+        }}
+        count={`${nb.all} biens affichés · page 1 sur ${pages}`}
+      />
+
+      <p class="search-hint" id="searchHint" hidden></p>
+
+      <LocalityLinks
+        variant="widen"
+        id="widenBand"
+        hidden
+        label="Peu de biens ici — élargir autour"
+        links={widenLinks}
+        style="margin-top:26px"
+      />
+
+      <SkeletonGrid id="skGrid" count={6} style="margin-top:40px" />
+
+      <EmptyState
+        id="emptyState"
+        title="Aucun bien ne correspond à ces critères"
+        critId="emptyCrit"
+        widenLabel="Chercher autour"
+        style="margin-top:40px"
+      >
+        Notre catalogue reste volontairement court : nous ne prenons que les mandats que nous
+        pouvons suivre nous-mêmes. Retirez un critère, ou dites-nous ce que vous cherchez — nous
+        avons parfois des biens avant leur mise en ligne.
+        <Fragment slot="actions">
+          <button class="btn" type="button" id="emptyReset">Effacer les filtres <span class="arr">→</span></button>
+          <a class="btn btn--ghost" href="/contact">Être prévenu des nouveaux biens</a>
+        </Fragment>
+        <Fragment slot="widen">
+          {widenLinks.map((l) => (
+            <a href={l.href} data-planned={"planned" in l && l.planned ? "" : undefined}>{l.text}</a>
+          ))}
+        </Fragment>
+      </EmptyState>
+
+      <div class="prop-grid" id="propGrid" style="margin-top:40px">
+        {biens.map((b, i) => (
+          <PropertyCard
+            class={`reveal${delay(i)}`}
+            data-cat={catDe(b)}
+            data-loc={locSlugDe(b.data.commune)}
+            data-type={typeSlugDe(b)}
+            data-price={b.data.prix}
+            data-surface={b.data.surface ?? 0}
+            data-idx={i + 1}
+            price={formatPrix(b.data.prix)}
+            suffix={b.data.transaction === "location" ? "/ mois" : undefined}
+            location={b.data.commune}
+            title={b.data.titre}
+            specs={specsDe(b)}
+            badge={badgeDe(b)?.label}
+            badgeVariant={badgeDe(b)?.variant}
+            tag={tagDe(b)}
+            peb={b.data.peb}
+            href={`/biens/${b.id}`}
+          />
+        ))}
+      </div>
+
+      <Pagination pages={pages} current={1} />
+    </div>
+  </section>
+
+  <!-- ===================== 3 · TRUST ACQUÉREURS (continuation) =====================
+       Écrit en classes DS : le port TrustSection ne permet ni classe de section
+       (.sec--cont) ni <em class="t-hl"> dans un titre libre — à reprendre dans le DS. -->
+  <section class="trust sec--cont">
+    <div class="wrap">
+      <div class="trust-head reveal">
+        <div style="flex:1 1 420px">
+          <Eyebrow>Ils nous font confiance</Eyebrow>
+          <h2 style="max-width:24ch">Des acquéreurs accompagnés, notés <em class="t-hl">4,8/5</em></h2>
+          <p class="trust-intro">Des avis Google vérifiés d'acheteurs de Charleroi et sa région — du premier contact à la signature chez le notaire.</p>
+        </div>
+      </div>
+      <div class="trust-sum reveal">
+        <div class="ts-score">
+          <div class="v">4,8</div>
+          <span class="t-stars" aria-label="4,8 étoiles sur 5">★★★★★</span>
+          <span class="t-src">Avis Google · 190 avis</span>
+        </div>
+        <div class="ts-bars">
+          {distribution.map((d) => (
+            <div class="ts-bar">
+              <span>{d.stars} ★</span>
+              <span class="ts-track"><span class="ts-fill" style={`width:${barWidth(d.count)}%`}></span></span>
+              <span class="n">{d.count}</span>
+            </div>
+          ))}
+        </div>
+        <div class="ts-cta">
+          <a class="btn" href={GOOGLE_URL} target="_blank" rel="noopener">Lire les 190 avis <span class="arr">→</span></a>
+          <a class="t-write" href={GOOGLE_URL} target="_blank" rel="noopener">Laisser un avis</a>
+        </div>
+      </div>
+      <div class="trust-grid">
+        {acheteurs.map((a, i) => (
+          <article class={`t-card reveal${delay(i)}`}>
+            <div class="t-headrow">
+              <span class="t-cstars" aria-label={`${a.data.note} étoiles sur 5`}>{"★★★★★".slice(0, a.data.note)}</span>
+              <span class="t-gtag">Google</span>
+            </div>
+            <p class="t-quote">{a.data.texte}</p>
+            <div class="t-meta">
+              <span class="t-ava" aria-hidden="true">{initialesDe(a.data.auteur)}</span>
+              <span>
+                <span class="t-name">{a.data.auteur}</span>
+                <br />
+                <span class="t-place">{(a.body ?? "").trim() || a.data.commune}</span>
+              </span>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 4 · CTA FINAL (vert tendre) ===================== -->
+  <FinalCta tone="tint">
+    <span class="eyebrow center reveal">Recherche sur-mesure</span>
+    <h2 class="reveal d1" style="font-size:clamp(32px,4.6vw,60px)">Le bien idéal est peut-être <em>off-market</em>.</h2>
+    <p class="reveal d2">Confiez-nous votre recherche : nos chasseurs présentent chaque mois des biens vendus en toute discrétion, avant toute publication.</p>
+    <div class="fc-actions reveal d2">
+      <a href="/contact" class="btn">Confier ma recherche <span class="arr">→</span></a>
+      <a href="/estimation" class="btn btn--ghost">Estimer mon bien</a>
+    </div>
+  </FinalCta>
+
+  {/* Filtrage, tri, pagination, 5 états et contrat d'URL — logique reprise
+     des scripts inline de biens.html et maison-a-vendre-liege.html (réf.).
+     Script traité (module) : il s'exécute APRÈS /ds-script.js (classique en
+     fin de body), dont il utilise l'enhanceur de <select> (_ddSync). La garde
+     `#filters && !#selLoc` de ds-script.js laisse le segment à ce script. */}
+  <script>
+    (function () {
+      "use strict";
+      const grid = document.getElementById("propGrid");
+      const sk = document.getElementById("skGrid");
+      if (!grid || !sk) return;
+      const cards = Array.from(grid.children) as HTMLElement[];
+      const selLoc = document.getElementById("selLoc") as HTMLSelectElement;
+      const selType = document.getElementById("selType") as HTMLSelectElement;
+      const selBudget = document.getElementById("selBudget") as HTMLSelectElement;
+      const selSort = document.getElementById("selSort") as HTMLSelectElement;
+      const qIn = document.getElementById("toolQ") as HTMLInputElement;
+      const count = document.getElementById("toolCount")!;
+      const reset = document.getElementById("toolReset") as HTMLButtonElement;
+      const widen = document.getElementById("widenBand")!;
+      const empty = document.getElementById("emptyState")!;
+      const crit = document.getElementById("emptyCrit")!;
+      const hint = document.getElementById("searchHint")!;
+      const pagi = document.querySelector(".pagination") as HTMLElement;
+      const segBtns = Array.from(document.querySelectorAll("#filters button")) as HTMLElement[];
+      const CAT: Record<string, string> = { vente: "Acheter", location: "Louer", vendu: "Déjà vendus" };
+      const PER_PAGE = 9;
+      const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let cat = "all";
+      let page = 1;
+      let pending: ReturnType<typeof setTimeout> | undefined;
+
+      const norm = (s: string | null | undefined) =>
+        (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+      const labelOf = (sel: HTMLSelectElement) =>
+        sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : "";
+      const sync = (sel: HTMLSelectElement) => {
+        const s = sel as HTMLSelectElement & { _ddSync?: () => void };
+        if (s._ddSync) s._ddSync();
+      };
+
+      /* Dictionnaire « vouliez-vous dire » : communes + types du filtre, plus
+         nos marchés voisins (référence). */
+      const DICT: string[] = [];
+      [selLoc, selType].forEach((s) =>
+        Array.from(s.options).forEach((o) => {
+          if (o.value !== "all") DICT.push(o.text);
+        }),
+      );
+      ["Namur", "Piscine", "Loft"].forEach((w) => {
+        if (!DICT.includes(w)) DICT.push(w);
+      });
+
+      function lev(a: string, b: string) {
+        const m = a.length, n = b.length;
+        if (!m || !n) return Math.max(m, n);
+        let prev = Array.from({ length: n + 1 }, (_, j) => j);
+        for (let i = 1; i <= m; i++) {
+          const cur = [i];
+          for (let j = 1; j <= n; j++) {
+            cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+          }
+          prev = cur;
+        }
+        return prev[n];
+      }
+      function suggest(term: string) {
+        const t = norm(term);
+        if (t.length < 4) return null;
+        let best: string | null = null;
+        let score = 3; /* Levenshtein ≤ 2 */
+        DICT.forEach((w) => {
+          const d = lev(t, norm(w));
+          if (d > 0 && d < score) { score = d; best = w; }
+        });
+        return best;
+      }
+
+      /* État initial depuis l'URL : ?cat&loc&type&q (+ budget de l'accueil, + page). */
+      const p0 = new URLSearchParams(location.search);
+      const urlCat = p0.get("cat");
+      if (urlCat && CAT[urlCat]) cat = urlCat;
+      const setSel = (sel: HTMLSelectElement, v: string | null) => {
+        if (v && Array.from(sel.options).some((o) => o.value === v)) sel.value = v;
+      };
+      setSel(selLoc, p0.get("loc"));
+      setSel(selType, p0.get("type"));
+      const b0 = p0.get("budget");
+      if (b0) {
+        /* L'accueil transmet le LIBELLÉ (« ≤ 500 000 € ») — accepté au même
+           titre que la valeur bornée. */
+        const opt = Array.from(selBudget.options).find(
+          (o) => o.value === b0 || o.text.trim() === b0.trim(),
+        );
+        if (opt) selBudget.value = opt.value;
+      }
+      if (p0.get("q")) qIn.value = p0.get("q")!;
+      const pg0 = parseInt(p0.get("page") || "", 10);
+      if (pg0 > 1) page = pg0;
+      segBtns.forEach((x) => x.classList.toggle("on", x.dataset.f === cat));
+      [selLoc, selType, selBudget].forEach(sync);
+
+      function matches(c: HTMLElement) {
+        const q = norm(qIn.value);
+        if (cat !== "all" && c.dataset.cat !== cat) return false;
+        if (selLoc.value !== "all" && c.dataset.loc !== selLoc.value) return false;
+        if (selType.value !== "all" && c.dataset.type !== selType.value) return false;
+        if (selBudget.value !== "all") {
+          const [lo, hi] = selBudget.value.split("-").map(Number);
+          const price = +(c.dataset.price || 0);
+          if (price < lo || price > hi) return false;
+        }
+        if (q && !norm(c.textContent).includes(q)) return false;
+        return true;
+      }
+
+      /* Contrat d'URL : l'état courant est reflété à chaque rendu. */
+      function syncUrl() {
+        const p = new URLSearchParams();
+        if (cat !== "all") p.set("cat", cat);
+        if (selLoc.value !== "all") p.set("loc", selLoc.value);
+        if (selType.value !== "all") p.set("type", selType.value);
+        if (selBudget.value !== "all") p.set("budget", selBudget.value);
+        if (qIn.value.trim()) p.set("q", qIn.value.trim());
+        if (page > 1) p.set("page", String(page));
+        const qs = p.toString();
+        history.replaceState(null, "", location.pathname + (qs ? "?" + qs : ""));
+      }
+
+      function render() {
+        const kept = cards.filter(matches);
+        const s = selSort.value;
+        kept.sort((a, b) =>
+          s === "asc" ? +a.dataset.price! - +b.dataset.price! :
+          s === "desc" ? +b.dataset.price! - +a.dataset.price! :
+          s === "surf" ? +(b.dataset.surface || 0) - +(a.dataset.surface || 0) :
+          +a.dataset.idx! - +b.dataset.idx!,
+        );
+        const pages = Math.max(1, Math.ceil(kept.length / PER_PAGE));
+        if (page > pages) page = 1;
+        const shown = kept.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+        cards.forEach((c) => c.classList.add("hide"));
+        shown.forEach((c) => { c.classList.remove("hide"); grid!.appendChild(c); });
+
+        count.textContent =
+          kept.length === 0
+            ? "Aucun bien ne correspond"
+            : kept.length + (kept.length > 1 ? " biens affichés" : " bien affiché") +
+              " · page " + page + " sur " + pages;
+
+        const active =
+          cat !== "all" || selLoc.value !== "all" || selType.value !== "all" ||
+          selBudget.value !== "all" || qIn.value.trim() !== "";
+        reset.hidden = !active;
+
+        grid!.hidden = kept.length === 0;
+        empty.hidden = kept.length !== 0;
+        widen.hidden = !(kept.length > 0 && kept.length <= 3);
+
+        /* Pagination réelle — puces régénérées, « suivant » = puce → */
+        pagi.textContent = "";
+        pagi.hidden = pages < 2;
+        const goTo = (n: number) => () => { page = n; run(); };
+        for (let i = 1; i <= pages; i++) {
+          if (i === page) {
+            const cur = document.createElement("span");
+            cur.className = "cur";
+            cur.textContent = String(i);
+            pagi.appendChild(cur);
+          } else {
+            const a = document.createElement("a");
+            a.href = "#resultats";
+            a.textContent = String(i);
+            a.addEventListener("click", goTo(i));
+            pagi.appendChild(a);
+          }
+        }
+        if (pages > 1 && page < pages) {
+          const nx = document.createElement("a");
+          nx.href = "#resultats";
+          nx.setAttribute("aria-label", "Page suivante");
+          nx.textContent = "→";
+          nx.addEventListener("click", goTo(page + 1));
+          pagi.appendChild(nx);
+        }
+
+        /* Critères actifs, retirables un par un (état zéro) */
+        crit.textContent = "";
+        if (kept.length === 0) {
+          const chips: [string, () => void][] = [];
+          if (cat !== "all")
+            chips.push([CAT[cat], () => { cat = "all"; segBtns.forEach((x) => x.classList.toggle("on", x.dataset.f === "all")); }]);
+          if (selLoc.value !== "all")
+            chips.push([labelOf(selLoc), () => { selLoc.value = "all"; sync(selLoc); }]);
+          if (selType.value !== "all")
+            chips.push([labelOf(selType), () => { selType.value = "all"; sync(selType); }]);
+          if (selBudget.value !== "all")
+            chips.push([labelOf(selBudget), () => { selBudget.value = "all"; sync(selBudget); }]);
+          if (qIn.value.trim()) chips.push(["« " + qIn.value.trim() + " »", () => { qIn.value = ""; }]);
+          chips.forEach(([label, undo]) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = label + " "; /* pas d'innerHTML : label peut venir de q */
+            const x = document.createElement("span");
+            x.setAttribute("aria-hidden", "true");
+            x.textContent = "×";
+            btn.appendChild(x);
+            btn.setAttribute("aria-label", "Retirer le critère " + label);
+            btn.addEventListener("click", () => { undo(); page = 1; run(); });
+            crit.appendChild(btn);
+          });
+        }
+
+        /* « Vouliez-vous dire » (Levenshtein ≤ 2 sur communes et types) */
+        const term = qIn.value.trim();
+        const alt = kept.length === 0 && term ? suggest(term) : null;
+        if (alt) {
+          hint.hidden = false;
+          /* pas d'innerHTML : term est une saisie utilisateur (aussi via ?q=) */
+          hint.textContent = "Aucun résultat pour « " + term + " ». Vouliez-vous dire ";
+          const btn = document.createElement("button");
+          btn.type = "button";
+          const b = document.createElement("b");
+          b.textContent = alt;
+          btn.appendChild(b);
+          btn.addEventListener("click", () => { qIn.value = alt; page = 1; run(); });
+          hint.appendChild(btn);
+          hint.appendChild(document.createTextNode(" ?"));
+        } else {
+          hint.hidden = true;
+          hint.textContent = "";
+        }
+
+        syncUrl();
+      }
+
+      /* Squelette entre deux jeux de résultats — coupé si reduced motion. */
+      function run() {
+        if (REDUCED) { render(); return; }
+        clearTimeout(pending);
+        count.textContent = "Recherche…";
+        sk!.hidden = false;
+        grid!.hidden = true;
+        empty.hidden = true;
+        widen.hidden = true;
+        hint.hidden = true;
+        pagi.hidden = true;
+        pending = setTimeout(() => { sk!.hidden = true; render(); }, 340);
+      }
+
+      document.getElementById("filters")!.addEventListener("click", (e) => {
+        const btn = (e.target as HTMLElement).closest("button");
+        if (!btn) return;
+        cat = btn.dataset.f || "all";
+        segBtns.forEach((x) => x.classList.toggle("on", x === btn));
+        page = 1;
+        run();
+      });
+      function clearAll() {
+        cat = "all"; selLoc.value = "all"; selType.value = "all"; selBudget.value = "all";
+        qIn.value = ""; page = 1;
+        [selLoc, selType, selBudget].forEach(sync);
+        segBtns.forEach((x) => x.classList.toggle("on", x.dataset.f === "all"));
+        run();
+      }
+      reset.addEventListener("click", clearAll);
+      document.getElementById("emptyReset")!.addEventListener("click", clearAll);
+      [selLoc, selType, selBudget, selSort].forEach((s) =>
+        s.addEventListener("change", () => { page = 1; run(); }),
+      );
+      let typing: ReturnType<typeof setTimeout> | undefined;
+      qIn.addEventListener("input", () => { page = 1; clearTimeout(typing); typing = setTimeout(run, 260); });
+      qIn.addEventListener("search", () => { page = 1; run(); });
+
+      render();
+    })();
+  </script>
+</PageLayout>

@@ -1,0 +1,50 @@
+---
+/**
+ * EmptyState — état zéro résultat d'une liste filtrée (.empty de local.css).
+ *
+ * Structure de la référence biens.html : titre, explication (slot par défaut),
+ * critères actifs retirables un par un (.empty-crit — rempli par le script de
+ * page), actions (slot "actions" : Effacer · Être prévenu), et « chercher
+ * autour » (slot "widen" : ancres descriptives vers des combinaisons non
+ * vides). Masqué par défaut ([hidden] de local.css) ; le script de page le
+ * bascule quand le filtrage ne retient aucune carte.
+ */
+interface Props {
+  id?: string;
+  title: string;
+  /** id du conteneur des critères retirables (rempli côté client). */
+  critId?: string;
+  widenLabel?: string;
+  hidden?: boolean;
+  class?: string;
+  style?: string;
+}
+const {
+  id,
+  title,
+  critId = "emptyCrit",
+  widenLabel = "Chercher autour",
+  hidden = true,
+  class: className = "",
+  style,
+} = Astro.props;
+---
+
+<div class={`empty ${className}`.trim()} id={id} hidden={hidden} style={style}>
+  <h3>{title}</h3>
+  <p><slot /></p>
+  <div class="empty-crit" id={critId}></div>
+  <div class="empty-acts">
+    <slot name="actions" />
+  </div>
+  {
+    Astro.slots.has("widen") && (
+      <div class="empty-widen">
+        <span class="ll-lab">{widenLabel}</span>
+        <div class="ll-pills">
+          <slot name="widen" />
+        </div>
+      </div>
+    )
+  }
+</div>
